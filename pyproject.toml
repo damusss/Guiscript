@@ -1,0 +1,32 @@
+[project]
+name = "guiscript"
+description = "User friendly, script based UI library for pygame GUIs and games"
+version = "1.0"
+readme = "README.md"
+
+authors = [
+    { name="Damus666", email="macchia.cuordileone@gmail.com" }
+]
+
+dependencies = [
+    "pygame-ce",
+    "numpy",
+    "opencv-python",
+    "ffpyplayer"
+]
+
+[project.scripts]
+
+[project.urls]
+homepage = "https://github.com/Damus666/Guiscript"
+bugtracker = "https://github.com/Damus666/Guiscript/issues"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+addopts = "-rA -s"
+testpaths = [
+    "tests",
+]
