@@ -67,7 +67,7 @@ def _post_slider_event(old: float, new: float, element: UIElement):
         "value": new,
         "percent": new*100
     }))
-    
+
 
 def _post_sound_player_event(type_: int, element: UIElement):
     pygame.event.post(pygame.Event(type_, {
@@ -83,7 +83,8 @@ def _post_sound_player_event(type_: int, element: UIElement):
         "time_remaining": element.get_time_remaining(),
         "volume": element.get_volume()
     }))
-    
+
+
 def _post_video_player_event(type_: int, element: UIElement):
     pygame.event.post(pygame.Event(type_, {
         "id": element.element_id,

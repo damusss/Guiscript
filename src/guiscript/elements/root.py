@@ -51,3 +51,29 @@ class UIRoot:
 
     def get_absolute_topleft(self) -> pygame.Vector2:
         return pygame.Vector2(0, 0)
+    
+    def can_navigate(self) -> bool:
+        return False
+    
+    def find_navigable_child(self) -> "UIElement":
+        for child in self.children:
+            if child.can_navigate():
+                return child
+            else:
+                their_child = child.find_navigable_child()
+                if their_child is not None:
+                    return their_child
+        return None
+    
+    def has_navigable_child(self) -> bool:
+        for child in self.children:
+            if child.can_navigate():
+                return True
+        return False
+    
+    def navigable_children_count(self) -> bool:
+        count = 0
+        for child in self.children:
+            if child.can_navigate():
+                count += 1
+        return count

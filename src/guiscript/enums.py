@@ -1,5 +1,5 @@
-from enum import StrEnum, IntEnum
 import pygame
+from enum import StrEnum, IntEnum
 
 
 class TextAlign(StrEnum):

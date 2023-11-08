@@ -1,8 +1,8 @@
-from enum import StrEnum
-import typing
-import os
 import pygame
+import typing
 import pathlib
+import os
+from enum import StrEnum
 
 from .style import UIStyles, UIStyleHolder
 from .error import UIScriptError
@@ -141,7 +141,7 @@ class UIScriptLexer:
 
     def lex(self) -> typing.Self:
         if self.max_i < 0:
-            self.add_tok(UISTT.eof,advance=False)
+            self.add_tok(UISTT.eof, advance=False)
             return self
 
         while self.char is not None:
@@ -395,7 +395,8 @@ class UIScriptParser:
         if comp_name == "icon" and comp_name == "name" and value is not None and not value in UIIcons.icons and os.path.exists(value):
             path = pathlib.Path(value)
             if path.is_file():
-                UIIcons.add(path.name, pygame.image.load(value).convert_alpha())
+                UIIcons.add(path.name, pygame.image.load(
+                    value).convert_alpha())
             value = path.name
         return (comp_name, property_name, value)
 

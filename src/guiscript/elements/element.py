@@ -9,7 +9,6 @@ from ..error import UIError
 from ..status import UIStatus
 from ..buffer import UIBuffers
 from ..style import UIStyleGroup, UIStyles, UIStyle
-from ..enums import ElementAlign
 from .. import components as comps
 from .. import common
 
@@ -22,7 +21,6 @@ class UIElement:
                  element_types: str = ("element",),
                  parent: "UIElement" = None,
                  ui_manager: "UIManager" = None,
-                 #align: ElementAlign = ElementAlign.middle,
                  ):
 
         # parameters
@@ -50,7 +48,6 @@ class UIElement:
         self.style_id: str = style_id
         self.element_types: tuple[str] = element_types
         self.update_types_override()
-        #self.align: ElementAlign = align
 
         # attrs and setup
         self.children: list[UIElement] = []
@@ -144,6 +141,8 @@ class UIElement:
 
     def hide(self) -> typing.Self:
         self.visible = False
+        if self is self.ui_manager.navigation.tabbed_element:
+            self.ui_manager.navigation.stop_navigating()
         self.parent.update_size_positions()
         return self
 
@@ -197,12 +196,36 @@ class UIElement:
     def get_style(self) -> UIStyle:
         return self.bg.get_style()
     
-    # set
-    #def set_alignment(self, align: ElementAlign) -> typing.Self:
-    #    self.align = align
-    #    self.parent.update_size_positions()
-    #    return self
+    # navigation
+    def can_navigate(self) -> bool:
+        return self.status.can_navigate and self.visible
     
+    def find_navigable_child(self) -> "UIElement":
+        if not self.can_navigate():
+            return None
+        for child in self.children:
+            if child.can_navigate():
+                return child
+            else:
+                their_child = child.find_navigable_child()
+                if their_child is not None:
+                    return their_child
+        return None
+    
+    def has_navigable_child(self) -> bool:
+        for child in self.children:
+            if child.can_navigate():
+                return True
+        return False
+    
+    def navigable_children_count(self) -> bool:
+        count = 0
+        for child in self.children:
+            if child.can_navigate():
+                count += 1
+        return count
+    
+    # set    
     def set_ignore(self, ignore_stack: bool = False, ignore_scroll: bool = False) -> typing.Self:
         self.ignore_stack = ignore_stack
         self.ignore_scroll = ignore_scroll
@@ -330,7 +353,7 @@ class UIElement:
     def update_surface_size(self):
         if self.element_surface.get_size() != self.relative_rect.size:
             self.element_surface = pygame.Surface(
-                self.relative_rect.size, pygame.SRCALPHA)
+                (max(self.relative_rect.w, 1), max(self.relative_rect.h, 1)), pygame.SRCALPHA)
 
     def update_types_override(self):
         new_types = []

@@ -1,7 +1,5 @@
 THINGS
 
-- select text in text comp
-- key navigation
 - tooltip
 - animations
 - docstrings
@@ -37,6 +35,9 @@ DONE THINGS
 - icon style
 - buffers
 - new callback system
+- stack filling + refactor
+- select text in text comp
+- key navigation
 
 DONE ELEMENTS
 

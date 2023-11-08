@@ -16,3 +16,4 @@ class UIState:
     mouse_pressed: tuple[bool, bool, bool] = pygame.mouse.get_pressed()
     keys_pressed = pygame.key.get_pressed()
     frame_count: int = 0
+    space_pressed: bool = False

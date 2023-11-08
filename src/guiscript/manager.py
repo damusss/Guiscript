@@ -4,6 +4,7 @@ import typing
 from .state import UIState
 from .elements.root import UIRoot
 from .interact import UIInteract
+from .navigation import UINavigation
 from .elements.element import UIElement
 from .script import UIScript
 from . import common
@@ -31,6 +32,7 @@ class UIManager:
         self.all_elements: list[UIElement] = []
         self.last_rendered: UIElement = None
         self.interact: UIInteract = UIInteract(self)
+        self.navigation: UINavigation = UINavigation(self)
         self.scroll_multiplier: float = 12
         self.root: UIRoot = UIRoot(screen_surface)
 
@@ -48,6 +50,8 @@ class UIManager:
         if event.type == pygame.MOUSEWHEEL:
             UIState.mouse_wheel = event.y
         self.root.event(event)
+        self.interact.event(event)
+        self.navigation.event(event)
 
     def logic(self, delta_time: float = 1):
         self.running_check()
@@ -57,6 +61,7 @@ class UIManager:
         UIState.mouse_rel = pygame.Vector2(pygame.mouse.get_rel())
         UIState.mouse_pressed = pygame.mouse.get_pressed()
         UIState.keys_pressed = pygame.key.get_pressed()
+        UIState.space_pressed = UIState.keys_pressed[pygame.K_SPACE]
         if self is UIState.current_manager: UIState.frame_count += 1
 
         self.interact.logic()
@@ -86,7 +91,7 @@ class UIManager:
 
     def get_with_style_id(self, style_id: str) -> typing.Generator[UIElement, typing.Any, typing.Any]:
         for el in self.all_elements:
-            if el.style_id == style_id:
+            if el.style_id == style_id or ";"+style_id+";" in el.style_id or el.style_id.endswith(";"+style_id) or el.style_id.startswith(style_id+";"):
                 yield el
 
     def get_with_element_type(self, element_type: str) -> typing.Generator[UIElement, typing.Any, typing.Any]:

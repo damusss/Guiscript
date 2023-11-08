@@ -1,6 +1,4 @@
 import pygame
-#import warnings
-#import typing
 
 from .element import UIElement
 from ..manager import UIManager
@@ -13,27 +11,16 @@ class HStack(UIElement):
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
                  style_id: str = "default",
-                 #anchor: StackAnchor = StackAnchor.middle,
                  parent: UIElement | None = None,
                  ui_manager: UIManager | None = None,
-                 #align: ElementAlign = ElementAlign.middle,
                  ):
         super().__init__(relative_rect, element_id, style_id, ("element", "stack", "hstack"), parent,
                          ui_manager)
-        #self.anchor: StackAnchor = anchor
         self.scroll_w: int = 1
         self.scroll_h: int = 1
         self.vscrollbar: UIVScrollbar = UIVScrollbar(self)
         self.hscrollbar: UIHScrollbar = UIHScrollbar(self)
         self.deactivate()
-
-    #def set_anchor(self, anchor: StackAnchor) -> typing.Self:
-    #    self.anchor = anchor
-    #    if self.anchor not in ["center", "left", "right", "max_spacing"]:
-    #        warnings.warn(
-    #            f"Anchor '{self.anchor}' not supported for HStack elements", category=UserWarning)
-    #    self.update_size_positions()
-    #    return self
 
     def update_size_positions(self):
         if not self.ui_manager.running:
@@ -43,17 +30,34 @@ class HStack(UIElement):
         total_y = 0
 
         active_children_num = 0
+        children_with_fill_x: list[UIElement] = []
         for i, child in enumerate(self.children):
             if child.ignore_stack or not child.visible:
                 continue
-            if child.relative_rect.h > total_y:
+
+            child_style = child.get_style()
+            if child.relative_rect.h > total_y and not child_style.stack.fill_y:
                 total_y = child.relative_rect.h
+            if child_style.stack.fill_x:
+                active_children_num += 1
+                children_with_fill_x.append(child)
+                continue
             if i > 0:
                 total_x += style.stack.spacing
             total_x += child.relative_rect.w
             active_children_num += 1
 
         total_x += style.stack.padding
+
+        if len(children_with_fill_x) > 0:
+            space_available = self.relative_rect.w-total_x
+            total_x = self.relative_rect.w
+            space_available -= style.stack.spacing * \
+                (len(children_with_fill_x)-1)
+            space_for_each_child = space_available/len(children_with_fill_x)
+            for child in children_with_fill_x:
+                child.set_size((space_for_each_child, child.relative_rect.h))
+
         total_y += style.stack.padding * 2
 
         if (total_y < self.relative_rect.h and style.stack.shrink_y) or \
@@ -106,14 +110,18 @@ class HStack(UIElement):
                 current_x += spacing
             child_style = child.get_style()
             child_y = style.stack.padding
-            if child.relative_rect.h < (self.relative_rect.h-scroll_y):
-                match child_style.stack.align:
-                    case "center":
-                        child_y = (self.relative_rect.h-scroll_y)//2 - \
-                            child.relative_rect.h//2
-                    case "bottom":
-                        child_y = (self.relative_rect.h-scroll_y) - \
-                            child.relative_rect.h-style.stack.padding
+            if not child_style.stack.fill_y:
+                if child.relative_rect.h < (self.relative_rect.h-scroll_y):
+                    match child_style.stack.align:
+                        case "center":
+                            child_y = (self.relative_rect.h-scroll_y)//2 - \
+                                child.relative_rect.h//2
+                        case "bottom":
+                            child_y = (self.relative_rect.h-scroll_y) - \
+                                child.relative_rect.h-style.stack.padding
+            else:
+                child.set_size(
+                    (child.relative_rect.w, self.relative_rect.h-style.stack.padding*2))
             child.set_relative_pos((current_x, child_y))
             current_x += child.relative_rect.w
 
@@ -123,30 +131,16 @@ class VStack(UIElement):
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
                  style_id: str = "default",
-                 #anchor: StackAnchor = StackAnchor.middle,
                  parent: UIElement | None = None,
                  ui_manager: UIManager | None = None,
-                 #align: ElementAlign = ElementAlign.middle,
                  ):
         super().__init__(relative_rect, element_id, style_id, ("element", "stack", "vstack"), parent,
                          ui_manager)
-        #self.anchor: StackAnchor = anchor
         self.scroll_w: int = 1
         self.scroll_h: int = 1
         self.vscrollbar: UIVScrollbar = UIVScrollbar(self)
         self.hscrollbar: UIHScrollbar = UIHScrollbar(self)
-        #if self.anchor not in ["center", "top", "bottom", "max_spacing"]:
-        #    warnings.warn(
-        #        f"Anchor '{self.anchor}' not supported for VStack elements", category=UserWarning)
         self.deactivate()
-
-    #def set_anchor(self, anchor: StackAnchor) -> typing.Self:
-    #    self.anchor = anchor
-    #    if self.anchor not in ["center", "top", "bottom", "max_spacing"]:
-    #        warnings.warn(
-    #            f"Anchor '{self.anchor}' not supported for VStack elements", category=UserWarning)
-    #    self.update_size_positions()
-    #    return self
 
     def update_size_positions(self):
         if not self.ui_manager.running:
@@ -156,17 +150,33 @@ class VStack(UIElement):
         total_y = style.stack.padding
 
         active_children_num = 0
+        children_with_fill_y: list[UIElement] = []
         for i, child in enumerate(self.children):
             if child.ignore_stack or not child.visible:
                 continue
-            if child.relative_rect.w > total_x:
+            child_style = child.get_style()
+            if child.relative_rect.w > total_x and not child_style.stack.fill_x:
                 total_x = child.relative_rect.w
+            if child_style.stack.fill_y:
+                active_children_num += 1
+                children_with_fill_y.append(child)
+                continue
             if i > 0:
                 total_y += style.stack.spacing
             total_y += child.relative_rect.h
             active_children_num += 1
 
         total_y += style.stack.padding
+
+        if len(children_with_fill_y) > 0:
+            space_available = self.relative_rect.h-total_y
+            total_y = self.relative_rect.h
+            space_available -= style.stack.spacing * \
+                (len(children_with_fill_y)-1)
+            space_for_each_child = space_available/len(children_with_fill_y)
+            for child in children_with_fill_y:
+                child.set_size((child.relative_rect.w, space_for_each_child))
+
         total_x += style.stack.padding * 2
 
         if (total_x < self.relative_rect.w and style.stack.shrink_x) or \
@@ -220,13 +230,17 @@ class VStack(UIElement):
                 current_y += spacing
             child_style = child.get_style()
             child_x = style.stack.padding
-            if child.relative_rect.w < (self.relative_rect.w-scroll_x):
-                match child_style.stack.align:
-                    case "center":
-                        child_x = (self.relative_rect.w-scroll_x)//2 - \
-                            child.relative_rect.w//2
-                    case "right":
-                        child_x = (self.relative_rect.w-scroll_x) - \
-                            child.relative_rect.w-style.stack.padding
+            if not child_style.stack.fill_x:
+                if child.relative_rect.w < (self.relative_rect.w-scroll_x):
+                    match child_style.stack.align:
+                        case "center":
+                            child_x = (self.relative_rect.w-scroll_x)//2 - \
+                                child.relative_rect.w//2
+                        case "right":
+                            child_x = (self.relative_rect.w-scroll_x) - \
+                                child.relative_rect.w-style.stack.padding
+            else:
+                child.set_size(
+                    (self.relative_rect.w-style.stack.padding*2, child.relative_rect.h))
             child.set_relative_pos((child_x, current_y))
             current_y += child.relative_rect.h

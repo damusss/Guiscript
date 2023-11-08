@@ -28,3 +28,7 @@
     text.font_name googleicons;
     text.sysfont false;
 }
+
+.fill_x:: {
+    stack.fill_x true;
+}

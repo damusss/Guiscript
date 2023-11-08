@@ -4,14 +4,11 @@ import warnings
 
 from .element import UIElement
 from ..manager import UIManager
-from ..enums import ElementAlign
 from ..error import UIError
 from ..state import UIState
 from ..events import _post_slideshow_event, _post_slider_event
 from ..common import StatusCallback
 from .. import settings
-
-element: typing.TypeAlias = UIElement
 
 # PROGRESS BAR
 

@@ -2,8 +2,8 @@ import pygame
 import typing
 import warnings
 import requests
-import io
 import threading
+import io
 if typing.TYPE_CHECKING:
     from .components import UIIconComp
 

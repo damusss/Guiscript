@@ -25,7 +25,7 @@ class UIStackStyle:
         self.shrink_x: bool = False
         self.shrink_y: bool = False
         self.fill_x: bool = False
-        self.fill_y: bool = True
+        self.fill_y: bool = False
         self.anchor: enums.StackAnchor = enums.StackAnchor.middle
         self.align: enums.ElementAlign = enums.ElementAlign.middle
         self.scrollbar_size: int = 10
@@ -70,6 +70,7 @@ class UITextStyle(UICompStyle):
         super().__init__()
         self.text: str = ""
         self.color: common.Color = (255, 255, 255)
+        self.selection_color: common.Color = (0, 100, 200)
         self.bg_color: common.Color | None = None
         self.padding: int = 5
         self.y_padding: int = 1
@@ -83,6 +84,7 @@ class UITextStyle(UICompStyle):
         self.italic: bool = False
         self.underline: bool = False
         self.strikethrough: bool = False
+    
         self.build_font()
         self.apply_mods()
 
@@ -97,6 +99,7 @@ class UITextStyle(UICompStyle):
         return self
 
     def apply_mods(self) -> typing.Self:
+        self.font.align = self.font_align
         self.font.bold = self.bold
         self.font.italic = self.italic
         self.font.underline = self.underline
@@ -119,6 +122,7 @@ class UIOutlineStyle(UICompStyle):
         self.color: common.Color = (50, 50, 50)
         self.width: int = 1
         self.border_radius: int = 7
+        self.navigation_color: common.Color = (255, 0, 0)
 
 
 class UIStyle:
@@ -204,7 +208,7 @@ class UIStyles:
                 style = _default_hover_style()
             case "press":
                 style = _default_press_style()
-        el_types, style_id, el_id = element.element_types, element.style_id, element.element_id
+        el_types, style_id, el_id = element.element_types, element.style_id.strip(), element.element_id.strip()
         style_id_styles, el_id_styles = [], []
         el_type_styles: dict[str, UIStyleHolder] = {
             el_t: [] for el_t in el_types}
@@ -213,7 +217,7 @@ class UIStyles:
                 continue
             if style_holder.style_target == "element_type" and style_holder.target_id in el_type_styles:
                 el_type_styles[style_holder.target_id].append(style_holder)
-            elif style_holder.style_target == "style_id" and style_holder.target_id in style_id:
+            elif style_holder.style_target == "style_id" and (style_holder.target_id == style_id or ";"+style_holder.target_id+";" in style_id or style_id.endswith(";"+style_holder.target_id) or style_id.startswith(style_holder.target_id+";")):
                 style_id_styles.append(style_holder)
             elif style_holder.style_target == "element_id" and style_holder.target_id == el_id:
                 el_id_styles.append(style_holder)
@@ -237,3 +241,4 @@ class UIStyles:
                             f"{comp_name.title()} style has no property '{name}'")
                     setattr(comp, name, value)
         style.text.build_font()
+        style.text.apply_mods()

@@ -57,7 +57,6 @@ from .elements.factories import (
     GIF,
     Slider,
     #ProgressBar
-    element
 )
 from .elements.stacks import (
     VStack,
@@ -80,5 +79,14 @@ from .settings import (
     SoundPlayerDefaultSettings,
     VideoPlayerSettings,
     VideoPlayerDefaultSettings
+)
+from .utils import (
+    element,
+    ZeroRect,
+    SizeRect,
+    PosRect,
+    ZeroRect as ZeroR,
+    SizeRect as SizeR,
+    PosRect as PosR
 )
 from .events import *

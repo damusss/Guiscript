@@ -3,15 +3,227 @@ import typing
 if typing.TYPE_CHECKING:
     from .elements.element import UIElement
 
+from .error import UIError
+
 VERSION = "WIP"
 
 Coordinate: typing.TypeAlias = typing.Iterable[float] | pygame.Vector2
 Color: typing.TypeAlias = typing.Iterable[int] | str | pygame.Color
-StatusCallback: typing.TypeAlias = typing.Callable[["UIElement"], typing.Any] | None
+StatusCallback: typing.TypeAlias = typing.Callable[[
+    "UIElement"], typing.Any] | None
 
 
 def style_id_or_copy(element: "UIElement", style_id: str) -> str:
     return element.style_id if style_id == "copy" else style_id
+
+
+def align_text(t_rect: pygame.Rect, el_rect: pygame.Rect, padding: int, y_padding: int, align: str) -> pygame.Rect:
+    match align:
+        case "center":
+            t_rect.center = el_rect.center
+        case "topleft":
+            t_rect.topleft = (el_rect.left+padding, el_rect.top+y_padding)
+        case "topright":
+            t_rect.topright = (el_rect.right-padding, el_rect.top+y_padding)
+        case "bottomleft":
+            t_rect.bottomleft = (el_rect.left+padding,
+                                 el_rect.bottom-y_padding)
+        case "bottomright":
+            t_rect.bottomright = (el_rect.right-padding,
+                                  el_rect.bottom-y_padding)
+        case "midleft" | "left":
+            t_rect.midleft = (el_rect.left+padding, el_rect.centery)
+        case "midright" | "right":
+            t_rect.midright = (el_rect.right-padding, el_rect.centery)
+        case "midtop" | "top":
+            t_rect.midtop = (el_rect.centerx, el_rect.top+y_padding)
+        case "midbottom" | "bottom":
+            t_rect.midbottom = (el_rect.centerx, el_rect.bottom-y_padding)
+        case _:
+            raise UIError(f"Unsupported text align: '{align}'")
+    return t_rect
+
+
+def text_wrap_str(text: str, wrapsize: int, font: pygame.Font) -> list[str]:
+    text = text.strip()
+    if not text:
+        return []
+    paragraphs = text.split("\n")
+    paragraph_lines = []
+    space = font.size(' ')[0]
+    for paragraph in paragraphs:
+        words = paragraph.split(' ')
+        x, y, maxw, i = 0, 0, wrapsize, 0
+        lines = []
+        line = ""
+        for abs_i, word in enumerate(words):
+            if not word:
+                continue
+            wordw, wordh = font.render(word, True, (0, 0, 0)).get_size()
+            if i != 0:
+                line += " "
+            line += word
+            if x + wordw >= maxw:
+                x = i = 0
+                y += wordh
+                if abs_i != 0:
+                    line = line.removesuffix(" "+word)
+                lines.append(line)
+                if abs_i != 0:
+                    line = word
+            x += wordw
+            if x != 0:
+                x += space
+            i += 1
+        lines.append(line)
+        paragraph_lines += lines
+    return paragraph_lines
+
+
+def text_click_idx(lines: list[str], font: pygame.Font, pos: pygame.Vector2, rect: pygame.Rect, absolute_topleft: pygame.Vector2) -> tuple[int, int, int, str] | None:
+    if len(lines) <= 0:
+        return
+    rel_pos = pos-absolute_topleft
+    if not rect.collidepoint(rel_pos):
+        return
+    line_idx = int((rel_pos.y-rect.top)//font.get_height())
+    if line_idx < 0 or line_idx >= len(lines):
+        return
+    line = lines[line_idx]
+    if not line:
+        return
+    start_x = tot_w = char_i = 0
+    if font.align == pygame.FONT_CENTER:
+        start_x = rect.w//2-font.size(line)[0]//2
+    elif font.align == pygame.FONT_RIGHT:
+        start_x = rect.w-font.size(line)[0]
+    rel_x = rel_pos.x
+    if rel_x <= start_x:
+        return
+    for i, char in enumerate(line):
+        char_w = font.size(char)[0]
+        tot_w += char_w
+        if tot_w+start_x >= rel_x:
+            char_i = i
+            break
+    else:
+        return
+    tot_i = 0
+    if line_idx > 0:
+        for l in lines[:line_idx]:
+            tot_i += len(l)
+    tot_i += char_i
+    return char_i, line_idx, tot_i, "".join(lines)
+
+
+def text_select_rects(start_li: int, start_ci: int, end_li: int, end_ci: int, lines: list[str], font: pygame.Font, rect: pygame.Rect) -> list[pygame.Rect]:
+    if start_li > end_li:
+        start_li, end_li = end_li, start_li
+        start_ci, end_ci = end_ci, start_ci
+    rects = []
+    font_h = font.get_height()
+    try:
+        if start_li == end_li:
+            if start_ci == end_ci:
+                return rects
+            if start_ci > end_ci:
+                start_ci, end_ci = end_ci, start_ci
+            line = lines[start_li]
+            offset = 0
+            if font.align == pygame.FONT_CENTER:
+                offset = rect.w//2-font.size(line)[0]//2
+            elif font.align == pygame.FONT_RIGHT:
+                offset = rect.w-font.size(line)[0]
+            rects.append(pygame.Rect(rect.left+offset+font.size(line[:start_ci])[0],
+                                     font_h*start_li+rect.top, font.size(line[start_ci:end_ci+1])[0], font_h))
+        else:
+            mid_lines = lines[start_li+1:end_li]
+            start_line = lines[start_li]
+            end_line = lines[end_li]
+            start_offset = end_offset = 0
+            if font.align == pygame.FONT_CENTER:
+                start_offset = rect.w//2-font.size(start_line)[0]//2
+                end_offset = rect.w//2-font.size(end_line)[0]//2
+            elif font.align == pygame.FONT_RIGHT:
+                start_offset = rect.w-font.size(start_line)[0]
+                end_offset = rect.w-font.size(end_line)[0]
+            rects.append(pygame.Rect(rect.left+start_offset+font.size(start_line[:start_ci])[0],
+                                     font_h*start_li+rect.top, font.size(start_line[start_ci:])[0], font_h))
+            rects.append(pygame.Rect(rect.left+end_offset, font_h*end_li +
+                         rect.top, font.size(end_line[:end_ci+1])[0], font_h))
+            for i, line in enumerate(mid_lines):
+                offset = 0
+                if font.align == pygame.FONT_CENTER:
+                    offset = rect.w//2-font.size(line)[0]//2
+                elif font.align == pygame.FONT_RIGHT:
+                    offset = rect.w-font.size(line)[0]
+                rects.append(pygame.Rect(rect.left+offset, font_h *
+                             (i+start_li+1)+rect.top, font.size(line)[0], font_h))
+    except Exception as e:
+        return rects
+    return rects
+
+
+def text_select_copy(start_li: int, start_ci: int, end_li: int, end_ci: int, lines: list[str]):
+    copy_str = ""
+    if start_li > end_li:
+        start_li, end_li = end_li, start_li
+        start_ci, end_ci = end_ci, start_ci
+    if start_li == end_li:
+        if start_ci > end_ci:
+            start_ci, end_ci = end_ci, start_ci
+        copy_str = lines[start_li][start_ci:end_ci+1]
+    else:
+        mid_lines = lines[start_li+1:end_li]
+        copy_str += " "*start_ci+lines[start_li][start_ci:]+"\n"
+        for line in mid_lines:
+            copy_str += line+"\n"
+        copy_str += lines[end_li][:end_ci]
+    pygame.scrap.put_text(copy_str)
+
+
+def generate_menu_surface(original_image: pygame.Surface, width: int, height: int, border: int) -> pygame.Surface:
+    if border < 1:
+        return original_image
+    # setup
+    s, s2 = border, border*2
+    width, height = int(width), int(height)
+    menu_surf: pygame.Surface = original_image
+    mw, mh = menu_surf.get_width(), menu_surf.get_height()
+    # main surfs
+    try:
+        big_surf = pygame.Surface((width, height), pygame.SRCALPHA)
+    except pygame.error:
+        return original_image
+    big_surf.fill(0)
+    inner_surf = pygame.transform.scale(menu_surf.subsurface(
+        (s, s, mw-s2, mh-s2)), (max(width-s2, 1), max(height-s2, 1)))
+    # corners
+    topleft = menu_surf.subsurface((0, 0, s, s))
+    topright = menu_surf.subsurface((mw-s, 0, s, s))
+    bottomleft = menu_surf.subsurface((0, mh-s, s, s))
+    bottomright = menu_surf.subsurface((mw-s, mh-s, s, s))
+    # sides
+    top = pygame.transform.scale(menu_surf.subsurface(
+        (s, 0, mw-s2, s)), (max(width-s2, 1), s))
+    bottom = pygame.transform.scale(menu_surf.subsurface(
+        (s, mh-s, mw-s2, s)), (max(width-s2, 1), s))
+    left = pygame.transform.scale(menu_surf.subsurface(
+        (0, s, s, mh-s2)), (s, max(height-s2, 1)))
+    right = pygame.transform.scale(menu_surf.subsurface(
+        (mw-s, s, s, mh-s2)), (s, max(height-s2, 1)))
+    # blitting
+    big_surf.blit(inner_surf, (s, s))
+    big_surf.blit(topleft, (0, 0))
+    big_surf.blit(topright, (width-s, 0))
+    big_surf.blit(bottomleft, (0, height-s))
+    big_surf.blit(bottomright, (width-s, height-s))
+    big_surf.blit(top, (s, 0))
+    big_surf.blit(bottom, (s, height-s))
+    big_surf.blit(left, (0, s))
+    big_surf.blit(right, (width-s, s))
+    # return
+    return big_surf
 
 
 DEFAULT_CALLBACKS: list[str] = [
@@ -126,15 +338,20 @@ slideshow_arrow, sound_player_button, video_player_button:hover:press {
     text.font_size 30;
 }
 
-.no_scroll {
+.no_scroll:: {
     stack.scroll_x false;
     stack.scroll_y false;
 }
 
-.no_padding {
+.no_padding:: {
     stack.padding 0;
     text.padding 0;
     image.padding 0;
     shape.padding 0;
+}
+
+.fill:: {
+    stack.fill_x true;
+    stack.fill_y true;
 }
 """

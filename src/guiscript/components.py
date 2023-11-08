@@ -6,6 +6,8 @@ if typing.TYPE_CHECKING:
 from .style import UIStyleGroup, UIStyle
 from .error import UIError
 from .icon import UIIcons
+from .state import UIState
+from . import common
 
 
 class UIComponent:
@@ -81,7 +83,7 @@ class UIBackgroundComp(UIComponent):
 class UIImageComp(UIComponent):
     def init(self):
         self.image_surf: pygame.Surface = None
-        self.original_surface: pygame.Surface|None = None
+        self.original_surface: pygame.Surface | None = None
         self.set_surface(None)
 
     def get_active_surface(self) -> pygame.Surface:
@@ -91,7 +93,8 @@ class UIImageComp(UIComponent):
         return self.original_surface if self.original_surface else self.get_style().image.image
 
     def set_surface(self, surface: pygame.Surface, force_update: bool = False) -> typing.Self:
-        if surface == self.original_surface and not force_update: return self
+        if surface == self.original_surface and not force_update:
+            return self
         self.original_surface: pygame.Surface = surface
         self.build(self.get_style())
         return self
@@ -128,11 +131,12 @@ class UIImageComp(UIComponent):
                     w = int(iw*(h/ih))
         else:
             w, h = tw, th
-            original_surface = _generate_menu_surface(original_surface,
+            original_surface = common.generate_menu_surface(original_surface,
                                                       w-(style.image.padding)*2,
                                                       h-(style.image.padding)*2,
                                                       style.image.border_size)
 
+        w, h = max(w, 1), max(h, 1)
         if style.image.border_size <= 0:
             self.image_surf: pygame.Surface = pygame.transform.scale(
                 original_surface, (w, h)).convert_alpha()
@@ -222,14 +226,17 @@ class UIShapeComp(UIComponent):
 
 class UITextComp(UIComponent):
     def init(self):
-        self.text = None
+        self.text: str = None
+        self.selection_rects: list[pygame.Rect] = []
+        self.can_select: bool = True
         self.set_text("")
 
     def render(self):
         style = self.get_style()
         if not style.text.enabled and not self.force_visibility:
             return
-        style.text.apply_mods()
+        for rect in self.selection_rects:
+            pygame.draw.rect(self.element.element_surface, style.text.selection_color, rect)
         self.element.element_surface.blit(self.text_surf, self.text_rect)
 
     def size_changed(self):
@@ -241,21 +248,31 @@ class UITextComp(UIComponent):
 
     def build(self, style):
         text = style.text.text if style.text.text else self.text
+        style.text.apply_mods()
         self.text_surf: pygame.Surface = style.text.font.render(text,
                                                                 style.text.antialas,
                                                                 style.text.color,
                                                                 style.text.bg_color,
                                                                 self.element.relative_rect.w)
-        self.text_rect: pygame.Rect = _align_text(self.text_surf.get_rect(),
+        self.text_rect: pygame.Rect = common.align_text(self.text_surf.get_rect(),
                                                   self.element.static_rect,
                                                   style.text.padding,
                                                   style.text.y_padding,
                                                   style.text.align)
 
     def set_text(self, text) -> typing.Self:
-        if text == self.text: return self
+        if text == self.text:
+            return self
         self.text: str = text
         self.build(self.get_style())
+        return self
+    
+    def enable_selection(self) -> typing.Self:
+        self.can_select = True
+        return self
+    
+    def disable_selection(self) -> typing.Self:
+        self.can_select = False
         return self
 
 
@@ -274,7 +291,8 @@ class UIIconComp(UIComponent):
         return self.icon_surf
 
     def set_icon(self, name: str) -> typing.Self:
-        if name == self.icon_name: return self
+        if name == self.icon_name:
+            return self
         self.icon_name = name
         self.build(self.get_style())
         return self
@@ -283,7 +301,7 @@ class UIIconComp(UIComponent):
         icon_name = self.icon_name or style.icon.name
         self.icon_surf: pygame.Surface = pygame.transform.scale_by(
             UIIcons.get(icon_name, self), style.icon.scale)
-        self.icon_rect: pygame.Rect = _align_text(self.icon_surf.get_rect(),
+        self.icon_rect: pygame.Rect = common.align_text(self.icon_surf.get_rect(),
                                                   self.element.static_rect,
                                                   style.icon.padding,
                                                   style.icon.padding,
@@ -295,84 +313,25 @@ class UIIconComp(UIComponent):
             return
         self.element.element_surface.blit(self.icon_surf, self.icon_rect)
 
+
 class UIOutlineComp(UIComponent):
     def render(self):
         style = self.get_style()
         if not style.outline.enabled and not self.force_visibility:
+            self.render_tabbed(style)
             return
         pygame.draw.rect(self.element.element_surface,
                          style.outline.color,
                          self.element.static_rect,
                          style.outline.width,
                          style.outline.border_radius)
-
-
-def _align_text(t_rect, el_rect, padding, y_padding, align):
-    match align:
-        case "center":
-            t_rect.center = el_rect.center
-        case "topleft":
-            t_rect.topleft = (el_rect.left+padding, el_rect.top+y_padding)
-        case "topright":
-            t_rect.topright = (el_rect.right-padding, el_rect.top+y_padding)
-        case "bottomleft":
-            t_rect.bottomleft = (el_rect.left+padding,
-                                 el_rect.bottom-y_padding)
-        case "bottomright":
-            t_rect.bottomright = (el_rect.right-padding,
-                                  el_rect.bottom-y_padding)
-        case "midleft" | "left":
-            t_rect.midleft = (el_rect.left+padding, el_rect.centery)
-        case "midright" | "right":
-            t_rect.midright = (el_rect.right-padding, el_rect.centery)
-        case "midtop" | "top":
-            t_rect.midtop = (el_rect.centerx, el_rect.top+y_padding)
-        case "midbottom" | "bottom":
-            t_rect.midbottom = (el_rect.centerx, el_rect.bottom-y_padding)
-        case _:
-            raise UIError(f"Unsupported text align: '{align}'")
-    return t_rect
-
-
-def _generate_menu_surface(original_image: pygame.Surface, width: int, height: int, border: int) -> pygame.Surface:
-    if border < 1:
-        return original_image
-    # setup
-    s, s2 = border, border*2
-    width, height = int(width), int(height)
-    menu_surf: pygame.Surface = original_image
-    mw, mh = menu_surf.get_width(), menu_surf.get_height()
-    # main surfs
-    try:
-        big_surf = pygame.Surface((width, height), pygame.SRCALPHA)
-    except pygame.error:
-        return original_image
-    big_surf.fill(0)
-    inner_surf = pygame.transform.scale(menu_surf.subsurface(
-        (s, s, mw-s2, mh-s2)), (max(width-s2, 1), max(height-s2, 1)))
-    # corners
-    topleft = menu_surf.subsurface((0, 0, s, s))
-    topright = menu_surf.subsurface((mw-s, 0, s, s))
-    bottomleft = menu_surf.subsurface((0, mh-s, s, s))
-    bottomright = menu_surf.subsurface((mw-s, mh-s, s, s))
-    # sides
-    top = pygame.transform.scale(menu_surf.subsurface(
-        (s, 0, mw-s2, s)), (max(width-s2, 1), s))
-    bottom = pygame.transform.scale(menu_surf.subsurface(
-        (s, mh-s, mw-s2, s)), (max(width-s2, 1), s))
-    left = pygame.transform.scale(menu_surf.subsurface(
-        (0, s, s, mh-s2)), (s, max(height-s2, 1)))
-    right = pygame.transform.scale(menu_surf.subsurface(
-        (mw-s, s, s, mh-s2)), (s, max(height-s2, 1)))
-    # blitting
-    big_surf.blit(inner_surf, (s, s))
-    big_surf.blit(topleft, (0, 0))
-    big_surf.blit(topright, (width-s, 0))
-    big_surf.blit(bottomleft, (0, height-s))
-    big_surf.blit(bottomright, (width-s, height-s))
-    big_surf.blit(top, (s, 0))
-    big_surf.blit(bottom, (s, height-s))
-    big_surf.blit(left, (0, s))
-    big_surf.blit(right, (width-s, s))
-    # return
-    return big_surf
+        
+        self.render_tabbed(style)
+            
+    def render_tabbed(self, style: UIStyle):
+        if self.element.ui_manager.navigation.tabbed_element is self.element:
+            pygame.draw.rect(self.element.element_surface,
+                             style.outline.navigation_color,
+                             self.element.static_rect,
+                             style.outline.width,
+                             style.outline.border_radius)

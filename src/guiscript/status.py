@@ -1,5 +1,4 @@
 import typing
-import traceback
 from . import common
 if typing.TYPE_CHECKING:
     from .elements.element import UIElement
@@ -11,9 +10,16 @@ class UIStatus:
         self.hovered: bool = False
         self.pressed: bool = False
         self.right_pressed: bool = False
+        
+        self.inactive_hovered: bool = False
+        self.inactive_pressed: bool = False
+        self.inactive_right_pressed: bool = False
+        
         self.selected: bool = False
-        self.can_select: bool = False
         self.scroll_hovered: bool = False
+        
+        self.can_select: bool = False
+        self.can_navigate: bool = True
 
         self.callbacks: dict[str, list[common.StatusCallback]] = {}
         self.register_callbacks(*common.DEFAULT_CALLBACKS)
@@ -48,7 +54,7 @@ class UIStatus:
             try:
                 callback(self.element, *args)
             except TypeError as e:
-                if "takes 0 positional arguments but 1 was given" in str(e):
+                if "takes 0 positional arguments but 1 was given" in str(e) or "takes 1 positional argument but 2 were given" in str(e):
                     callback(*args)
                     return self
                 raise e
@@ -65,6 +71,16 @@ class UIStatus:
 
     def disable_selection(self) -> typing.Self:
         self.can_select = False
+        return self
+    
+    def enable_navigation(self) -> typing.Self:
+        self.can_navigate = True
+        return self
+
+    def disable_navigation(self) -> typing.Self:
+        self.can_navigate = False
+        if self.element is self.element.ui_manager.navigation.tabbed_element:
+            self.element.ui_manager.navigation.stop_navigating()
         return self
 
     def select(self) -> typing.Self:
