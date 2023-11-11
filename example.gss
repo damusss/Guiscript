@@ -32,3 +32,11 @@
 .fill_x:: {
     stack.fill_x true;
 }
+
+.turn_red:press: {
+    % bg.color (25, 25, 25), 1000;
+}
+
+.turn_red:hover {
+    % bg.color red, 1000;
+}

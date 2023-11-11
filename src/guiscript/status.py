@@ -11,10 +11,6 @@ class UIStatus:
         self.pressed: bool = False
         self.right_pressed: bool = False
         
-        self.inactive_hovered: bool = False
-        self.inactive_pressed: bool = False
-        self.inactive_right_pressed: bool = False
-        
         self.selected: bool = False
         self.scroll_hovered: bool = False
         

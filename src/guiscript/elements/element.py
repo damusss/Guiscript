@@ -8,7 +8,10 @@ from ..state import UIState
 from ..error import UIError
 from ..status import UIStatus
 from ..buffer import UIBuffers
+from ..tooltip import UITooltips
+from ..animation import UIPropertyAnim
 from ..style import UIStyleGroup, UIStyles, UIStyle
+from ..enums import AnimRepeatMode, AnimEaseFunc, AnimPropertyType
 from .. import components as comps
 from .. import common
 
@@ -51,6 +54,7 @@ class UIElement:
 
         # attrs and setup
         self.children: list[UIElement] = []
+        self.ghost_element: UIElement|None = None
         self.element_surface: pygame.Surface = pygame.Surface(
             self.relative_rect.size, pygame.SRCALPHA)
         self.absolute_rect: pygame.Rect = self.relative_rect.copy()
@@ -65,7 +69,9 @@ class UIElement:
         self.buffers: UIBuffers = UIBuffers(self)
         self.visible: bool = True
         self.active: bool = True
+        self._last_style: UIStyle = None
         self.style_group: UIStyleGroup = UIStyles.get_style_group(self)
+        self.style: UIStyle = self.style_group.style
 
         # components
         self.callback_component: comps.UIComponent = comps.UIComponent(
@@ -102,12 +108,15 @@ class UIElement:
 
     def size_changed(self):
         ...
-        
+
     def style_changed(self):
         self.update_size_positions()
         self.size_changed()
         self.parent.update_size_positions()
-        
+        for comp in self.components:
+            comp.build(self.style)
+        self.style.enter()
+
     def build(self):
         self.update_size_positions()
         self.size_changed()
@@ -124,6 +133,9 @@ class UIElement:
             self.children.remove(element)
         self.update_size_positions()
         return self
+    
+    def destroy(self):
+        ...
 
     # flags
     def activate(self) -> typing.Self:
@@ -151,8 +163,16 @@ class UIElement:
         self.update_size_positions()
 
     def logic(self):
+        if self.ghost_element is not None:
+            self.set_relative_pos((self.ghost_element.relative_rect.centerx-self.relative_rect.w//2, self.ghost_element.relative_rect.centery-self.relative_rect.h//2))
         for child in sorted(self.children, key=lambda el: el.z_index):
             child.logic()
+        self.calc_style()
+        self.style.logic()
+        if self.style.dirty:
+            for comp in self.components:
+                comp.build(self.style)
+            self.style.dirty = False
 
         self.on_logic()
 
@@ -193,13 +213,28 @@ class UIElement:
     def get_absolute_topleft(self) -> pygame.Vector2:
         return pygame.Vector2(self.parent.get_absolute_topleft()+self.relative_rect.topleft)-(self.ui_manager.root.scroll_offset if self.ignore_scroll else self.parent.scroll_offset)
 
-    def get_style(self) -> UIStyle:
-        return self.bg.get_style()
-    
+    def calc_style(self) -> typing.Self:
+        style: UIStyle = None
+        if not self.active:
+            style = self.style_group.style
+        elif self.status.pressed or self.status.selected:
+            style = self.style_group.press_style
+        elif self.status.hovered:
+            style = self.style_group.hover_style
+        else:
+            style = self.style_group.style
+        if style is not self._last_style:
+            self.style = style
+            self.style_changed()
+            for comp in self.components:
+                comp.build(style)
+            self._last_style = style
+        return self
+
     # navigation
     def can_navigate(self) -> bool:
         return self.status.can_navigate and self.visible
-    
+
     def find_navigable_child(self) -> "UIElement":
         if not self.can_navigate():
             return None
@@ -211,26 +246,26 @@ class UIElement:
                 if their_child is not None:
                     return their_child
         return None
-    
+
     def has_navigable_child(self) -> bool:
         for child in self.children:
             if child.can_navigate():
                 return True
         return False
-    
+
     def navigable_children_count(self) -> bool:
         count = 0
         for child in self.children:
             if child.can_navigate():
                 count += 1
         return count
-    
-    # set    
+
+    # set
     def set_ignore(self, ignore_stack: bool = False, ignore_scroll: bool = False) -> typing.Self:
         self.ignore_stack = ignore_stack
         self.ignore_scroll = ignore_scroll
         return self
-    
+
     def set_z_index(self, z_index: int) -> typing.Self:
         self.z_index = z_index
         self.parent.update_size_positions()
@@ -310,7 +345,7 @@ class UIElement:
             comp.style_changed()
 
         return self
-    
+
     def set_parent(self, parent: "UIElement") -> typing.Self:
         if parent is self.parent:
             return self
@@ -319,6 +354,37 @@ class UIElement:
         self.parent.add_child(self)
         return self
     
+    def set_tooltip(self, title: str, description: str, width: int = 200, height: int = 200, title_h: int = 40) -> "UIElement":
+        tooltip_cont = UIElement(pygame.Rect(0, 0, width, height),
+                                 self.element_id+"tooltip_container",
+                                 "default",
+                                 ("element", "tooltip", "tooltip_container"),
+                                 self.ui_manager.root, self.ui_manager).set_z_index(200)
+        if title:
+            UIElement(pygame.Rect(0, 0, width, title_h),
+                      self.element_id+"tooltip_title",
+                      "default",
+                      ("element", "tooltip", "label",
+                       "tooltip_label", "tooltip_title"),
+                      tooltip_cont, self.ui_manager).text.set_text(title).element
+        UIElement(pygame.Rect(0, title_h if title else 0, width, height-title_h if title else height),
+                  self.element_id+"tooltip_description",
+                  "default",
+                  ("element", "tooltip", "label",
+                   "tooltip_label", "tooltip_description"),
+                  tooltip_cont, self.ui_manager).text.set_text(description).element
+        tooltip_cont.hide()
+        UITooltips.register(tooltip_cont, self)
+        return tooltip_cont
+    
+    def set_ghost(self, relative_rect: pygame.Rect) -> typing.Self:
+        if self.ghost_element is not None:
+            self.ghost_element.destroy()
+            self.ghost_element = None
+        self.set_ignore(True, self.ignore_scroll)
+        self.ghost_element = UIElement(relative_rect, self.element_id+"_ghost", "invis_cont", ("element", "ghost_element"), self.parent, self.ui_manager).set_z_index(-100)
+        return self
+
     # add
     def add_element_type(self, element_type: str) -> typing.Self:
         self.element_types = (*self.element_types, element_type)
@@ -334,7 +400,74 @@ class UIElement:
             self.add_element_type(et)
         return self
 
-    # ADD TOOLTIP
+    # animation
+    def animate_x(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+                  ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
+        UIPropertyAnim(self, AnimPropertyType.x, increase,
+                       duration_ms, repeat_mode, ease_func_name)
+        return self
+
+    def animate_y(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+                  ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
+        UIPropertyAnim(self, AnimPropertyType.y, increase,
+                       duration_ms, repeat_mode, ease_func_name)
+        return self
+    
+    def animate_xy(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+                  ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
+        UIPropertyAnim(self, AnimPropertyType.x, increase,
+                       duration_ms, repeat_mode, ease_func_name)
+        UIPropertyAnim(self, AnimPropertyType.y, increase,
+                       duration_ms, repeat_mode, ease_func_name)
+        return self
+
+    def animate_w(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+                      ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
+        UIPropertyAnim(self, AnimPropertyType.width, increase,
+                       duration_ms, repeat_mode, ease_func_name)
+        return self
+
+    def animate_h(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+                       ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
+        UIPropertyAnim(self, AnimPropertyType.height, increase,
+                       duration_ms, repeat_mode, ease_func_name)
+        return self
+    
+    def animate_wh(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+                      ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
+        UIPropertyAnim(self, AnimPropertyType.width, increase,
+                       duration_ms, repeat_mode, ease_func_name)
+        UIPropertyAnim(self, AnimPropertyType.height, increase,
+                       duration_ms, repeat_mode, ease_func_name)
+        return self
+
+    def animate_x_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+                        ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
+        return self.animate_x(value-self.relative_rect.x, duration_ms, repeat_mode, ease_func_name)
+
+    def animate_y_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+                        ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
+        return self.animate_y(value-self.relative_rect.y, duration_ms, repeat_mode, ease_func_name)
+    
+    def animate_xy_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+                        ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
+        self.animate_x(value-self.relative_rect.x, duration_ms, repeat_mode, ease_func_name)
+        self.animate_y(value-self.relative_rect.y, duration_ms, repeat_mode, ease_func_name)
+        return self
+
+    def animate_w_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+                        ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
+        return self.animate_w(value-self.relative_rect.w, duration_ms, repeat_mode, ease_func_name)
+
+    def animate_h_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+                        ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
+        return self.animate_h(value-self.relative_rect.h, duration_ms, repeat_mode, ease_func_name)
+    
+    def animate_wh_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+                        ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
+        self.animate_w(value-self.relative_rect.w, duration_ms, repeat_mode, ease_func_name)
+        self.animate_h(value-self.relative_rect.h, duration_ms, repeat_mode, ease_func_name)
+        return self
 
     # update
     def update_absolute_rect_pos(self):

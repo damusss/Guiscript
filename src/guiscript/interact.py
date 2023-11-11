@@ -18,7 +18,6 @@ class UIInteract:
         self.hovered_el: UIElement = None
         self.pressed_el: UIElement = None
         self.right_pressed_el: UIElement = None
-        self.inactive_hovered_el: UIElement = None
 
         self.start_idxs: list[int] = None
         self.last_idxs: list[int] = None
@@ -29,27 +28,21 @@ class UIInteract:
             return
 
         # text selection
-        if self.text_select_el is not None and self.start_idxs is not None and UIState.mouse_pressed[0]:
-            if UIState.mouse_rel.length() != 0:
-                select_style = self.text_select_el.get_style()
-                lines = common.text_wrap_str(self.text_select_el.text.get_active_text(
-                ), self.text_select_el.relative_rect.w, select_style.text.font)
-                end_idxs_info = common.text_click_idx(lines, select_style.text.font, UIState.mouse_pos, self.text_select_el.text.text_rect,
-                                                      pygame.Vector2(self.text_select_el.absolute_rect.topleft))
+        if self.text_select_el is not None and self.start_idxs is not None:
+            lines = common.text_wrap_str(self.text_select_el.text.get_active_text(
+            ), self.text_select_el.relative_rect.w, self.text_select_el.style.text.font)
+            if UIState.mouse_pressed[0]:
+                end_idxs_info = common.text_click_idx(lines, self.text_select_el.style.text.font, UIState.mouse_pos, self.text_select_el.text.text_rect,
+                                                    pygame.Vector2(self.text_select_el.absolute_rect.topleft))
                 if end_idxs_info is not None:
                     char_i, line_i, tot_i, raw_text = end_idxs_info
                     self.last_idxs = [char_i, line_i, tot_i]
-
-                    select_rects = common.text_select_rects(self.start_idxs[1], self.start_idxs[0], self.last_idxs[1], self.last_idxs[0],
-                                                            lines, select_style.text.font, self.text_select_el.text.text_rect)
-                    if select_rects:
-                        self.text_select_el.text.selection_rects = select_rects
-        # remove press status from inactive
-        if self.inactive_hovered_el is not None:
-            if not UIState.mouse_pressed[0]:
-                self.inactive_hovered_el.status.inactive_pressed = False
-            if not UIState.mouse_pressed[1]:
-                self.inactive_hovered_el.status.inactive_right_pressed = False
+                    
+            if self.last_idxs is not None:
+                select_rects = common.text_select_rects(self.start_idxs[1], self.start_idxs[0], self.last_idxs[1], self.last_idxs[0],
+                                                        lines, self.text_select_el.style.text.font, self.text_select_el.text.text_rect)
+                if select_rects:
+                    self.text_select_el.text.selection_rects = select_rects
         # we are pressing something
         if self.pressed_el is not None:
             # fire when_pressed
@@ -58,7 +51,6 @@ class UIInteract:
             # update hover
             self.pressed_el.status.hovered = self.pressed_el.absolute_rect.collidepoint(
                 UIState.mouse_pos)
-            self.pressed_el.status.inactive_hovered = False
             # we are not pressing no more
             if (not UIState.mouse_pressed[0] and not self.pressed_el is self.ui_manager.navigation.tabbed_element) or (self.pressed_el is self.ui_manager.navigation.tabbed_element and not UIState.space_pressed):
                 # fire on_stop_press
@@ -68,7 +60,6 @@ class UIInteract:
                 _post_base_event(events.CLICK, self.pressed_el)
                 # set pressed
                 self.pressed_el.status.pressed = False
-                self.pressed_el.status.inactive_pressed = False
                 # update selection
                 if self.pressed_el.status.can_select:
                     # fire on_select/on_deselect
@@ -92,7 +83,6 @@ class UIInteract:
             # update hover
             self.right_pressed_el.status.hovered = self.right_pressed_el.absolute_rect.collidepoint(
                 UIState.mouse_pos)
-            self.right_pressed_el.status.inactive_hovered = False
             # we aint pressing
             if not UIState.mouse_pressed[1]:
                 # fire on_stop_right_press
@@ -103,7 +93,6 @@ class UIInteract:
                 _post_base_event(events.RIGHT_CLICK, self.right_pressed_el)
                 # set not right pressed and remove right pressed el
                 self.right_pressed_el.status.right_pressed = False
-                self.right_pressed_el.status.inactive_right_pressed = False
                 self.right_pressed_el = None
         else:
             # we aint pressing anything
@@ -112,50 +101,19 @@ class UIInteract:
             if self.hovered_el is not None:
                 # remove hover status, and raycast again
                 self.hovered_el.status.hovered = False
-                self.hovered_el.status.inactive_hovered = False
                 old = self.hovered_el
                 self.hovered_el = self.raycast(
                     UIState.mouse_pos, last_rendered.parent if last_rendered else None, True)
-                if self.hovered_el:
-                    if not self.hovered_el.visible:
-                        self.hovered_el = None
-                    elif not self.hovered_el.active:
-                        self.hovered_el.status.inactive_hovered = True
-                        self.inactive_hovered_el = self.hovered_el
-                        if UIState.mouse_pressed[0]:
-                            if not self.hovered_el.status.inactive_pressed:
-                                self.text_select_start_press(self.hovered_el)
-                            self.hovered_el.status.inactive_pressed = True
-                        elif UIState.mouse_pressed[1]:
-                            self.hovered_el.status.inactive_right_pressed = True
-                        self.hovered_el = None
-                    else:
-                        self.hovered_el.status.inactive_hovered = False
                 # if we changed hover, fire on_stop_hover
                 if old is not self.hovered_el:
                     old.status.invoke_callback("on_stop_hover")
                     _post_base_event(events.STOP_HOVER, old)
+                else:
+                    self.hovered_el.status.hovered = True
             else:
                 # we didnt have something hovered so just raycast
                 self.hovered_el = self.raycast(
                     UIState.mouse_pos, last_rendered.parent if last_rendered else None, True)
-                if self.inactive_hovered_el is not None:
-                    self.inactive_hovered_el.status.inactive_hovered = False
-                if self.hovered_el:
-                    if not self.hovered_el.visible:
-                        self.hovered_el = None
-                    elif not self.hovered_el.active:
-                        self.hovered_el.status.inactive_hovered = True
-                        self.inactive_hovered_el = self.hovered_el
-                        if UIState.mouse_pressed[0]:
-                            if not self.hovered_el.status.inactive_pressed:
-                                self.text_select_start_press(self.hovered_el)
-                            self.hovered_el.status.inactive_pressed = True
-                        elif UIState.mouse_pressed[1]:
-                            self.hovered_el.status.inactive_right_pressed = True
-                        self.hovered_el = None
-                    else:
-                        self.hovered_el.status.inactive_hovered = False
             # we are actually hovering something
             if self.hovered_el is not None:
                 # TODO: set scroll hover
@@ -164,7 +122,6 @@ class UIInteract:
                     self.hovered_el.status.invoke_callback("on_start_hover")
                     _post_base_event(events.START_HOVER, self.hovered_el)
                     self.hovered_el.status.hovered = True
-                self.hovered_el.status.inactive_hovered = False
                 # fire when_hovered
                 self.hovered_el.status.invoke_callback("when_hovered")
                 _post_base_event(events.HOVERED, self.hovered_el)
@@ -227,10 +184,9 @@ class UIInteract:
         if self.text_select_el is not None:
             self.text_select_el.text.selection_rects = []
         self.text_select_el = None
-        style = element.get_style()
         lines = common.text_wrap_str(
-            txt, element.relative_rect.w, style.text.font)
-        idxs_info = common.text_click_idx(lines, style.text.font, UIState.mouse_pos, element.text.text_rect,
+            txt, element.relative_rect.w, element.style.text.font)
+        idxs_info = common.text_click_idx(lines, element.style.text.font, UIState.mouse_pos, element.text.text_rect,
                                           pygame.Vector2(element.absolute_rect.topleft))
         if idxs_info is None:
             return

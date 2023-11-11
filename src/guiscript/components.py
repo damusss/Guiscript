@@ -28,28 +28,13 @@ class UIComponent:
 
     def style_changed(self):
         self.style_group = self.element.style_group
-        self.build(self.get_style())
+        self.build(self.element.style)
 
     def position_changed(self):
         ...
 
     def size_changed(self):
         ...
-
-    def get_style(self) -> UIStyle:
-        style = None
-        if self.element.status.pressed or self.element.status.selected:
-            style = self.style_group.press_style
-        elif self.element.status.hovered:
-            style = self.style_group.hover_style
-        else:
-            style = self.style_group.style
-        if style is not self._last_style:
-            self._last_style = style
-            if self._style_change_callback:
-                self._style_change_callback()
-            self.build(style)
-        return style
 
     def force_enable(self) -> typing.Self:
         self.enabled = True
@@ -70,14 +55,13 @@ class UIComponent:
 
 class UIBackgroundComp(UIComponent):
     def render(self):
-        style = self.get_style()
-        if not style.bg.enabled and not self.force_visibility:
+        if not self.element.style.bg.enabled and not self.force_visibility:
             return
         pygame.draw.rect(self.element.element_surface,
-                         style.bg.color,
+                         self.element.style.bg.color,
                          self.element.static_rect,
                          0,
-                         style.bg.border_radius)
+                         self.element.style.bg.border_radius)
 
 
 class UIImageComp(UIComponent):
@@ -90,17 +74,17 @@ class UIImageComp(UIComponent):
         return self.image_surf
 
     def get_original_surface(self) -> pygame.Surface:
-        return self.original_surface if self.original_surface else self.get_style().image.image
+        return self.original_surface if self.original_surface else self.element.style.image.image
 
     def set_surface(self, surface: pygame.Surface, force_update: bool = False) -> typing.Self:
         if surface == self.original_surface and not force_update:
             return self
         self.original_surface: pygame.Surface = surface
-        self.build(self.get_style())
+        self.build(self.element.style)
         return self
 
     def size_changed(self):
-        self.build(self.get_style())
+        self.build(self.element.style)
 
     def build(self, style: UIStyle):
         original_surface = self.original_surface if self.original_surface else style.image.image
@@ -158,17 +142,16 @@ class UIImageComp(UIComponent):
                 None, self.image_surf, None, None, (0, 0, 0, 0))
 
     def render(self):
-        style = self.get_style()
-        original_surface = self.original_surface if self.original_surface else style.image.image
+        original_surface = self.original_surface if self.original_surface else self.element.style.image.image
         if not original_surface:
             return
 
-        if not style.image.enabled and not self.force_visibility:
+        if not self.element.style.image.enabled and not self.force_visibility:
             return
         self.element.element_surface.blit(self.image_surf, self.image_rect)
-        if style.image.outline_width > 0:
-            pygame.draw.rect(self.element.element_surface, style.image.outline_color,
-                             self.image_rect, style.image.outline_width, style.image.border_radius)
+        if self.element.style.image.outline_width > 0:
+            pygame.draw.rect(self.element.element_surface, self.element.style.image.outline_color,
+                             self.image_rect, self.element.style.image.outline_width, self.element.style.image.border_radius)
 
 
 class UIShapeComp(UIComponent):
@@ -180,9 +163,9 @@ class UIShapeComp(UIComponent):
         return self
 
     def render(self):
-        style = self.get_style()
-        if not style.shape.enabled and not self.force_visibility:
+        if not self.element.style.shape.enabled and not self.force_visibility:
             return
+        style = self.element.style
         match style.shape.type:
             case "rect":
                 rect = (
@@ -232,19 +215,17 @@ class UITextComp(UIComponent):
         self.set_text("")
 
     def render(self):
-        style = self.get_style()
-        if not style.text.enabled and not self.force_visibility:
+        if not self.element.style.text.enabled and not self.force_visibility:
             return
         for rect in self.selection_rects:
-            pygame.draw.rect(self.element.element_surface, style.text.selection_color, rect)
+            pygame.draw.rect(self.element.element_surface, self.element.style.text.selection_color, rect)
         self.element.element_surface.blit(self.text_surf, self.text_rect)
 
     def size_changed(self):
-        self.build(self.get_style())
+        self.build(self.element.style)
 
     def get_active_text(self) -> str:
-        style = self.get_style()
-        return style.text.text if style.text.text else self.text
+        return self.element.style.text.text if self.element.style.text.text else self.text
 
     def build(self, style):
         text = style.text.text if style.text.text else self.text
@@ -264,7 +245,7 @@ class UITextComp(UIComponent):
         if text == self.text:
             return self
         self.text: str = text
-        self.build(self.get_style())
+        self.build(self.element.style)
         return self
     
     def enable_selection(self) -> typing.Self:
@@ -282,10 +263,10 @@ class UIIconComp(UIComponent):
         self.set_icon(None)
 
     def get_active_name(self) -> str:
-        self.icon_name or self.get_style().icon.name
+        self.icon_name or self.element.style.icon.name
 
     def get_icon_surface(self) -> pygame.Surface:
-        return UIIcons.get(self.icon_name or self.get_style().icon.name)
+        return UIIcons.get(self.icon_name or self.element.style.icon.name)
 
     def get_active_surface(self) -> pygame.Surface:
         return self.icon_surf
@@ -294,7 +275,7 @@ class UIIconComp(UIComponent):
         if name == self.icon_name:
             return self
         self.icon_name = name
-        self.build(self.get_style())
+        self.build(self.element.style)
         return self
 
     def build(self, style: UIStyle):
@@ -308,15 +289,14 @@ class UIIconComp(UIComponent):
                                                   style.icon.align)
 
     def render(self):
-        style = self.get_style()
-        if not style.icon.enabled and not self.force_visibility:
+        if not self.element.style.icon.enabled and not self.force_visibility:
             return
         self.element.element_surface.blit(self.icon_surf, self.icon_rect)
 
 
 class UIOutlineComp(UIComponent):
     def render(self):
-        style = self.get_style()
+        style = self.element.style
         if not style.outline.enabled and not self.force_visibility:
             self.render_tabbed(style)
             return

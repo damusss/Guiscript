@@ -1,7 +1,5 @@
 THINGS
 
-- tooltip
-- animations
 - docstrings
 - (maybe) element script
 
@@ -38,6 +36,9 @@ DONE THINGS
 - stack filling + refactor
 - select text in text comp
 - key navigation
+- tooltip
+- property animations
+- style animations
 
 DONE ELEMENTS
 

@@ -75,3 +75,39 @@ class ProgressBarDirection(StrEnum):
     right_left = "right_left"
     top_bottom = "top_bottom"
     bottom_top = "bottom_top"
+
+
+class AnimPropertyType(StrEnum):
+    x = "x"
+    y = "y"
+    width = "width"
+    height = "height"
+    
+    
+class AnimRepeatMode(StrEnum):
+    norepeat = "norepeat"
+    restart = "restart"
+    repeat = "repeat"
+    
+    
+class AnimEaseFunc(StrEnum):
+    linear = 'linear'
+    ease_in = 'ease_in'
+    ease_out = 'ease_out'
+    in_quad = 'ease_in_quad'
+    out_quad = 'ease_out_quad'
+    in_cubic = 'ease_in_cubic'
+    out_cubic = 'ease_out_cubic'
+    in_quart = 'ease_in_quart'
+    out_quart = 'ease_out_quart'
+    in_quint = 'ease_in_quint'
+    out_quint = 'ease_out_quint'
+    in_sine = 'ease_in_sine'
+    out_sine = 'ease_out_sine'
+    in_expo = 'ease_in_expo'
+    out_expo = 'ease_out_expo'
+    out_circ = 'ease_out_circ'
+    
+class StyleAnimPropertyType(StrEnum):
+    number = "number"
+    color = "color"

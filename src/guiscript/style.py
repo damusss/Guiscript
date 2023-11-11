@@ -6,12 +6,18 @@ if typing.TYPE_CHECKING:
 
 from . import common
 from . import enums
+from .animation import UIStyleAnim
 from .error import UIError
 
 
 class UICompStyle:
     def __init__(self):
         self.enabled: bool = True
+        
+    def set(self, **properties) -> typing.Self:
+        for name, val in properties.items():
+            setattr(self, name, val)
+        return self
 
 
 class UIStackStyle:
@@ -134,9 +140,35 @@ class UIStyle:
         self.text: UITextStyle = UITextStyle()
         self.icon: UIIconStyle = UIIconStyle()
         self.outline: UIOutlineStyle = UIOutlineStyle()
+        
+        self.style_group: "UIStyleGroup" = None
+        self.dirty: bool = True
+        self.animations: list[UIStyleAnim] = []
         self.styles: tuple[UICompStyle] = (
             self.bg, self.image, self.shape, self.text, self.outline)
-
+        
+    def add_animation(self,
+                      comp_name: str,
+                      property_name: str,
+                      property_type: enums.StyleAnimPropertyType,
+                      duration_ms: float,
+                      value,
+                      ease_func_name: enums.AnimEaseFunc = enums.AnimEaseFunc.ease_in
+                      ) -> typing.Self:
+        self.animations.append(
+            UIStyleAnim(self, (self.style_group.style, self.style_group.hover_style, self.style_group.press_style), 
+                        comp_name, property_name, property_type, duration_ms, value, ease_func_name)
+        )
+        return self
+        
+    def logic(self):
+        for anim in self.animations:
+            if not anim.completed:
+                anim.logic()
+        
+    def enter(self):
+        for anim in self.animations:
+            anim.start()
 
 def _default_style() -> UIStyle:
     return UIStyle()
@@ -156,17 +188,19 @@ def _default_press_style() -> UIStyle:
 
 class UIStyleHolder:
     def __init__(self, properties: dict[str, dict[str]],
+                 animations: list,
                  style_type: enums.StyleType | str,
                  style_target: enums.StyleTarget | str,
                  target_id: str
                  ):
         self.properties: dict[str, dict[str]] = properties
+        self.animations: list = animations
         self.style_type: str = style_type
         self.style_target: str = style_target
         self.target_id: str = target_id
 
     def copy_as_type(self, style_type: enums.StyleType | str) -> "UIStyleHolder":
-        return UIStyleHolder(self.properties, style_type, self.style_target, self.target_id)
+        return UIStyleHolder(self.properties, self.animations, style_type, self.style_target, self.target_id)
 
     def __repr__(self):
         return f"UIStyleHolder(style_type={self.style_type}, style_target={self.style_target}, target_id={self.target_id}, \nproperties={self.properties}\n)\n"
@@ -177,6 +211,9 @@ class UIStyleGroup:
         self.style: UIStyle = style
         self.hover_style: UIStyle = hover_style
         self.press_style: UIStyle = press_style
+        self.style.style_group = self
+        self.hover_style.style_group = self
+        self.press_style.style_group = self
 
 
 class UIStyles:
@@ -193,14 +230,24 @@ class UIStyles:
 
     @classmethod
     def get_style_group(cls, element: "UIElement") -> UIStyleGroup:
-        return UIStyleGroup(
-            cls.get_style_of_type(element, "normal"),
-            cls.get_style_of_type(element, "hover"),
-            cls.get_style_of_type(element, "press")
+        normal_style, normal_anims = cls.get_style_of_type(element, "normal")
+        hover_style, hover_anims = cls.get_style_of_type(element, "hover")
+        press_style, press_anims = cls.get_style_of_type(element, "press")
+        group = UIStyleGroup(
+            normal_style,
+            hover_style,
+            press_style
         )
+        for normal_anim in normal_anims:
+            group.style.add_animation(*normal_anim)
+        for hover_anim in hover_anims:
+            group.hover_style.add_animation(*hover_anim)
+        for press_anim in press_anims:
+            group.press_style.add_animation(*press_anim)
+        return group
 
     @classmethod
-    def get_style_of_type(cls, element: "UIElement", type_: enums.StyleType | str) -> UIStyle:
+    def get_style_of_type(cls, element: "UIElement", type_: enums.StyleType | str) -> tuple[UIStyle, list]:
         match type_:
             case "normal":
                 style = _default_style()
@@ -210,6 +257,7 @@ class UIStyles:
                 style = _default_press_style()
         el_types, style_id, el_id = element.element_types, element.style_id.strip(), element.element_id.strip()
         style_id_styles, el_id_styles = [], []
+        animations: list = []
         el_type_styles: dict[str, UIStyleHolder] = {
             el_t: [] for el_t in el_types}
         for style_holder in cls.styles:
@@ -221,14 +269,17 @@ class UIStyles:
                 style_id_styles.append(style_holder)
             elif style_holder.style_target == "element_id" and style_holder.target_id == el_id:
                 el_id_styles.append(style_holder)
-        for el_type_styles in el_type_styles.values():
-            for el_type_style in el_type_styles:
+        for el_type_styles_i in el_type_styles.values():
+            for el_type_style in el_type_styles_i:
                 cls.apply_style_properties(el_type_style.properties, style)
+                animations = cls.update_style_animations(animations, el_type_style.animations)
         for style_id_style in style_id_styles:
             cls.apply_style_properties(style_id_style.properties, style)
+            animations = cls.update_style_animations(animations, style_id_style.animations)
         for el_id_style in el_id_styles:
             cls.apply_style_properties(el_id_style.properties, style)
-        return style
+            animations = cls.update_style_animations(animations, el_id_style.animations)
+        return style, animations
 
     @classmethod
     def apply_style_properties(cls, properties: dict[str, dict[str]], style: UIStyle):
@@ -242,3 +293,13 @@ class UIStyles:
                     setattr(comp, name, value)
         style.text.build_font()
         style.text.apply_mods()
+        
+    @classmethod
+    def update_style_animations(cls, current_animations: list, holder_animations: list) -> list:
+        new_anims = current_animations.copy()
+        for anim_data in holder_animations:
+            for old_anim_data in list(new_anims):
+                if old_anim_data[0] == anim_data[0] and old_anim_data[1] == anim_data[1]:
+                    new_anims.remove(old_anim_data)
+            new_anims.append(anim_data)
+        return new_anims

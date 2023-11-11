@@ -7,6 +7,8 @@ from .interact import UIInteract
 from .navigation import UINavigation
 from .elements.element import UIElement
 from .script import UIScript
+from .tooltip import UITooltips
+from .animation import UIAnimUpdater
 from . import common
 
 
@@ -62,7 +64,10 @@ class UIManager:
         UIState.mouse_pressed = pygame.mouse.get_pressed()
         UIState.keys_pressed = pygame.key.get_pressed()
         UIState.space_pressed = UIState.keys_pressed[pygame.K_SPACE]
-        if self is UIState.current_manager: UIState.frame_count += 1
+        if self is UIState.current_manager:
+            UIState.frame_count += 1
+            UITooltips.logic()
+            UIAnimUpdater.logic()
 
         self.interact.logic()
         self.root.logic()

@@ -25,7 +25,7 @@ class HStack(UIElement):
     def update_size_positions(self):
         if not self.ui_manager.running:
             return
-        style = self.bg.get_style()
+        style = self.style
         total_x = style.stack.padding
         total_y = 0
 
@@ -145,7 +145,7 @@ class VStack(UIElement):
     def update_size_positions(self):
         if not self.ui_manager.running:
             return
-        style = self.bg.get_style()
+        style = self.style
         total_x = 0
         total_y = style.stack.padding
 
@@ -154,10 +154,9 @@ class VStack(UIElement):
         for i, child in enumerate(self.children):
             if child.ignore_stack or not child.visible:
                 continue
-            child_style = child.get_style()
-            if child.relative_rect.w > total_x and not child_style.stack.fill_x:
+            if child.relative_rect.w > total_x and not child.style.stack.fill_x:
                 total_x = child.relative_rect.w
-            if child_style.stack.fill_y:
+            if child.style.stack.fill_y:
                 active_children_num += 1
                 children_with_fill_y.append(child)
                 continue
@@ -228,11 +227,10 @@ class VStack(UIElement):
                 continue
             if i > i_o:
                 current_y += spacing
-            child_style = child.get_style()
             child_x = style.stack.padding
-            if not child_style.stack.fill_x:
+            if not child.style.stack.fill_x:
                 if child.relative_rect.w < (self.relative_rect.w-scroll_x):
-                    match child_style.stack.align:
+                    match child.style.stack.align:
                         case "center":
                             child_x = (self.relative_rect.w-scroll_x)//2 - \
                                 child.relative_rect.w//2

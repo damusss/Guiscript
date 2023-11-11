@@ -6,8 +6,9 @@ from enum import StrEnum
 
 from .style import UIStyles, UIStyleHolder
 from .error import UIScriptError
-from .enums import StyleType, StyleTarget
+from .enums import StyleType, StyleTarget, AnimEaseFunc, StyleAnimPropertyType
 from .icon import UIIcons
+from . import common
 
 
 class UISTT(StrEnum):
@@ -30,6 +31,7 @@ class UISTT(StrEnum):
     expr = "expr"
     string = "string"
     slash = "slash"
+    percent = "percent"
 
 
 class UIScriptToken:
@@ -169,6 +171,8 @@ class UIScriptLexer:
                 self.add_tok(UISTT.comma)
             elif self.char == "#":
                 self.add_tok(UISTT.hash)
+            elif self.char == "%":
+                self.add_tok(UISTT.percent)
             elif self.char == "-":
                 self.advance()
                 if self.char in self.number_chars:
@@ -388,6 +392,10 @@ class UIScriptParser:
             raise UIScriptError(
                 f"Expected property name identifier after '{comp_name}.', got '{self.tok}' instead"+self.error_suffix())
         property_name = self.tok.value
+        if property_name in ["set", "build_font", "apply_mods"]:
+            raise UIScriptError(
+                f"Property name not allowed: '{property_name}'"+self.error_suffix()
+            )
         self.advance()
         value = self.parse_property_value()
         if comp_name == "image" and property_name == "image" and value is not None and isinstance(value, str) and os.path.exists(value):
@@ -398,7 +406,57 @@ class UIScriptParser:
                 UIIcons.add(path.name, pygame.image.load(
                     value).convert_alpha())
             value = path.name
-        return (comp_name, property_name, value)
+        return (False, comp_name, property_name, value)
+    
+    def parse_style_animation(self):
+        self.advance()
+        if not self.tok.type == UISTT.identifier:
+            raise UIScriptError(
+                f"Expected component name identifier inside style animation after '%', got '{self.tok.value}' instead"+self.error_suffix())
+        if not self.tok.value in ["stack", "bg", "image", "shape", "text", "icon", "outline"]:
+            raise UIScriptError(
+                f"Supported component names are stack, bg, image, shape, text, icon, outline; got '{self.tok.value}' instead"+self.error_suffix())
+        comp_name = self.tok.value
+        self.advance()
+        if not self.tok.type == UISTT.dot:
+            raise UIScriptError(
+                f"Expected '.' after component name identifier, got '{self.tok}' instead"+self.error_suffix())
+        self.advance()
+        if not self.tok.type == UISTT.identifier:
+            raise UIScriptError(
+                f"Expected property name identifier after '{comp_name}.', got '{self.tok}' instead"+self.error_suffix())
+        property_name = self.tok.value
+        if property_name in ["set", "build_font", "apply_mods"]:
+            raise UIScriptError(
+                f"Property name not allowed: '{property_name}'"+self.error_suffix()
+            )
+        if not property_name in common.STYLE_ANIMATION_TYPES[comp_name]:
+            raise UIScriptError(
+                f"Property name '{property_name}''s type does not support animation"+self.error_suffix())
+        self.advance()
+        value = self.parse_property_value()
+        if not self.tok.type == UISTT.comma:
+            raise UIScriptError(
+                f"Expected comma after style animation value '{value}' and the animation duration in ms after the comma, got '{self.tok.value}' instead"+self.error_suffix())
+        self.advance()
+        if not self.tok.type == UISTT.number:
+            raise UIScriptError(
+                f"Expected number representing duration in ms after comma in style animation, got '{self.tok.value}' instead"+self.error_suffix())
+        duration = self.tok.value
+        ease_func_name = AnimEaseFunc.ease_in
+        self.advance()
+        if self.tok.type == UISTT.comma:
+            self.advance()
+            ease_func_name = self.parse_property_value()
+            if not isinstance(ease_func_name, str):
+                raise UIScriptError(
+                    f"Style animation ease function name was evaluated with an unsupported python type '{type(ease_func_name)}', expected 'str'"+self.error_suffix())
+        return (True, comp_name, property_name, common.STYLE_ANIMATION_TYPES[comp_name][property_name], duration, value, ease_func_name)
+    
+    def parse_style_instruction(self):
+        if self.tok.type == UISTT.percent:
+            return self.parse_style_animation()
+        return self.parse_style_property()
 
     def parse_style_body(self) -> list[tuple[str, str, typing.Any]]:
         if not self.tok.type == UISTT.left_brace:
@@ -406,50 +464,53 @@ class UIScriptParser:
                 self.tok)+"' instead"+self.error_suffix())
         self.advance()
         expressions = []
-        expressions.append(self.parse_style_property())
+        expressions.append(self.parse_style_instruction())
         while self.tok.type == UISTT.semicolon:
             self.advance()
             if self.tok.type == UISTT.right_brace:
                 break
-            expressions.append(self.parse_style_property())
+            expressions.append(self.parse_style_instruction())
         if not self.tok.type == UISTT.right_brace:
             raise UIScriptError("Expected '}' at the end of the style body, got '" +
                                 str(self.tok)+"' instead"+self.error_suffix())
         self.advance()
         return expressions
 
-    def parse_style_properties(self, expressions: list[tuple[str, str, typing.Any]]) -> dict[str, dict[str]]:
-        properties = {}
+    def parse_style_properties_animations(self, expressions: list[tuple[str, str, typing.Any]]) -> tuple[dict[str, dict[str]], list]:
+        properties, animations = {}, []
         for expr in expressions:
-            if expr[0] not in properties:
-                properties[expr[0]] = {}
-            properties[expr[0]][expr[1]] = expr[2]
-        return properties
+            if expr[0]:
+                animations.append(expr[1:])
+            else:
+                if expr[1] not in properties:
+                    properties[expr[1]] = {}
+                properties[expr[1]][expr[2]] = expr[3]
+        return properties, animations
 
-    def make_style_holder(self, style_type: StyleType, style_target: StyleTarget, target_id: str, properties: dict[str, dict[str]]):
+    def make_style_holder(self, style_type: StyleType, style_target: StyleTarget, target_id: str, properties: dict[str, dict[str]], animations: list):
         self.style_holders.append(UIStyleHolder(
-            properties, style_type, style_target, target_id))
+            properties, animations, style_type, style_target, target_id))
 
     def parse_style(self):
         target, target_ids = self.parse_style_target()
         main_type, copy_type, also_normal = self.parse_style_type()
         expressions = self.parse_style_body()
-        properties = self.parse_style_properties(expressions)
+        properties, animations = self.parse_style_properties_animations(expressions)
         for target_id in target_ids:
             if not copy_type:
                 self.make_style_holder(
-                    main_type, target, target_id, properties)
+                    main_type, target, target_id, properties, animations)
                 if also_normal:
                     self.make_style_holder(
-                        StyleType.normal, target, target_id, properties)
+                        StyleType.normal, target, target_id, properties, animations)
             else:
                 self.make_style_holder(
-                    main_type, target, target_id, properties)
+                    main_type, target, target_id, properties, animations)
                 self.make_style_holder(
-                    copy_type, target, target_id, properties)
+                    copy_type, target, target_id, properties, animations)
                 if also_normal:
                     self.make_style_holder(
-                        StyleType.normal, target, target_id, properties)
+                        StyleType.normal, target, target_id, properties, animations)
 
     def parse(self) -> typing.Self:
         while self.tok and self.tok.type in [UISTT.dot, UISTT.hash, UISTT, UISTT.identifier]:

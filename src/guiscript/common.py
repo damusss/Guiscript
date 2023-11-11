@@ -225,6 +225,78 @@ def generate_menu_surface(original_image: pygame.Surface, width: int, height: in
     # return
     return big_surf
 
+def lerp(a: float, b: float, t: float) -> float:
+    return a + t*(b-a)
+
+def linear(t: float) -> float:
+    return t
+
+def ease_in(t: float) -> float:
+    return t * t
+
+def ease_out(t: float) -> float:
+    return t * (2 - t)
+
+def ease_in_quad(t: float) -> float:
+    return t * t
+
+def ease_out_quad(t: float) -> float:
+    return t * (2 - t)
+
+def ease_in_cubic(t: float) -> float:
+    return t * t * t
+
+def ease_out_cubic(t: float) -> float:
+    return 1 - (1 - t) ** 3
+
+def ease_in_quart(t: float) -> float:
+    return t * t * t * t
+
+def ease_out_quart(t: float) -> float:
+    return 1 - (1 - t) ** 4
+
+def ease_in_quint(t: float) -> float:
+    return t * t * t * t * t
+
+def ease_out_quint(t: float) -> float:
+    return 1 - (1 - t) ** 5
+
+import math
+
+def ease_in_sine(t: float) -> float:
+    return 1 - math.cos((t * math.pi) / 2)
+
+def ease_out_sine(t: float) -> float:
+    return math.sin((t * math.pi) / 2)
+
+def ease_in_expo(t: float) -> float:
+    return 0 if t == 0 else 2 ** (10 * (t - 1))
+
+def ease_out_expo(t: float) -> float:
+    return 1 if t == 1 else 1 - 2 ** (-10 * t)
+
+def ease_out_circ(t: float) -> float:
+    return math.sqrt(abs(1 - (t - 1) * (t - 1)))
+    
+ANIMATION_FUNCTIONS = {
+    'linear': linear,
+    'ease_in': ease_in,
+    'ease_out': ease_out,
+    'ease_in_quad': ease_in_quad,
+    'ease_out_quad': ease_out_quad,
+    'ease_in_cubic': ease_in_cubic,
+    'ease_out_cubic': ease_out_cubic,
+    'ease_in_quart': ease_in_quart,
+    'ease_out_quart': ease_out_quart,
+    'ease_in_quint': ease_in_quint,
+    'ease_out_quint': ease_out_quint,
+    'ease_in_sine': ease_in_sine,
+    'ease_out_sine': ease_out_sine,
+    'ease_in_expo': ease_in_expo,
+    'ease_out_expo': ease_out_expo,
+    'ease_out_circ': ease_out_circ,
+}
+
 
 DEFAULT_CALLBACKS: list[str] = [
     "when_hovered",
@@ -242,6 +314,50 @@ DEFAULT_CALLBACKS: list[str] = [
     "on_right_click",
     "on_move"
 ]
+
+STYLE_ANIMATION_TYPES =  {
+    "stack": {
+        "spacing": "number",
+        "padding": "number",
+        "scrollbar_size": "number"
+    },
+    "bg": {
+        "color": "color",
+        "border_radius": "number"
+    },
+    "image": {
+        "padding": "number",
+        "border_radius": "number",
+        "border_size": "number",
+        "outline_width": "number",
+        "outline_color": "color"
+    },
+    "shape": {
+        "color": "color",
+        "outline_width": "number",
+        "padding": "number",
+        "rect_border_radius": "number",
+        "ellipse_padding_x": "number",
+        "ellipse_padding_y": "number"
+    },
+    "text": {
+        "color": "color",
+        "selection_color": "color",
+        "padding": "number",
+        "y_padding": "number",
+        "font_size": "number"
+    },
+    "icon": {
+        "scale": "number",
+        "padding": "number"
+    },
+    "outline": {
+        "color": "color",
+        "navigation_color": "color",
+        "width": "number",
+        "border_radius": "number"
+    }
+}
 
 DEFAULT_STYLE_GSS: str = """
 // BUILTIN ELEMENT TYPES
@@ -324,6 +440,14 @@ sound_player_button,video_player_button:: {
 
 slideshow_arrow, sound_player_button, video_player_button:hover:press {
     bg.enabled true;
+}
+
+tooltip_title:: {
+    text.font_size 23;
+}
+
+tooltip_description:: {
+    text.font_size 20;
 }
 
 // BUILTIN STYLE GROUPS

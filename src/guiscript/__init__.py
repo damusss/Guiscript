@@ -10,6 +10,9 @@ from .state import UIState
 from .script import UIScript
 from .icon import UIIcons
 from .buffer import UIBuffer
+from .animation import (
+    UIPropertyAnim
+)
 from .components import (
     UIBackgroundComp, 
     UIShapeComp, 
@@ -43,7 +46,11 @@ from .enums import (
     StackAnchor,
     SliderAxis,
     DropMenuDirection,
-    ProgressBarDirection
+    ProgressBarDirection,
+    AnimPropertyType,
+    AnimRepeatMode,
+    AnimEaseFunc,
+    StyleAnimPropertyType
 )
 from .elements.factories import (
     Label, 
