@@ -1,12 +1,9 @@
 THINGS
 
-- docstrings
-- (maybe) element script
+...
 
 ELEMENTS
 
-progress bar
-dropdown
 selection list
 entry line
 window
@@ -39,6 +36,7 @@ DONE THINGS
 - tooltip
 - property animations
 - style animations
+- docstrings
 
 DONE ELEMENTS
 
@@ -55,4 +53,6 @@ slider
 icon
 icon button
 audio player
-video
+video player
+progress bar
+drop menu

@@ -1,42 +1,15 @@
-.menu_bga:: {
-    image.enabled true;
-    image.border_size 12;
-    image.padding 0;
-    image.border_radius 0;
-    bg.enabled false;
-    outline.enabled false;
-}
-
-.menu_bga {
-    image.image $MENU;
-}
-
-.menu_bga:hover {
-    image.image $MENU_HOVER;
-}
-
-.menu_bga:press {
-    image.image $MENU_PRESS;
-}
-
-.slideshow_bga:: {
-    image.outline_width 0;
-}
-
-#iconbtn:: {
-    text.text 'space_dashboardsettings';
-    text.font_name googleicons;
-    text.sysfont false;
-}
-
 .fill_x:: {
     stack.fill_x true;
 }
 
-.turn_red:press: {
-    % bg.color (25, 25, 25), 1000;
+.turn_red {
+    % bg.color (25, 25, 25), 200;
+}
+
+.turn_red:press {
+    % bg.color purple, 200;
 }
 
 .turn_red:hover {
-    % bg.color red, 1000;
+    % bg.color red, 300;
 }

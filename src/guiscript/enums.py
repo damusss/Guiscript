@@ -3,6 +3,7 @@ from enum import StrEnum, IntEnum
 
 
 class TextAlign(StrEnum):
+    """Text alignment inside the element boundaries for the text element component"""
     middle = "center"
     topleft = "topleft"
     topright = "topright"
@@ -19,12 +20,14 @@ class TextAlign(StrEnum):
 
 
 class FontAlign(IntEnum):
+    """Integer enum replacing pygame font align constants, used to align wrapped text differently"""
     center = pygame.FONT_CENTER
     left = pygame.FONT_LEFT
     right = pygame.FONT_RIGHT
 
 
 class ShapeType(StrEnum):
+    """The shapes supported by the shape element component"""
     rect = "rect"
     circle = "circle"
     ellipse = "ellipse"
@@ -32,18 +35,21 @@ class ShapeType(StrEnum):
 
 
 class StyleType(StrEnum):
+    """[Internal] The types a UIStyle can be"""
     normal = "normal"
     hover = "hover"
     press = "press"
 
 
 class StyleTarget(StrEnum):
+    """[Internal] The target of a style holder"""
     element_type = "element_type"
     style_id = "style_id"
     element_id = "element_id"
 
 
 class ElementAlign(StrEnum):
+    """Where is the element placed in the parent in the opposite axis of the stack"""
     middle = "center"
     left = "left"
     right = "right"
@@ -52,6 +58,7 @@ class ElementAlign(StrEnum):
 
 
 class StackAnchor(StrEnum):
+    """Where are elements anchored where there is space left in the stack's axis"""
     middle = "center"
     left = "left"
     right = "right"
@@ -61,16 +68,19 @@ class StackAnchor(StrEnum):
 
 
 class SliderAxis(StrEnum):
+    """The directions a slider can have"""
     horizontal = "horizontal"
     vertical = "vertical"
 
 
 class DropMenuDirection(StrEnum):
+    """The directions a drop menu can have"""
     up = "up"
     down = "down"
 
 
 class ProgressBarDirection(StrEnum):
+    """The directions a progress bar can have"""
     left_right = "left_right"
     right_left = "right_left"
     top_bottom = "top_bottom"
@@ -78,19 +88,22 @@ class ProgressBarDirection(StrEnum):
 
 
 class AnimPropertyType(StrEnum):
+    """What a property animation is targetting"""
     x = "x"
     y = "y"
     width = "width"
     height = "height"
-    
-    
+
+
 class AnimRepeatMode(StrEnum):
+    """How should the property animation repeat when it ends"""
     norepeat = "norepeat"
     restart = "restart"
     repeat = "repeat"
-    
-    
+
+
 class AnimEaseFunc(StrEnum):
+    """The easing function to use when animating"""
     linear = 'linear'
     ease_in = 'ease_in'
     ease_out = 'ease_out'
@@ -107,7 +120,9 @@ class AnimEaseFunc(StrEnum):
     in_expo = 'ease_in_expo'
     out_expo = 'ease_out_expo'
     out_circ = 'ease_out_circ'
-    
+
+
 class StyleAnimPropertyType(StrEnum):
+    """Types supported by style animations"""
     number = "number"
     color = "color"

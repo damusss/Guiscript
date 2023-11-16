@@ -11,16 +11,21 @@ from .error import UIError
 
 
 class UICompStyle:
+    """Base style class for element components"""
+
     def __init__(self):
         self.enabled: bool = True
-        
+
     def set(self, **properties) -> typing.Self:
+        """Set multiple style properties at once"""
         for name, val in properties.items():
             setattr(self, name, val)
         return self
 
 
 class UIStackStyle:
+    """Style class for stacks-like elements"""
+
     def __init__(self):
         self.spacing: int = 5
         self.padding: int = 7
@@ -36,8 +41,16 @@ class UIStackStyle:
         self.align: enums.ElementAlign = enums.ElementAlign.middle
         self.scrollbar_size: int = 10
 
+    def set(self, **properties) -> typing.Self:
+        """Set multiple style properties at once"""
+        for name, val in properties.items():
+            setattr(self, name, val)
+        return self
+
 
 class UIBGStyle(UICompStyle):
+    """Style class for the background element component"""
+
     def __init__(self):
         super().__init__()
         self.color: common.Color = (25, 25, 25)
@@ -45,6 +58,8 @@ class UIBGStyle(UICompStyle):
 
 
 class UIImageStyle(UICompStyle):
+    """Style class for the image element component"""
+
     def __init__(self):
         super().__init__()
         self.image: pygame.Surface | None = None
@@ -59,6 +74,8 @@ class UIImageStyle(UICompStyle):
 
 
 class UIShapeStyle(UICompStyle):
+    """Style class for the shape element component"""
+
     def __init__(self):
         super().__init__()
         self.color: common.Color = (0, 120, 255)
@@ -72,6 +89,8 @@ class UIShapeStyle(UICompStyle):
 
 
 class UITextStyle(UICompStyle):
+    """Style class for the text element component"""
+
     def __init__(self):
         super().__init__()
         self.text: str = ""
@@ -90,11 +109,12 @@ class UITextStyle(UICompStyle):
         self.italic: bool = False
         self.underline: bool = False
         self.strikethrough: bool = False
-    
+
         self.build_font()
         self.apply_mods()
 
     def build_font(self) -> typing.Self:
+        """Build the font object after changes in the font properties"""
         func = pygame.font.SysFont if self.sysfont else pygame.Font
         font_name = self.font_name
         if font_name == "googleicons":
@@ -105,6 +125,7 @@ class UITextStyle(UICompStyle):
         return self
 
     def apply_mods(self) -> typing.Self:
+        """Apply text modifiers to the font object"""
         self.font.align = self.font_align
         self.font.bold = self.bold
         self.font.italic = self.italic
@@ -114,6 +135,8 @@ class UITextStyle(UICompStyle):
 
 
 class UIIconStyle(UICompStyle):
+    """Style class for the icon element component"""
+
     def __init__(self):
         super().__init__()
         self.name: str | None = None
@@ -123,6 +146,8 @@ class UIIconStyle(UICompStyle):
 
 
 class UIOutlineStyle(UICompStyle):
+    """Style class for the outline element component"""
+
     def __init__(self):
         super().__init__()
         self.color: common.Color = (50, 50, 50)
@@ -132,6 +157,8 @@ class UIOutlineStyle(UICompStyle):
 
 
 class UIStyle:
+    """Class that holds all the component styles and the animations"""
+
     def __init__(self):
         self.stack: UIStackStyle = UIStackStyle()
         self.bg: UIBGStyle = UIBGStyle()
@@ -140,13 +167,13 @@ class UIStyle:
         self.text: UITextStyle = UITextStyle()
         self.icon: UIIconStyle = UIIconStyle()
         self.outline: UIOutlineStyle = UIOutlineStyle()
-        
+
         self.style_group: "UIStyleGroup" = None
         self.dirty: bool = True
         self.animations: list[UIStyleAnim] = []
         self.styles: tuple[UICompStyle] = (
             self.bg, self.image, self.shape, self.text, self.outline)
-        
+
     def add_animation(self,
                       comp_name: str,
                       property_name: str,
@@ -155,20 +182,24 @@ class UIStyle:
                       value,
                       ease_func_name: enums.AnimEaseFunc = enums.AnimEaseFunc.ease_in
                       ) -> typing.Self:
+        """Add a style animation for this style"""
         self.animations.append(
-            UIStyleAnim(self, (self.style_group.style, self.style_group.hover_style, self.style_group.press_style), 
+            UIStyleAnim(self, (self.style_group.style, self.style_group.hover_style, self.style_group.press_style),
                         comp_name, property_name, property_type, duration_ms, value, ease_func_name)
         )
         return self
-        
+
     def logic(self):
+        """[Internal] Update animations. Called by UIElement"""
         for anim in self.animations:
             if not anim.completed:
                 anim.logic()
-        
+
     def enter(self):
+        """[Internal] Start animations. Called when the style changes by UIElement"""
         for anim in self.animations:
             anim.start()
+
 
 def _default_style() -> UIStyle:
     return UIStyle()
@@ -187,6 +218,8 @@ def _default_press_style() -> UIStyle:
 
 
 class UIStyleHolder:
+    """[Internal] Hold style data generated from a loaded script"""
+
     def __init__(self, properties: dict[str, dict[str]],
                  animations: list,
                  style_type: enums.StyleType | str,
@@ -200,6 +233,7 @@ class UIStyleHolder:
         self.target_id: str = target_id
 
     def copy_as_type(self, style_type: enums.StyleType | str) -> "UIStyleHolder":
+        """Return the same holder with a different style_type"""
         return UIStyleHolder(self.properties, self.animations, style_type, self.style_target, self.target_id)
 
     def __repr__(self):
@@ -207,6 +241,8 @@ class UIStyleHolder:
 
 
 class UIStyleGroup:
+    """Group normal, hover and press styles"""
+
     def __init__(self, style: UIStyle, hover_style: UIStyle, press_style: UIStyle):
         self.style: UIStyle = style
         self.hover_style: UIStyle = hover_style
@@ -217,19 +253,25 @@ class UIStyleGroup:
 
 
 class UIStyles:
+    """[Internal] Style manager for style holders"""
     styles: list[UIStyleHolder] = []
 
     @classmethod
-    def add_style(cls, style_holder: UIStyleHolder):
+    def add_style(cls, style_holder: UIStyleHolder) -> typing.Self:
+        """[Internal] Add a style holder"""
         cls.styles.append(style_holder)
+        return cls
 
     @classmethod
-    def add_styles(cls, *style_holders: UIStyleHolder):
+    def add_styles(cls, *style_holders: UIStyleHolder) -> typing.Self:
+        """[Internal] Add multipple style holders at once"""
         for holder in style_holders:
             cls.styles.append(holder)
+        return cls
 
     @classmethod
     def get_style_group(cls, element: "UIElement") -> UIStyleGroup:
+        """[Internal] Return a new style group for a given element using matching style holders"""
         normal_style, normal_anims = cls.get_style_of_type(element, "normal")
         hover_style, hover_anims = cls.get_style_of_type(element, "hover")
         press_style, press_anims = cls.get_style_of_type(element, "press")
@@ -248,6 +290,7 @@ class UIStyles:
 
     @classmethod
     def get_style_of_type(cls, element: "UIElement", type_: enums.StyleType | str) -> tuple[UIStyle, list]:
+        """[Internal] Return a new style for a given element using matching style holders of a given type"""
         match type_:
             case "normal":
                 style = _default_style()
@@ -255,7 +298,8 @@ class UIStyles:
                 style = _default_hover_style()
             case "press":
                 style = _default_press_style()
-        el_types, style_id, el_id = element.element_types, element.style_id.strip(), element.element_id.strip()
+        el_types, style_id, el_id = element.element_types, element.style_id.strip(
+        ), element.element_id.strip()
         style_id_styles, el_id_styles = [], []
         animations: list = []
         el_type_styles: dict[str, UIStyleHolder] = {
@@ -272,17 +316,21 @@ class UIStyles:
         for el_type_styles_i in el_type_styles.values():
             for el_type_style in el_type_styles_i:
                 cls.apply_style_properties(el_type_style.properties, style)
-                animations = cls.update_style_animations(animations, el_type_style.animations)
+                animations = cls.update_style_animations(
+                    animations, el_type_style.animations)
         for style_id_style in style_id_styles:
             cls.apply_style_properties(style_id_style.properties, style)
-            animations = cls.update_style_animations(animations, style_id_style.animations)
+            animations = cls.update_style_animations(
+                animations, style_id_style.animations)
         for el_id_style in el_id_styles:
             cls.apply_style_properties(el_id_style.properties, style)
-            animations = cls.update_style_animations(animations, el_id_style.animations)
+            animations = cls.update_style_animations(
+                animations, el_id_style.animations)
         return style, animations
 
     @classmethod
     def apply_style_properties(cls, properties: dict[str, dict[str]], style: UIStyle):
+        """[Internal] Apply a property dictionary to a UIStyle"""
         for comp_name in ["stack", "bg", "image", "shape", "text", "icon", "outline"]:
             if comp_name in properties:
                 comp = getattr(style, comp_name)
@@ -293,9 +341,10 @@ class UIStyles:
                     setattr(comp, name, value)
         style.text.build_font()
         style.text.apply_mods()
-        
+
     @classmethod
     def update_style_animations(cls, current_animations: list, holder_animations: list) -> list:
+        """[Internal] Update the animations list removing duplicates"""
         new_anims = current_animations.copy()
         for anim_data in holder_animations:
             for old_anim_data in list(new_anims):

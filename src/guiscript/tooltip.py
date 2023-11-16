@@ -2,21 +2,25 @@ import pygame
 import typing
 if typing.TYPE_CHECKING:
     from .elements.element import UIElement
-    
+
 from .state import UIState
 
+
 class UITooltips:
+    """Tooltip Manager. Updated by static_logic, automatically set up by UIElement.set_tooltip"""
     hover_time: float = 1200
     tooltips: list[dict[str]] = []
     active_tooltip: "UIElement" = None
-    
+
     @classmethod
-    def set_hover_time(cls, hover_time: float) -> typing.Self:
-        cls.hover_time = hover_time
+    def set_hover_time(cls, hover_time_ms: float) -> typing.Self:
+        """Set how much time in ms must pass after tooltips appear while the mouse is still"""
+        cls.hover_time = hover_time_ms
         return cls
-    
+
     @classmethod
     def register(cls, tooltip: "UIElement", element: "UIElement") -> typing.Self:
+        """Register a tooltip and an element for the tooltip to appear on prolungated hover. Automated by UIElement.set_tooltip"""
         already = False
         for tt_data in list(cls.tooltips):
             if tt_data["el"] is element:
@@ -33,9 +37,10 @@ class UITooltips:
                 }
             )
         return cls
-        
+
     @classmethod
     def on_start_hover(cls, element):
+        """[Internal] Callback given to registered elements"""
         if cls.active_tooltip is not None:
             cls.active_tooltip.hide()
         cls.active_tooltip = None
@@ -43,15 +48,17 @@ class UITooltips:
             if tt_data["el"] is element:
                 tt_data["start_hover_time"] = pygame.time.get_ticks()
                 cls.active_tooltip = tt_data["tt"]
-        
+
     @classmethod
     def on_stop_hover(cls):
+        """[Internal] Callback given to registered elements"""
         if cls.active_tooltip is not None:
             cls.active_tooltip.hide()
         cls.active_tooltip = None
-        
+
     @classmethod
     def logic(cls):
+        """[Internal] Update tooltips (called by static_logic)"""
         if cls.active_tooltip is not None:
             tt_data: dict[str] = None
             for tt_data_i in cls.tooltips:
@@ -73,4 +80,3 @@ class UITooltips:
             if py+tt.relative_rect.h > win_size[1]:
                 py = UIState.mouse_pos.y-10-tt.relative_rect.h
             tt.set_absolute_pos((px, py))
-                    

@@ -6,6 +6,7 @@ if typing.TYPE_CHECKING:
 
 
 class UIState:
+    """[Internal] Hold global UI information"""
     current_manager: "UIManager" = None
     current_parent: "UIElement" = None
 

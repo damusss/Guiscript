@@ -12,6 +12,7 @@ from . import common
 
 
 class UISTT(StrEnum):
+    """[Internal] The type enum of tokens"""
     left_paren = "left_paren"
     right_paren = "right_paren"
     left_brace = "left_brace"
@@ -35,6 +36,8 @@ class UISTT(StrEnum):
 
 
 class UIScriptToken:
+    """[Internal] Token used when lexing and parsing a GSS Script"""
+
     def __init__(self, type_: UISTT, value, line: int, col: int):
         self.type: UISTT = type_
         self.value = value
@@ -49,6 +52,7 @@ class UIScriptToken:
 
 
 class UIScriptLexer:
+    """[Internal] Lexer for GSS scripts"""
     start_iden_chars: str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
     number_chars: str = "0123456789"
     iden_chars: str = start_iden_chars + number_chars
@@ -198,6 +202,8 @@ class UIScriptLexer:
 
 
 class UIScriptParser:
+    "[Internal] Parser for GSS scripts"
+
     def __init__(self, tokens: list[UIScriptToken], filename: str, variables: dict[str]):
         self.filename: str = filename
         self.variables: dict[str] = variables
@@ -349,12 +355,11 @@ class UIScriptParser:
 
     def parse_hex_value(self):
         self.advance()
-        if not self.tok.type == UISTT.identifier:
-            raise UIScriptError(
-                f"Expected hex number identifier after '#' as a property value, got '{self.tok}' instead"+self.error_suffix())
-        number = self.tok.value
-        self.advance()
-        return f"#{number}"
+        hex_num = ""
+        while self.tok.type == UISTT.identifier or self.tok.type == UISTT.number:
+            hex_num += str(self.tok.value)
+            self.advance()
+        return f"#{hex_num}"
 
     def parse_property_value(self) -> typing.Any:
         if self.tok.type in [UISTT.number, UISTT.null, UISTT.bool, UISTT.string]:
@@ -394,7 +399,8 @@ class UIScriptParser:
         property_name = self.tok.value
         if property_name in ["set", "build_font", "apply_mods"]:
             raise UIScriptError(
-                f"Property name not allowed: '{property_name}'"+self.error_suffix()
+                f"Property name not allowed: '{
+                    property_name}'"+self.error_suffix()
             )
         self.advance()
         value = self.parse_property_value()
@@ -407,7 +413,7 @@ class UIScriptParser:
                     value).convert_alpha())
             value = path.name
         return (False, comp_name, property_name, value)
-    
+
     def parse_style_animation(self):
         self.advance()
         if not self.tok.type == UISTT.identifier:
@@ -428,7 +434,8 @@ class UIScriptParser:
         property_name = self.tok.value
         if property_name in ["set", "build_font", "apply_mods"]:
             raise UIScriptError(
-                f"Property name not allowed: '{property_name}'"+self.error_suffix()
+                f"Property name not allowed: '{
+                    property_name}'"+self.error_suffix()
             )
         if not property_name in common.STYLE_ANIMATION_TYPES[comp_name]:
             raise UIScriptError(
@@ -452,7 +459,7 @@ class UIScriptParser:
                 raise UIScriptError(
                     f"Style animation ease function name was evaluated with an unsupported python type '{type(ease_func_name)}', expected 'str'"+self.error_suffix())
         return (True, comp_name, property_name, common.STYLE_ANIMATION_TYPES[comp_name][property_name], duration, value, ease_func_name)
-    
+
     def parse_style_instruction(self):
         if self.tok.type == UISTT.percent:
             return self.parse_style_animation()
@@ -495,7 +502,8 @@ class UIScriptParser:
         target, target_ids = self.parse_style_target()
         main_type, copy_type, also_normal = self.parse_style_type()
         expressions = self.parse_style_body()
-        properties, animations = self.parse_style_properties_animations(expressions)
+        properties, animations = self.parse_style_properties_animations(
+            expressions)
         for target_id in target_ids:
             if not copy_type:
                 self.make_style_holder(
@@ -522,8 +530,10 @@ class UIScriptParser:
 
 
 class UIScript:
+    """Manage style script execution by lexing and parsing"""
     @classmethod
     def parse_script(self, filename: str, variables: dict[str]):
+        """Load styles and animations from a GSS file using the given variables"""
         if not os.path.exists(filename):
             raise UIScriptError(
                 f"UI Script file '{filename}' doesn't exist. Is the file name/path correct?")
@@ -536,6 +546,7 @@ class UIScript:
 
     @classmethod
     def parse_source(self, source: str, filename: str, variables: dict[str]):
+        """Load styles and animations from a GSS source using the given variables. The filename is needed for error messages"""
         lexer = UIScriptLexer(source, filename).lex()
         if len(lexer.tokens) > 0:
             parser = UIScriptParser(lexer.tokens, filename, variables).parse()

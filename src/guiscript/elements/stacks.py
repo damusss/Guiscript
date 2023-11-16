@@ -7,6 +7,8 @@ from ..enums import StackAnchor, ElementAlign
 
 
 class HStack(UIElement):
+    """Organize children horizontally using stack style settings"""
+
     def __init__(self,
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
@@ -21,8 +23,11 @@ class HStack(UIElement):
         self.vscrollbar: UIVScrollbar = UIVScrollbar(self)
         self.hscrollbar: UIHScrollbar = UIHScrollbar(self)
         self.deactivate()
+        
+    def first_frame(self):
+        self.refresh_stack()
 
-    def update_size_positions(self):
+    def refresh_stack(self):
         if not self.ui_manager.running:
             return
         style = self.style
@@ -35,10 +40,9 @@ class HStack(UIElement):
             if child.ignore_stack or not child.visible:
                 continue
 
-            child_style = child.get_style()
-            if child.relative_rect.h > total_y and not child_style.stack.fill_y:
+            if child.relative_rect.h > total_y and not child.style.stack.fill_y:
                 total_y = child.relative_rect.h
-            if child_style.stack.fill_x:
+            if child.style.stack.fill_x:
                 active_children_num += 1
                 children_with_fill_x.append(child)
                 continue
@@ -108,11 +112,10 @@ class HStack(UIElement):
                 continue
             if i > i_o:
                 current_x += spacing
-            child_style = child.get_style()
             child_y = style.stack.padding
-            if not child_style.stack.fill_y:
+            if not child.style.stack.fill_y:
                 if child.relative_rect.h < (self.relative_rect.h-scroll_y):
-                    match child_style.stack.align:
+                    match child.style.stack.align:
                         case "center":
                             child_y = (self.relative_rect.h-scroll_y)//2 - \
                                 child.relative_rect.h//2
@@ -127,6 +130,8 @@ class HStack(UIElement):
 
 
 class VStack(UIElement):
+    """Organize children vertically using stack style settings"""
+
     def __init__(self,
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
@@ -141,8 +146,11 @@ class VStack(UIElement):
         self.vscrollbar: UIVScrollbar = UIVScrollbar(self)
         self.hscrollbar: UIHScrollbar = UIHScrollbar(self)
         self.deactivate()
+        
+    def first_frame(self):
+        self.refresh_stack()
 
-    def update_size_positions(self):
+    def refresh_stack(self):
         if not self.ui_manager.running:
             return
         style = self.style

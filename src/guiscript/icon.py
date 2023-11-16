@@ -26,6 +26,7 @@ def _download_add(name: str, url: str, is_async: bool = False):
 
 
 class UIIcons:
+    """Icon manager for the icon element component"""
     icons: dict[str, pygame.Surface] = {
         "empty": _empty
     }
@@ -34,35 +35,42 @@ class UIIcons:
 
     @classmethod
     def download(cls, name: str, url: str):
+        """Download an icon from the internet"""
         _download_add(name, url, False)
 
     @classmethod
     def downloads(cls, **names_urls: str):
+        """Download multiple icons from the internet"""
         for name, url in names_urls.items():
             cls.download(name, url)
 
     @classmethod
     def download_async(cls, name: str, url: str):
+        """Download an icon from the internet but let the rest of the code execute, refreshing the icon component when it's ready"""
         cls.adding_async.append(name)
         thread = threading.Thread(None, _download_add, args=(name, url, True))
         thread.start()
 
     @classmethod
     def downloads_async(cls, **names_urls: str):
+        """Download multiple icons from the internet but let the rest of the code execute, refreshing the icon components when it's ready"""
         for name, url in names_urls.items():
             cls.download_async(name, url)
 
     @classmethod
     def add(cls, name: str, surface: pygame.Surface):
+        """Bind a surface icon to a name"""
         cls.icons[name] = surface
 
     @classmethod
     def adds(cls, **name_surfs: pygame.Surface):
+        """Bind surfaces to icon names"""
         for name, surf in name_surfs.items():
             cls.add(name, surf)
 
     @classmethod
     def get(cls, name: str | None, icon_comp=None) -> pygame.Surface:
+        """Get the icon surface from a name"""
         if name is None:
             return cls.icons["empty"]
         if name in cls.adding_async and icon_comp:

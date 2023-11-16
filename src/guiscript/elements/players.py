@@ -4,7 +4,7 @@ import numpy
 import cv2
 from ffpyplayer.player import MediaPlayer
 
-from .stacks import VStack, HStack
+from .stacks import HStack
 from .factories import Slider, Button, Image
 from .element import UIElement
 from ..manager import UIManager
@@ -18,29 +18,29 @@ from ..import events
 
 
 class SoundPlayer(HStack):
+    """Element with control over a sound"""
+
     def __init__(self,
                  sound: pygame.mixer.Sound,
                  filename: str,
                  relative_rect: pygame.Rect,
-                 start_volume: int = 1,
                  element_id: str = "none",
                  style_id: str = "default",
                  parent: UIElement | None = None,
                  ui_manager: UIManager | None = None,
-                 #align: ElementAlign = ElementAlign.middle,
                  settings: settings_.SoundPlayerSettings = settings_.SoundPlayerDefaultSettings
                  ):
         self._done = False
         super().__init__(relative_rect, element_id, style_id,
                          StackAnchor.max_spacing, parent, ui_manager)
-        self.add_element_types("player", "sound_player")
+        self.add_element_types("player", "soundplayer")
         self.settings = settings
         if self.settings.sliders_settings is None:
             self.settings.sliders_settings = settings_.SliderDefaultSettings
         self.media_player = MediaPlayer(filename, ff_opts={"paused": True})
         self.filename = filename
         self.playing = self.paused = self.muted = False
-        self.media_player.set_volume(start_volume)
+        self.media_player.set_volume(settings.start_volume)
         self.pg_sound = sound
         self.duration = self.pg_sound.get_length()
         self.volume_before_mute = self.media_player.get_volume()
@@ -80,13 +80,13 @@ class SoundPlayer(HStack):
         self._done = True
 
         self.play_button.add_element_types(
-            "sound_player_button", "sound_player_play_button")
+            "soundplayer_button", "soundplayer_play_button")
         self.volume_button.add_element_types(
-            "sound_player_button", "sound_player_volume_button")
+            "soundplayer_button", "soundplayer_volume_button")
         self.track_slider.add_element_types(
-            "sound_player_slider", "sound_player_track_slider")
+            "soundplayer_slider", "soundplayer_track_slider")
         self.volume_slider.add_element_types(
-            "sound_player_slider", "sound_player_volume_slider")
+            "soundplayer_slider", "soundplayer_volume_slider")
         self.play_button.status.add_listener(
             "on_stop_press", self.on_play_click)
         self.volume_button.status.add_listener(
@@ -97,11 +97,12 @@ class SoundPlayer(HStack):
         self.status.register_callbacks(
             "on_toggle", "on_mute", "on_volume_move", "on_track_move")
 
-        self.size_changed()
+        self.build()
         self.stop()
-        self.volume_slider.set_value(start_volume)
+        self.volume_slider.set_value(settings.start_volume)
 
     def play(self):
+        """Manually start playing the sound"""
         self.playing = True
         self.play_start_time = pygame.time.get_ticks()/1000
         self.media_player.set_pause(False)
@@ -110,6 +111,7 @@ class SoundPlayer(HStack):
         return self
 
     def stop(self, start_position: float = 0) -> typing.Self:
+        """Manually stop playing the sound. start_position will determine the position in time where the sound will seek when it starts playing again"""
         self.media_player.set_pause(True)
         self.playing = self.paused = False
         self.track_slider.set_value(start_position/self.duration)
@@ -117,6 +119,7 @@ class SoundPlayer(HStack):
         return self
 
     def pause(self) -> typing.Self:
+        """Manually pause the sound"""
         self.media_player.set_pause(True)
         self.playing = False
         self.paused = True
@@ -124,6 +127,7 @@ class SoundPlayer(HStack):
         )/1000-self.play_start_time)+self.pause_position
 
     def resume(self) -> typing.Self:
+        """Manually resume the sound"""
         self.media_player.set_pause(False)
         self.playing = True
         self.paused = False
@@ -131,11 +135,13 @@ class SoundPlayer(HStack):
         return self
 
     def set_volume(self, volume: float) -> typing.Self:
+        """Manually set the volume of the sound"""
         self.media_player.set_volume(volume)
         self.volume_slider.set_value(volume)
         return self
 
     def mute(self) -> typing.Self:
+        """Manually mute the sound"""
         self.volume_before_mute = self.get_volume()
         self.media_player.set_volume(0)
         self.volume_slider.set_value(0)
@@ -143,12 +149,14 @@ class SoundPlayer(HStack):
         return self
 
     def unmute(self) -> typing.Self:
+        """Manually unmute the sound"""
         self.media_player.set_volume(self.volume_before_mute)
         self.volume_slider.set_value(self.volume_before_mute)
         self.muted = False
         return self
 
     def seek(self, time_seconds: float) -> typing.Self:
+        """Manually seek to a position in time"""
         was_paused = not self.playing or self.paused
         self.stop(time_seconds)
         self.play()
@@ -157,21 +165,26 @@ class SoundPlayer(HStack):
         return self
 
     def seek_percent(self, percent: float) -> typing.Self:
+        """Manually seek to a position in time, expressed in percentage"""
         self.seek(self.duration*(percent/100))
         return self
 
     def get_volume(self) -> float:
+        """Return the volume of the sound"""
         return self.volume_slider.get_value()
 
     def get_time_passed(self) -> float:
+        """Return how much time has passed since the sound started playing"""
         if self.playing:
             return ((pygame.time.get_ticks()/1000-self.play_start_time)+self.pause_position)
         return self.pause_position/self.duration
 
     def get_time_remaining(self) -> float:
+        """Return how much time is left until the sound stops"""
         return self.duration-self.get_time_passed()
 
     def on_play_click(self, btn):
+        """[Internal] Child callback"""
         if not self.playing and not self.paused:
             self.play()
         elif not self.playing and self.paused:
@@ -182,6 +195,7 @@ class SoundPlayer(HStack):
         self.status.invoke_callback("on_toggle")
 
     def on_volume_click(self, btn):
+        """[Internal] Child callback"""
         if self.muted:
             self.unmute()
         else:
@@ -190,6 +204,7 @@ class SoundPlayer(HStack):
         self.status.invoke_callback("on_mute")
 
     def on_track_move(self, slider):
+        """[Internal] Child callback"""
         was_paused = not self.playing or self.paused
         self.stop(self.duration*self.track_slider.get_value())
         self.play()
@@ -199,6 +214,7 @@ class SoundPlayer(HStack):
         self.status.invoke_callback("on_track_move")
 
     def on_volume_move(self, slider):
+        """[Internal] Child callback"""
         self.media_player.set_volume(self.get_volume())
         events._post_sound_player_event(events.SOUND_PLAYER_VOLUME_MOVE, self)
         self.status.invoke_callback("on_volume_move")
@@ -226,7 +242,7 @@ class SoundPlayer(HStack):
             if self.track_slider.get_value() != 0:
                 self.track_slider.set_value(0)
 
-    def size_changed(self):
+    def build(self):
         if not self._done:
             return
         style = self.callback_component.get_style()
@@ -241,22 +257,22 @@ class SoundPlayer(HStack):
 
 
 class VideoPlayer(UIElement):
+    """Element with control over a video and its sound"""
+
     def __init__(self,
                  filename: str,
                  relative_rect: pygame.Rect,
-                 start_volume: int = 1,
                  element_id: str = "none",
                  style_id: str = "default",
                  parent: UIElement | None = None,
                  ui_manager: UIManager | None = None,
-                 #align: ElementAlign = ElementAlign.middle,
                  settings: settings_.VideoPlayerSettings = settings_.VideoPlayerDefaultSettings
                  ):
         self.settings = settings
         if self.settings.sliders_settings is None:
             self.settings.sliders_settings = settings_.SliderDefaultSettings
         super().__init__(relative_rect, element_id, style_id,
-                         ("element", "player", "video_player"), parent, ui_manager)
+                         ("element", "player", "videoplayer"), parent, ui_manager)
         self.filename = filename
         self.media_player = MediaPlayer(filename, ff_opts={
                                         "fast": True, "framedrop": True, "paused": True, "sync": "video"})
@@ -272,7 +288,7 @@ class VideoPlayer(UIElement):
         self.last_frame_update = 0
         self.filename = filename
         self.playing = self.paused = self.muted = False
-        self.media_player.set_volume(start_volume)
+        self.media_player.set_volume(settings.start_volume)
         self.duration = self.total_frames / self.fps
 
         self.volume_before_mute = self.media_player.get_volume()
@@ -326,16 +342,16 @@ class VideoPlayer(UIElement):
         )
         self._done = True
 
-        self.video_image.add_element_types("video_player_video")
-        self.control_stack.add_element_types("video_player_control_stack")
+        self.video_image.add_element_types("videoplayer_video")
+        self.control_stack.add_element_types("videoplayer_control_stack")
         self.play_button.add_element_types(
-            "video_player_button", "video_player_play_button")
+            "videoplayer_button", "videoplayer_play_button")
         self.volume_button.add_element_types(
-            "video_player_button", "video_player_volume_button")
+            "videoplayer_button", "videoplayer_volume_button")
         self.track_slider.add_element_types(
-            "video_player_slider", "video_player_track_slider")
+            "videoplayer_slider", "videoplayer_track_slider")
         self.volume_slider.add_element_types(
-            "video_player_slider", "video_player_volume_slider")
+            "videoplayer_slider", "videoplayer_volume_slider")
         self.play_button.status.add_listener(
             "on_stop_press", self.on_play_click)
         self.volume_button.status.add_listener(
@@ -346,8 +362,8 @@ class VideoPlayer(UIElement):
         self.status.register_callbacks(
             "on_toggle", "on_mute", "on_volume_move", "on_track_move")
 
-        self.size_changed()
-        self.volume_slider.set_value(start_volume)
+        self.build()
+        self.volume_slider.set_value(settings.start_volume)
         self.track_slider.set_value(0)
         success, frame = self.video_player.read()
         if success:
@@ -359,6 +375,7 @@ class VideoPlayer(UIElement):
         self.stop()
 
     def play(self):
+        """Manually play the video and sound"""
         self.playing = True
         self.play_start_time = pygame.time.get_ticks()/1000
         self.media_player.set_pause(False)
@@ -368,6 +385,7 @@ class VideoPlayer(UIElement):
         return self
 
     def stop(self, start_position: float = 0) -> typing.Self:
+        """Manually stop the video and sound. The start_position will determine the seeking position the next time the video starts"""
         self.media_player.set_pause(True)
         self.playing = self.paused = False
         self.track_slider.set_value(start_position/self.duration)
@@ -375,6 +393,7 @@ class VideoPlayer(UIElement):
         return self
 
     def pause(self) -> typing.Self:
+        """Manually pause the video and sound"""
         self.media_player.set_pause(True)
         self.playing = False
         self.paused = True
@@ -382,6 +401,7 @@ class VideoPlayer(UIElement):
         )/1000-self.play_start_time)+self.pause_position
 
     def resume(self) -> typing.Self:
+        """Manually resume the video and sound"""
         self.media_player.set_pause(False)
         self.playing = True
         self.paused = False
@@ -389,11 +409,13 @@ class VideoPlayer(UIElement):
         return self
 
     def set_volume(self, volume: float) -> typing.Self:
+        """Manually set the video and sound"""
         self.media_player.set_volume(volume)
         self.volume_slider.set_value(volume)
         return self
 
     def mute(self) -> typing.Self:
+        """Manually mute the video and sound"""
         self.volume_before_mute = self.get_volume()
         self.media_player.set_volume(0)
         self.volume_slider.set_value(0)
@@ -401,12 +423,14 @@ class VideoPlayer(UIElement):
         return self
 
     def unmute(self) -> typing.Self:
+        """Manually unmute the video and sound"""
         self.media_player.set_volume(self.volume_before_mute)
         self.volume_slider.set_value(self.volume_before_mute)
         self.muted = False
         return self
 
     def seek(self, time_seconds: float) -> typing.Self:
+        """Manually seek the video and sound to a position in time"""
         was_paused = not self.playing or self.paused
         self.stop(time_seconds)
         self.play()
@@ -422,21 +446,26 @@ class VideoPlayer(UIElement):
         return self
 
     def seek_percent(self, percent: float) -> typing.Self:
+        """Manually seek the video and sound to a position in time expressed as a percentage"""
         self.seek(self.duration*(percent/100))
         return self
 
     def get_volume(self) -> float:
+        """Return the sound volume"""
         return self.volume_slider.get_value()
 
     def get_time_passed(self) -> float:
+        """Return how much time has passed since the sound started playing"""
         if self.playing:
             return ((pygame.time.get_ticks()/1000-self.play_start_time)+self.pause_position)
         return self.pause_position/self.duration
 
     def get_time_remaining(self) -> float:
+        """Return how much time is left until the sound stops"""
         return self.duration-self.get_time_passed()
 
     def on_play_click(self):
+        """[Internal] Child callback"""
         if not self.playing and not self.paused:
             self.play()
         elif not self.playing and self.paused:
@@ -447,6 +476,7 @@ class VideoPlayer(UIElement):
         self.status.invoke_callback("on_toggle")
 
     def on_volume_click(self):
+        """[Internal] Child callback"""
         if self.muted:
             self.unmute()
         else:
@@ -455,6 +485,7 @@ class VideoPlayer(UIElement):
         self.status.invoke_callback("on_mute")
 
     def on_track_move(self):
+        """[Internal] Child callback"""
         was_paused = not self.playing or self.paused
         self.stop(self.duration*self.track_slider.get_value())
         success, frame = self.video_player.read()
@@ -471,6 +502,7 @@ class VideoPlayer(UIElement):
         self.status.invoke_callback("on_track_move")
 
     def on_volume_move(self):
+        """[Internal] Child callback"""
         self.media_player.set_volume(self.get_volume())
         events._post_video_player_event(events.VIDEO_PLAYER_VOLUME_MOVE, self)
         self.status.invoke_callback("on_volume_move")
@@ -508,7 +540,7 @@ class VideoPlayer(UIElement):
             if self.track_slider.get_value() != 0:
                 self.track_slider.set_value(0)
 
-    def size_changed(self):
+    def build(self):
         if not self._done:
             return
         style = self.callback_component.get_style()

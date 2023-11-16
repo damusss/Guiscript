@@ -20,17 +20,23 @@ SLIDESHOW_MOVE_RIGHT = pygame.event.custom_type()
 
 SLIDER_MOVE = pygame.event.custom_type()
 
-SOUND_PLAYER_TOGGLE = pygame.event.custom_type()
-SOUND_PLAYER_MUTE = pygame.event.custom_type()
-SOUND_PLAYER_TRACK_MOVE = pygame.event.custom_type()
-SOUND_PLAYER_VOLUME_MOVE = pygame.event.custom_type()
-SOUND_PLAYER_END = pygame.event.custom_type()
+SOUNDPLAYER_TOGGLE = pygame.event.custom_type()
+SOUNDPLAYER_MUTE = pygame.event.custom_type()
+SOUNDPLAYER_TRACK_MOVE = pygame.event.custom_type()
+SOUNDPLAYER_VOLUME_MOVE = pygame.event.custom_type()
+SOUNDPLAYER_END = pygame.event.custom_type()
 
-VIDEO_PLAYER_TOGGLE = pygame.event.custom_type()
-VIDEO_PLAYER_MUTE = pygame.event.custom_type()
-VIDEO_PLAYER_TRACK_MOVE = pygame.event.custom_type()
-VIDEO_PLAYER_VOLUME_MOVE = pygame.event.custom_type()
-VIDEO_PLAYER_END = pygame.event.custom_type()
+VIDEOPLAYER_TOGGLE = pygame.event.custom_type()
+VIDEOPLAYER_MUTE = pygame.event.custom_type()
+VIDEOPLAYER_TRACK_MOVE = pygame.event.custom_type()
+VIDEOPLAYER_VOLUME_MOVE = pygame.event.custom_type()
+VIDEOPLAYER_END = pygame.event.custom_type()
+
+DROPMENU_SELECT = pygame.event.custom_type()
+DROPMENU_TOGGLE = pygame.event.custom_type()
+
+SELECTIONLIST_SELECT = pygame.event.custom_type()
+SELECTIONLIST_DESELECT = pygame.event.custom_type()
 
 
 def _post_base_event(type_: int, element: UIElement):
@@ -75,7 +81,7 @@ def _post_sound_player_event(type_: int, element: UIElement):
         "element_id": element.element_id,
         "element": element,
         "obj": element,
-        "sound_player": element,
+        "soundplayer": element,
         "playing": element.playing,
         "muted": element.muted,
         "paused": element.paused,
@@ -91,7 +97,7 @@ def _post_video_player_event(type_: int, element: UIElement):
         "element_id": element.element_id,
         "element": element,
         "obj": element,
-        "video_player": element,
+        "videoplayer": element,
         "playing": element.playing,
         "muted": element.muted,
         "paused": element.paused,
@@ -99,3 +105,31 @@ def _post_video_player_event(type_: int, element: UIElement):
         "time_remaining": element.get_time_remaining(),
         "volume": element.get_volume()
     }))
+    
+    
+def _post_dropmenu_event(mode: str, element: UIElement):
+    pygame.event.post(pygame.Event(
+        DROPMENU_SELECT if mode == "select" else DROPMENU_TOGGLE,
+        {
+            "id": element.element_id,
+            "element_id": element.element_id,
+            "element": element,
+            "obj": element,
+            "dropmenu": element,
+            "selected_option": element.get_selected(),
+            "selected": element.get_selected()
+        }))
+    
+
+def _post_selectionlist_event(mode: str, element: UIElement, option: str):
+    pygame.event.post(pygame.Event(
+        SELECTIONLIST_SELECT if mode == "select" else SELECTIONLIST_DESELECT,
+        {
+            "id": element.element_id,
+            "element_id": element.element_id,
+            "element": element,
+            "obj": element,
+            "selectionlist": element,
+            "selected": element.get_selected(),
+            "option": option
+        }))

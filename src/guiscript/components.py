@@ -11,6 +11,8 @@ from . import common
 
 
 class UIComponent:
+    """Base class for element components"""
+
     def __init__(self, element: "UIElement", style_change_callback=None):
         self.element: "UIElement" = element
         self.enabled: bool = True
@@ -21,35 +23,44 @@ class UIComponent:
         self.init()
 
     def init(self):
+        """[Internal] Called by the base class after initialization"""
         ...
 
     def render(self):
+        """[Internal] Render the component"""
         ...
 
     def style_changed(self):
+        """[Internal] Rebuild the component"""
         self.style_group = self.element.style_group
         self.build(self.element.style)
 
     def position_changed(self):
+        """[Internal] Overridable by subclasses"""
         ...
 
     def size_changed(self):
+        """[Internal] Overridable by subclasses"""
         ...
 
     def force_enable(self) -> typing.Self:
+        """Force the component to stay enabled"""
         self.enabled = True
         self.force_visibility = True
         return self
 
     def force_disable(self) -> typing.Self:
+        """Force the component to stay disabled"""
         self.enabled = False
         return self
 
     def dont_force(self) -> typing.Self:
+        """Don't force visibility over the component"""
         self.force_visibility = False
         return self
 
     def build(self, style: UIStyle):
+        """[Internal] Overridable by subclasses"""
         ...
 
 
@@ -71,12 +82,15 @@ class UIImageComp(UIComponent):
         self.set_surface(None)
 
     def get_active_surface(self) -> pygame.Surface:
+        """Return the surface the component is blitting"""
         return self.image_surf
 
     def get_original_surface(self) -> pygame.Surface:
+        """Return the surface the component uses before scaling it"""
         return self.original_surface if self.original_surface else self.element.style.image.image
 
     def set_surface(self, surface: pygame.Surface, force_update: bool = False) -> typing.Self:
+        """Manually set the surface. This will override the style's image.image property"""
         if surface == self.original_surface and not force_update:
             return self
         self.original_surface: pygame.Surface = surface
@@ -92,7 +106,7 @@ class UIImageComp(UIComponent):
             return
 
         iw, ih = original_surface.get_size()
-        tw, th = max(self.element.relative_rect.w-style.image.padding*2, 5),\
+        tw, th = max(self.element.relative_rect.w-style.image.padding*2, 5), \
             max(self.element.relative_rect.h-style.image.padding*2, 5)
 
         if style.image.border_size <= 0:
@@ -116,9 +130,9 @@ class UIImageComp(UIComponent):
         else:
             w, h = tw, th
             original_surface = common.generate_menu_surface(original_surface,
-                                                      w-(style.image.padding)*2,
-                                                      h-(style.image.padding)*2,
-                                                      style.image.border_size)
+                                                            w-(style.image.padding)*2,
+                                                            h-(style.image.padding)*2,
+                                                            style.image.border_size)
 
         w, h = max(w, 1), max(h, 1)
         if style.image.border_size <= 0:
@@ -159,6 +173,7 @@ class UIShapeComp(UIComponent):
         self.custom_rect = None
 
     def set_custom_rect(self, rect: pygame.Rect | None) -> typing.Self:
+        """If the shape type is 'rect', draw the given rect instead of the automated one"""
         self.custom_rect = rect
         return self
 
@@ -218,13 +233,15 @@ class UITextComp(UIComponent):
         if not self.element.style.text.enabled and not self.force_visibility:
             return
         for rect in self.selection_rects:
-            pygame.draw.rect(self.element.element_surface, self.element.style.text.selection_color, rect)
+            pygame.draw.rect(self.element.element_surface,
+                             self.element.style.text.selection_color, rect)
         self.element.element_surface.blit(self.text_surf, self.text_rect)
 
     def size_changed(self):
         self.build(self.element.style)
 
     def get_active_text(self) -> str:
+        """Return the text the component is rendering as a string"""
         return self.element.style.text.text if self.element.style.text.text else self.text
 
     def build(self, style):
@@ -236,24 +253,29 @@ class UITextComp(UIComponent):
                                                                 style.text.bg_color,
                                                                 self.element.relative_rect.w)
         self.text_rect: pygame.Rect = common.align_text(self.text_surf.get_rect(),
-                                                  self.element.static_rect,
-                                                  style.text.padding,
-                                                  style.text.y_padding,
-                                                  style.text.align)
+                                                        self.element.static_rect,
+                                                        style.text.padding,
+                                                        style.text.y_padding,
+                                                        style.text.align)
 
     def set_text(self, text) -> typing.Self:
+        """Manually set the text. This will not override the style's text.text"""
+        text = str(text)
         if text == self.text:
             return self
         self.text: str = text
         self.build(self.element.style)
         return self
-    
+
     def enable_selection(self) -> typing.Self:
+        """Let the user select and copy text on the element"""
         self.can_select = True
         return self
-    
+
     def disable_selection(self) -> typing.Self:
+        """Prevent the user from selecting or copying text on the element"""
         self.can_select = False
+        self.selection_rects = []
         return self
 
 
@@ -263,15 +285,19 @@ class UIIconComp(UIComponent):
         self.set_icon(None)
 
     def get_active_name(self) -> str:
+        """Return the icon name the component is using"""
         self.icon_name or self.element.style.icon.name
 
     def get_icon_surface(self) -> pygame.Surface:
+        """Return the icon surface the component is rendering before scaling it"""
         return UIIcons.get(self.icon_name or self.element.style.icon.name)
 
     def get_active_surface(self) -> pygame.Surface:
+        """Return the icon surface the component is blitting"""
         return self.icon_surf
 
     def set_icon(self, name: str) -> typing.Self:
+        """Manually set the icon name. This will override the style's icon.name"""
         if name == self.icon_name:
             return self
         self.icon_name = name
@@ -283,10 +309,10 @@ class UIIconComp(UIComponent):
         self.icon_surf: pygame.Surface = pygame.transform.scale_by(
             UIIcons.get(icon_name, self), style.icon.scale)
         self.icon_rect: pygame.Rect = common.align_text(self.icon_surf.get_rect(),
-                                                  self.element.static_rect,
-                                                  style.icon.padding,
-                                                  style.icon.padding,
-                                                  style.icon.align)
+                                                        self.element.static_rect,
+                                                        style.icon.padding,
+                                                        style.icon.padding,
+                                                        style.icon.align)
 
     def render(self):
         if not self.element.style.icon.enabled and not self.force_visibility:
@@ -305,10 +331,11 @@ class UIOutlineComp(UIComponent):
                          self.element.static_rect,
                          style.outline.width,
                          style.outline.border_radius)
-        
+
         self.render_tabbed(style)
-            
+
     def render_tabbed(self, style: UIStyle):
+        """[Internal] Render the keyboard navigation outline if the element is tabbed"""
         if self.element.ui_manager.navigation.tabbed_element is self.element:
             pygame.draw.rect(self.element.element_surface,
                              style.outline.navigation_color,

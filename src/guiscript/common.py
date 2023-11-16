@@ -1,11 +1,11 @@
+import math
 import pygame
 import typing
 if typing.TYPE_CHECKING:
     from .elements.element import UIElement
 
 from .error import UIError
-
-VERSION = "WIP"
+from .state import UIState
 
 Coordinate: typing.TypeAlias = typing.Iterable[float] | pygame.Vector2
 Color: typing.TypeAlias = typing.Iterable[int] | str | pygame.Color
@@ -116,7 +116,7 @@ def text_click_idx(lines: list[str], font: pygame.Font, pos: pygame.Vector2, rec
     return char_i, line_idx, tot_i, "".join(lines)
 
 
-def text_select_rects(start_li: int, start_ci: int, end_li: int, end_ci: int, lines: list[str], font: pygame.Font, rect: pygame.Rect) -> list[pygame.Rect]:
+def text_select_rects(start_li: int, start_ci: int, end_li: int, end_ci: int, lines: list[str], font: pygame.Font, rect: pygame.Rect, rel_move: bool = False) -> list[pygame.Rect]:
     if start_li > end_li:
         start_li, end_li = end_li, start_li
         start_ci, end_ci = end_ci, start_ci
@@ -124,16 +124,20 @@ def text_select_rects(start_li: int, start_ci: int, end_li: int, end_ci: int, li
     font_h = font.get_height()
     try:
         if start_li == end_li:
-            if start_ci == end_ci:
-                return rects
-            if start_ci > end_ci:
-                start_ci, end_ci = end_ci, start_ci
             line = lines[start_li]
             offset = 0
             if font.align == pygame.FONT_CENTER:
                 offset = rect.w//2-font.size(line)[0]//2
             elif font.align == pygame.FONT_RIGHT:
                 offset = rect.w-font.size(line)[0]
+            if start_ci == end_ci:
+                if not rel_move or not UIState.mouse_pressed[0]:
+                    return rects
+                char = lines[start_li][start_ci]
+                rects.append(pygame.Rect(rect.left+offset+font.size(line[:start_ci])[0], font_h*start_li+rect.top, font.size(char)[0], font_h))
+                return rects
+            if start_ci > end_ci:
+                start_ci, end_ci = end_ci, start_ci
             rects.append(pygame.Rect(rect.left+offset+font.size(line[:start_ci])[0],
                                      font_h*start_li+rect.top, font.size(line[start_ci:end_ci+1])[0], font_h))
         else:
@@ -225,59 +229,75 @@ def generate_menu_surface(original_image: pygame.Surface, width: int, height: in
     # return
     return big_surf
 
+
 def lerp(a: float, b: float, t: float) -> float:
     return a + t*(b-a)
+
 
 def linear(t: float) -> float:
     return t
 
+
 def ease_in(t: float) -> float:
     return t * t
+
 
 def ease_out(t: float) -> float:
     return t * (2 - t)
 
+
 def ease_in_quad(t: float) -> float:
     return t * t
+
 
 def ease_out_quad(t: float) -> float:
     return t * (2 - t)
 
+
 def ease_in_cubic(t: float) -> float:
     return t * t * t
+
 
 def ease_out_cubic(t: float) -> float:
     return 1 - (1 - t) ** 3
 
+
 def ease_in_quart(t: float) -> float:
     return t * t * t * t
+
 
 def ease_out_quart(t: float) -> float:
     return 1 - (1 - t) ** 4
 
+
 def ease_in_quint(t: float) -> float:
     return t * t * t * t * t
+
 
 def ease_out_quint(t: float) -> float:
     return 1 - (1 - t) ** 5
 
-import math
 
 def ease_in_sine(t: float) -> float:
     return 1 - math.cos((t * math.pi) / 2)
 
+
 def ease_out_sine(t: float) -> float:
     return math.sin((t * math.pi) / 2)
+
 
 def ease_in_expo(t: float) -> float:
     return 0 if t == 0 else 2 ** (10 * (t - 1))
 
+
 def ease_out_expo(t: float) -> float:
     return 1 if t == 1 else 1 - 2 ** (-10 * t)
 
+
 def ease_out_circ(t: float) -> float:
     return math.sqrt(abs(1 - (t - 1) * (t - 1)))
-    
+
+
 ANIMATION_FUNCTIONS = {
     'linear': linear,
     'ease_in': ease_in,
@@ -315,7 +335,17 @@ DEFAULT_CALLBACKS: list[str] = [
     "on_move"
 ]
 
-STYLE_ANIMATION_TYPES =  {
+
+Z_INDEXES = {
+    "ghost": -100,
+    "element": 0,
+    "scrollbar": 100,
+    "menu": 150,
+    "tooltip": 200,
+}
+
+
+STYLE_ANIMATION_TYPES = {
     "stack": {
         "spacing": "number",
         "padding": "number",
@@ -386,7 +416,7 @@ button:: {
     bg.enabled true;
 }
 
-image_button, icon_button:: {
+imagebutton, iconbutton:: {
     text.enabled false;
 }
 
@@ -409,7 +439,7 @@ checkbox:press {
     text.enabled false;
 }
 
-slideshow, gif, video_player_video, video_player_control_stack:: {
+slideshow, gif, videoplayer_video, videoplayer_control_stack, dropmenu:: {
     bg.enabled false;
     outline.enabled false;
 }
@@ -419,8 +449,23 @@ slider:: {
     outline.enabled false;
 }
 
-video_player:: {
+videoplayer:: {
     image.enabled true;
+}
+
+progressbar:: {
+    shape.enabled true;
+    shape.type rect;
+}
+
+dropmenu:: {
+    stack.padding 0;
+}
+
+selectionlist:: {
+    stack.padding 2;
+    stack.spacing 2;
+    stack.anchor top;
 }
 
 // SPECIFIC
@@ -431,14 +476,32 @@ slideshow_arrow:: {
     outline.enabled false;
 }
 
-sound_player_button,video_player_button:: {
+soundplayer_button,videoplayer_button:: {
     text.font_name googleicons;
     text.font_size 30;
     bg.enabled false;
     outline.enabled false;
 }
 
-slideshow_arrow, sound_player_button, video_player_button:hover:press {
+dropmenu_arrow::{
+    text.font_name googleicons;
+    text.font_size 30;
+}
+
+dropmenu_option, selectionlist_option:: {
+    stack.fill_x true;
+    outline.enabled false;
+    bg.border_radius 0;
+    outline.border_radius 0;
+}
+
+dropmenu_menu:: {
+    stack.grow_y true;
+    stack.padding 2;
+    stack.spacing 2;
+}
+
+slideshow_arrow, soundplayer_button, videoplayer_button:hover:press {
     bg.enabled true;
 }
 

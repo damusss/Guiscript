@@ -8,23 +8,83 @@ from ..error import UIError
 from ..state import UIState
 from ..events import _post_slideshow_event, _post_slider_event
 from ..common import StatusCallback
-from .. import settings
+from .. import settings as settings_
 
-# PROGRESS BAR
+
+class ProgressBar(UIElement):
+    """Element with a bar that can progress"""
+    
+    def __init__(self,
+                 value: int,
+                 relative_rect: pygame.Rect,
+                 element_id: str = "none",
+                 style_id: str = "default",
+                 parent: UIElement | None = None,
+                 ui_manager: UIManager | None = None,
+                 settings: settings_.ProgressBarSettings = settings_.ProgressBarDefaultSettings,
+                 ):
+        super().__init__(relative_rect, element_id, style_id, ("element", "progressbar"), parent, ui_manager)
+        self.deactivate()
+        self.settings: settings_.ProgressBarSettings = settings
+        self.set_value(value)
+        
+    def get_percent(self) -> float:
+        """Return the current value as a percentage"""
+        return (self.value/self.settings.max_value)*100
+    
+    def get_01(self) -> float:
+        """Return the current value in the range 0-1"""
+        return self.value/self.settings.max_value
+    
+    def set_value(self, value: float) -> typing.Self:
+        """Clamp and set the current value and build the rect"""
+        self.value: float = pygame.math.clamp(value, 0, self.settings.max_value)
+        if "left" in self.settings.direction and "right" in self.settings.direction:
+            y = self.style.shape.padding
+            height = max(self.relative_rect.h-self.style.stack.padding*2, 1)
+            width = max((self.relative_rect.w-self.style.shape.padding*2)*(self.value/self.settings.max_value), 1)
+            if self.settings.direction == "left_right":
+                x = self.style.shape.padding
+            elif self.settings.direction == "right_left":
+                x = self.relative_rect.w-self.style.shape.padding-width
+        elif "top" in self.settings.direction and "bottom" in self.settings.direction:
+            x = self.style.shape.padding
+            width = max(self.relative_rect.w-self.style.stack.padding*2, 1)
+            height = max((self.relative_rect.h-self.style.shape.padding*2)*(self.value/self.settings.max_value), 1)
+            if self.settings.direction == "top_bottom":
+                y = self.style.shape.padding
+            elif self.settings.direction == "bottom_top":
+                y = self.relative_rect.h-self.style.shape.padding-height
+        self.shape_rect = pygame.Rect(x, y, width, height)
+        self.shape.set_custom_rect(self.shape_rect)
+        return self
+    
+    def set_percent(self, value_percent: float) -> typing.Self:
+        """Clamp and set the current value as a percentage and build the rect"""
+        return self.set_value((value_percent/100)*self.settings.max_value)
+        
+    def set_01(self, value_01: float) -> typing.Self:
+        """Clamp and set the current value from the range 0-1 and build the rect"""
+        return self.set_value(value_01*self.settings.max_value)
+    
+    def build(self):
+        self.set_value(self.value)
+
 
 class Slider(UIElement):
+    """Element with a handle that can move"""
+
     def __init__(self,
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
                  style_id: str = "default",
                  parent: UIElement | None = None,
                  ui_manager: UIManager | None = None,
-                 #align: ElementAlign = ElementAlign.middle,
-                 settings: settings.SliderSettings = settings.SliderDefaultSettings,
+                 settings: settings_.SliderSettings = settings_.SliderDefaultSettings,
                  ):
         super().__init__(relative_rect, element_id, style_id,
                          ("element", "slider"), parent, ui_manager)
-        self.settings = settings
+        self.settings: settings_.SliderSettings = settings
         if not self.settings.axis in ["horizontal", "vertical"]:
             warnings.warn(
                 f"Slider axis '{self.settings.axis}' is not supported", category=UserWarning)
@@ -45,7 +105,7 @@ class Slider(UIElement):
             self.element_id+"_handle",
             (self.style_id if self.settings.handle_style_id ==
              "copy" else self.settings.handle_style_id),
-            ("element", "button", "slider_handle"),
+            ("element", "handle", "slider_handle"),
             self,
             self.ui_manager
         )
@@ -55,26 +115,33 @@ class Slider(UIElement):
         self.set_value(self.settings.start_value)
 
     def get_value(self) -> float:
+        """Return the current value in the range 0-1"""
         return (((self.handle.relative_rect.centerx-self.bar.relative_rect.left)/self.bar.relative_rect.w)
                 if self.settings.axis == "horizontal" else
                 ((self.handle.relative_rect.centery-self.bar.relative_rect.top)/self.bar.relative_rect.h))
 
     def get_percent(self) -> float:
+        """Return the current value in the range 0-100"""
         return self.get_value()*100
 
     def set_value(self, value: float) -> typing.Self:
+        """Set the value. Must be between 0-1"""
+        value = pygame.math.clamp(value, 0, 1)
         if self.settings.axis == "horizontal":
-            pos = self.bar.relative_rect.x+(value*self.bar.relative_rect.w)-self.settings.handle_size//2
+            pos = self.bar.relative_rect.x + \
+                (value*self.bar.relative_rect.w)-self.settings.handle_size//2
             self.handle.set_relative_pos(
                 (pos, self.bar.relative_rect.centery-self.settings.handle_size//2))
         elif self.settings.axis == "vertical":
-            pos = self.bar.relative_rect.y+(value*self.bar.relative_rect.h)-self.settings.handle_size//2
+            pos = self.bar.relative_rect.y + \
+                (value*self.bar.relative_rect.h)-self.settings.handle_size//2
             self.handle.set_relative_pos(
                 (self.bar.relative_rect.centerx-self.settings.handle_size//2, pos))
         self.buffers.update("value", value)
         return self
 
     def set_percent(self, value_percent: float) -> typing.Self:
+        """Set the value with percentage. Must be between 0-100"""
         return self.set_value(value_percent/100)
 
     def on_logic(self):
@@ -103,7 +170,7 @@ class Slider(UIElement):
                 self.status.invoke_callback("on_move")
                 self.buffers.update("value", val)
 
-    def size_changed(self):
+    def build(self):
         cur_value = self.get_value()
         style = self.get_style()
         self.handle.set_size(
@@ -120,6 +187,8 @@ class Slider(UIElement):
 
 
 class GIF(UIElement):
+    """Element that iterates surfaces quickly"""
+
     def __init__(self,
                  frames: list[pygame.Surface],
                  relative_rect: pygame.Rect,
@@ -128,7 +197,6 @@ class GIF(UIElement):
                  style_id: str = "default",
                  parent: UIElement | None = None,
                  ui_manager: UIManager | None = None,
-                 #align: ElementAlign = ElementAlign.middle,
                  ):
         super().__init__(relative_rect, element_id, style_id, ("element", "image", "gif"), parent,
                          ui_manager)
@@ -136,6 +204,7 @@ class GIF(UIElement):
         self.build()
 
     def set_frames(self, frames: list[pygame.Surface], frame_speed: float = 0.04) -> typing.Self:
+        """Set the GIF frames and the frame speed"""
         if len(frames) <= 0:
             raise UIError(f"GIF frames list must contain at least 1 surface")
         self.frames: list[pygame.Surface] = frames
@@ -145,14 +214,17 @@ class GIF(UIElement):
         return self
 
     def set_surface(self, surface: pygame.Surface) -> typing.Self:
+        """Manually set the current surface"""
         self.image.set_surface(surface)
         return self
 
     def set_frame_index(self, index: float) -> typing.Self:
+        """Manually set the frame index of the GIF"""
         self.frame_index = pygame.math.clamp(index, 0, len(self.frames)-1)
         return self
 
     def get_frame(self) -> pygame.Surface:
+        """Return the current frame surface"""
         return self.frames[int(self.frame_index)]
 
     def on_logic(self):
@@ -166,15 +238,19 @@ class GIF(UIElement):
         self.set_surface(self.frames[int(self.frame_index)])
 
     def play(self) -> typing.Self:
+        """Enable the GIF to iterate surfaces"""
         self.is_playing: bool = True
         return self
 
     def stop(self) -> typing.Self:
+        """Stop the GIF from iterating surfaces"""
         self.is_playing: bool = False
         return self
 
 
 class Slideshow(UIElement):
+    """Element that iterates surfaces using control arrow buttons"""
+
     def __init__(self,
                  surfaces: list[pygame.Surface],
                  relative_rect: pygame.Rect,
@@ -182,12 +258,11 @@ class Slideshow(UIElement):
                  style_id: str = "default",
                  parent: UIElement | None = None,
                  ui_manager: UIManager | None = None,
-                 #align: ElementAlign = ElementAlign.middle,
-                 settings: settings.SlideshowSettings = settings.SlideshowDefaultSettings
+                 settings: settings_.SlideshowSettings = settings_.SlideshowDefaultSettings
                  ):
         super().__init__(relative_rect, element_id, style_id,
                          ("element", "image", "slideshow"), parent, ui_manager)
-        self.settings = settings
+        self.settings: settings_.SlideshowSettings = settings
         self.left_arrow = Button(self.settings.left_arrow_txt,
                                  pygame.Rect(0, 0, 100, 100),
                                  self.element_id+"_left_arrow",
@@ -206,8 +281,10 @@ class Slideshow(UIElement):
                                   self,
                                   self.ui_manager,
                                   )
-        self.left_arrow.status.add_listener("on_stop_press",self.on_left_click)
-        self.right_arrow.status.add_listener("on_stop_press",self.on_right_click)
+        self.left_arrow.status.add_listener(
+            "on_stop_press", self.on_left_click)
+        self.right_arrow.status.add_listener(
+            "on_stop_press", self.on_right_click)
         self.left_arrow.add_element_types(
             "slideshow_arrow", "slideshow_left_arrow")
         self.right_arrow.add_element_types(
@@ -217,6 +294,7 @@ class Slideshow(UIElement):
         self.build()
 
     def set_surfaces(self, surfaces: list[pygame.Surface]) -> typing.Self:
+        """Set the surfaces to iterate"""
         if len(surfaces) <= 0:
             raise UIError(
                 f"Slideshow surfaces list must contain at least 1 surface")
@@ -226,15 +304,18 @@ class Slideshow(UIElement):
         return self
 
     def set_surface(self, surface: pygame.Surface) -> typing.Self:
+        """Manually set the current surface"""
         self.image.set_surface(surface)
         return self
 
     def set_surface_index(self, index: int) -> typing.Self:
+        """Manually set the current surface index"""
         self.surface_index = pygame.math.clamp(index, 0, len(self.surfaces)-1)
         self.set_surface(self.surfaces[self.surface_index])
         return self
 
     def move_right(self) -> typing.Self:
+        """Manually move the surface to the next"""
         self.surface_index += 1
         if self.surface_index >= len(self.surfaces):
             self.surface_index = 0
@@ -242,6 +323,7 @@ class Slideshow(UIElement):
         return self
 
     def move_left(self) -> typing.Self:
+        """Manually move the surface to the previous"""
         self.surface_index -= 1
         if self.surface_index < 0:
             self.surface_index = len(self.surfaces)-1
@@ -249,11 +331,13 @@ class Slideshow(UIElement):
         return self
 
     def on_right_click(self):
+        """[Internal] Child callback"""
         self.move_right()
         _post_slideshow_event("right", self)
         self.status.invoke_callback("on_move", "right")
 
     def on_left_click(self):
+        """[Internal] Child callback"""
         self.move_left()
         _post_slideshow_event("left", self)
         self.status.invoke_callback("on_move", "left")
@@ -270,6 +354,8 @@ class Slideshow(UIElement):
 
 
 class Label(UIElement):
+    """Inactive element with a shortcut to set the text"""
+
     def __init__(self,
                  text: str,
                  relative_rect: pygame.Rect,
@@ -277,7 +363,6 @@ class Label(UIElement):
                  style_id: str = "default",
                  parent: UIElement | None = None,
                  ui_manager: UIManager | None = None,
-                 #align: ElementAlign = ElementAlign.middle,
                  ):
         super().__init__(relative_rect, element_id,
                          style_id, ("element", "label"), parent, ui_manager)
@@ -285,31 +370,36 @@ class Label(UIElement):
         self.deactivate()
 
     def set_text(self, text: str) -> typing.Self:
+        """Shortcut for 'element.text.set_text'"""
         self.text.set_text(text)
         return self
 
 
 class Icon(UIElement):
+    """Inactive element with a shortcut to set the icon"""
+
     def __init__(self,
-                 name: str|None,
+                 name: str | None,
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
                  style_id: str = "default",
                  parent: UIElement | None = None,
                  ui_manager: UIManager | None = None,
-                 #align: ElementAlign = ElementAlign.middle,
                  ):
         super().__init__(relative_rect, element_id,
                          style_id, ("element", "icon"), parent, ui_manager)
         self.icon.set_icon(name)
         self.deactivate()
-        
+
     def set_icon(self, name: str) -> typing.Self:
+        """Shortcut for 'element.icon.set_icon'"""
         self.icon.set_icon(name)
         return self
 
 
 class Image(UIElement):
+    """Inactive element with a shortcut to set the image"""
+
     def __init__(self,
                  surface: pygame.Surface,
                  relative_rect: pygame.Rect,
@@ -317,20 +407,21 @@ class Image(UIElement):
                  style_id: str = "default",
                  parent: UIElement | None = None,
                  ui_manager: UIManager | None = None,
-                 #align: ElementAlign = ElementAlign.middle,
                  ):
         super().__init__(relative_rect, element_id,
                          style_id, ("element", "image"), parent, ui_manager)
         self.image.set_surface(surface)
-
         self.deactivate()
 
     def set_surface(self, surface: pygame.Surface) -> typing.Self:
+        """Shortcut for 'element.image.set_surface'"""
         self.image.set_surface(surface)
         return self
 
 
 class Button(UIElement):
+    """Active element with a shortcut to set the text"""
+
     def __init__(self,
                  text: str,
                  relative_rect: pygame.Rect,
@@ -339,19 +430,21 @@ class Button(UIElement):
                  selectable: bool = False,
                  parent: UIElement | None = None,
                  ui_manager: UIManager | None = None,
-                 #align: ElementAlign = ElementAlign.middle,
                  ):
-        super().__init__(relative_rect, element_id, style_id, ("element", "button"), parent,
+        super().__init__(relative_rect, element_id, style_id, ("element", "label", "button"), parent,
                          ui_manager)
         self.text.set_text(text)
         self.status.can_select = selectable
 
     def set_text(self, text: str) -> typing.Self:
+        """Shortcut for 'element.text.set_text'"""
         self.text.set_text(text)
         return self
 
 
 class ImageButton(UIElement):
+    """Active element with a shortcut to set the image"""
+
     def __init__(self,
                  surface: pygame.Surface,
                  relative_rect: pygame.Rect,
@@ -360,40 +453,45 @@ class ImageButton(UIElement):
                  selectable: bool = False,
                  parent: UIElement | None = None,
                  ui_manager: UIManager | None = None,
-                 #align: ElementAlign = ElementAlign.middle,
                  ):
         super().__init__(relative_rect, element_id,
-                         style_id, ("element", "image", "button", "image_button"), parent, ui_manager)
+                         style_id, ("element", "image", "button", "imagebutton"), parent, ui_manager)
         self.image.set_surface(surface)
         self.status.can_select = selectable
 
     def set_surface(self, surface: pygame.Surface) -> typing.Self:
+        """Shortcut for 'element.image.set_surface'"""
         self.image.set_surface(surface)
         return self
-   
-    
+
+
 class IconButton(UIElement):
+    """Active element with a shortcut to set the icon"""
+
     def __init__(self,
-                 name: str|None,
+                 name: str | None,
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
                  style_id: str = "default",
                  selectable: bool = False,
                  parent: UIElement | None = None,
                  ui_manager: UIManager | None = None,
-                 #align: ElementAlign = ElementAlign.middle,
                  ):
         super().__init__(relative_rect, element_id,
-                         style_id, ("element", "icon", "button", "icon_button"), parent, ui_manager)
+                         style_id, ("element", "icon", "button", "iconbutton"), parent, ui_manager)
         self.icon.set_icon(name)
-        if selectable: self.status.can_select = True
-        
+        if selectable:
+            self.status.can_select = True
+
     def set_icon(self, name: str) -> typing.Self:
+        """Shortcut for 'element.icon.set_icon'"""
         self.icon.set_icon(name)
         return self
 
 
 class Checkbox(UIElement):
+    """Selectable element with shortcuts for selection and deselection"""
+
     def __init__(self,
                  relative_rect: pygame.Rect,
                  start_selected: bool = False,
@@ -401,7 +499,7 @@ class Checkbox(UIElement):
                  style_id: str = "default",
                  parent: UIElement | None = None,
                  ui_manager: UIManager | None = None,
-                 #align: ElementAlign = ElementAlign.middle,
+                 # align: ElementAlign = ElementAlign.middle,
                  ):
         super().__init__(relative_rect, element_id, style_id, ("element", "button", "checkbox"), parent,
                          ui_manager)
@@ -409,12 +507,23 @@ class Checkbox(UIElement):
         self.status.selected = start_selected
 
     def get_selected(self) -> bool:
+        """Return whether the element is selected or not"""
         return self.status.selected
 
     def select(self) -> typing.Self:
+        """Shortcut for 'element.status.select'"""
         self.status.select()
         return self
 
     def deselect(self) -> typing.Self:
+        """Shortcut for 'element.status.select'"""
         self.status.deselect()
+        return self
+
+    def toggle(self) -> typing.Self:
+        """Select or deselect based on the current status"""
+        if self.status.selected:
+            self.status.deselect()
+        else:
+            self.status.select()
         return self

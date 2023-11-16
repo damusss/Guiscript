@@ -2,19 +2,21 @@ import pygame
 
 from .element import UIElement
 from ..state import UIState
+from .. import common
 
 
 class UIVScrollbar(UIElement):
+    """Element used for scrolling vertically in a stack"""
+
     def __init__(self, stack: UIElement):
         super().__init__(pygame.Rect(0, 0, 10, 10), stack.element_id+"_vscrollbar", stack.style_id,
                          ("element", "scrollbar", "vscrollbar"), stack, stack.ui_manager)
-        self.set_ignore(True, True)
-        self.z_index = 100
+        self.set_ignore(True, True).set_can_destroy(False).deactivate().set_z_index(common.Z_INDEXES["scrollbar"])
         self.handle: UIElement = UIElement(pygame.Rect(
-            0, 0, 10, 10), self.element_id+"_handle", self.style_id, ("element", "handle", "scrollbarhandle", "vscrollbarhandle"), self, self.ui_manager)
-        self.deactivate()
+            0, 0, 10, 10), self.element_id+"_handle", self.style_id, ("element", "handle", "scrollbar_handle", "vscrollbar_handle"), self, self.ui_manager)
 
     def is_needed(self, total_h: int, can_scroll: bool, grow_y: bool) -> bool:
+        """[Internal]"""
         if not can_scroll or grow_y:
             return False
         else:
@@ -24,6 +26,7 @@ class UIVScrollbar(UIElement):
                 return False
 
     def update_size_position(self, total_h: int, size: int, can_scroll: bool, scroll_y: int, grow_y: bool):
+        """[Internal]"""
         self.set_relative_pos((self.parent.relative_rect.w-size, 0))
         self.set_size((size, self.parent.relative_rect.h), False)
         if not can_scroll or grow_y:
@@ -66,16 +69,17 @@ class UIVScrollbar(UIElement):
 
 
 class UIHScrollbar(UIElement):
+    """Element used for scrolling horizontally in a stack"""
+
     def __init__(self, stack: UIElement):
         super().__init__(pygame.Rect(0, 0, 10, 10), stack.element_id+"_hscrollbar",
                          stack.style_id, ("element", "scrollbar", "hscrollbar"), stack, stack.ui_manager)
-        self.set_ignore(True, True)
-        self.z_index = 100
+        self.set_ignore(True, True).set_can_destroy(False).deactivate().set_z_index(common.Z_INDEXES["scrollbar"])
         self.handle: UIElement = UIElement(pygame.Rect(
-            0, 0, 10, 10), self.element_id+"_handle", self.style_id, ("element", "handle", "scrollbarhandle", "hscrollbarhandle"), self, self.ui_manager)
-        self.deactivate()
+            0, 0, 10, 10), self.element_id+"_handle", self.style_id, ("element", "handle", "scrollbar_handle", "hscrollbar_handle"), self, self.ui_manager)
 
     def is_needed(self, total_w: int, can_scroll: bool, grow_x: bool):
+        """[Internal]"""
         if not can_scroll or grow_x:
             return False
         else:
@@ -85,6 +89,7 @@ class UIHScrollbar(UIElement):
                 return False
 
     def update_size_position(self, total_w: int, size: int, can_scroll: bool, scroll_x: int, grow_x: bool):
+        """[Internal]"""
         self.set_relative_pos((0, self.parent.relative_rect.h-size))
         self.set_size((self.parent.relative_rect.w-scroll_x, size), False)
         if not can_scroll or grow_x:

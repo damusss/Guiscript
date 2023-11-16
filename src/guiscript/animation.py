@@ -9,20 +9,28 @@ from . import common
 
 
 class UIAnimation:
+    """Base class for UI animations"""
+
     def start(self) -> typing.Self:
+        """Start animating"""
         ...
-        
+
     def logic(self):
+        """Update the value"""
         ...
-        
+
     def apply_value(self) -> typing.Self:
+        """Apply the value to the element/style"""
         ...
-        
+
     def get_elapsed_time(self) -> float:
+        """Return how much time passed since 'start' was called"""
         return 0
 
 
 class UIPropertyAnim(UIAnimation):
+    """Animation object for element properties"""
+
     def __init__(self,
                  element: "UIElement",
                  property_type: AnimPropertyType,
@@ -40,6 +48,8 @@ class UIPropertyAnim(UIAnimation):
         self.increase_dir = 1 if increase >= 0 else -1
         self.end_value: float = abs(increase)
         self.duration_ms: float = duration_ms
+        if self.duration_ms <= 0:
+            self.duration_ms = 1
         self.start_value: float = getattr(
             element.relative_rect, self.property_type)
         self.current_value: float = 0
@@ -112,18 +122,20 @@ class UIPropertyAnim(UIAnimation):
                         self.start_time = pygame.time.get_ticks()
 
         self.apply_value()
-        
-        
+
+
 class UIStyleAnim(UIAnimation):
-    def __init__(self, 
-                 style: "UIStyle", 
-                 styles: list["UIStyle"], 
-                 comp_name: str, 
-                 property_name: str, 
-                 property_type: StyleAnimPropertyType, 
-                 duration_ms: float, 
-                 value, 
-                 ease_func_name: AnimEaseFunc= AnimEaseFunc.ease_in
+    """Animation object for style properties"""
+
+    def __init__(self,
+                 style: "UIStyle",
+                 styles: list["UIStyle"],
+                 comp_name: str,
+                 property_name: str,
+                 property_type: StyleAnimPropertyType,
+                 duration_ms: float,
+                 value,
+                 ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in
                  ):
         self.style: "UIStyle" = style
         self.styles: list["UIStyle"] = styles
@@ -131,68 +143,76 @@ class UIStyleAnim(UIAnimation):
         self.property_name: str = property_name
         self.property_type: StyleAnimPropertyType = property_type
         self.duration_ms: float = duration_ms
-        self.end_value = value if self.property_type == StyleAnimPropertyType.number else pygame.Color(value) if self.property_type == StyleAnimPropertyType.color else None
+        if self.duration_ms <= 0:
+            self.duration_ms = 1
+        self.end_value = value if self.property_type == StyleAnimPropertyType.number else pygame.Color(
+            value) if self.property_type == StyleAnimPropertyType.color else None
         self.ease_func = common.ANIMATION_FUNCTIONS[ease_func_name]
-        self.should_build_font = self.comp_name == "text" and self.property_name in ["sysfont", "font_name", "font_size"]
+        self.should_build_font = self.comp_name == "text" and self.property_name in [
+            "sysfont", "font_name", "font_size"]
         self.start_time = -1
         self.start_value = None
         self.current_value = None
         self.completed = True
-        
+
     def apply_value(self) -> typing.Self:
         for style in self.styles:
-            setattr(getattr(style, self.comp_name), self.property_name, self.current_value)
+            setattr(getattr(style, self.comp_name),
+                    self.property_name, self.current_value)
             style.dirty = True
             if self.should_build_font:
                 style.text.build_font()
         return self
-    
+
     def start(self) -> typing.Self:
         self.completed = False
-        start_value = getattr(getattr(self.style, self.comp_name), self.property_name)
-        self.start_value = start_value if self.property_type == StyleAnimPropertyType.number else pygame.Color(start_value) if self.property_type == StyleAnimPropertyType.color else None
+        start_value = getattr(
+            getattr(self.style, self.comp_name), self.property_name)
+        self.start_value = start_value if self.property_type == StyleAnimPropertyType.number else pygame.Color(
+            start_value) if self.property_type == StyleAnimPropertyType.color else None
         self.current_value = self.start_value
         self.start_time = pygame.time.get_ticks()
         return self
-    
+
     def get_elapsed_time(self) -> float:
         if self.completed:
             return -1
         return pygame.time.get_ticks()-self.start_time
-    
+
     def logic(self):
         if self.completed:
-            return 
-        
+            return
+
         if self.property_type == StyleAnimPropertyType.number:
             lerp_val = common.lerp(self.start_value, self.end_value, self.ease_func(
                 self.get_elapsed_time()/self.duration_ms))
-            
+
             self.current_value = lerp_val
             if abs(self.end_value-self.current_value) <= 1:
                 self.current_value = self.end_value
                 self.completed = True
-                
+
         elif self.property_type == StyleAnimPropertyType.color:
             self.current_value = self.start_value.lerp(self.end_value, pygame.math.clamp(self.ease_func(
                 self.get_elapsed_time()/self.duration_ms), 0.0, 1.0))
             if abs(self.end_value.r-self.current_value.r) <= 1 and \
-                abs(self.end_value.g-self.current_value.g) <= 1 and \
-                abs(self.end_value.b-self.current_value.b) <= 1 and \
-                abs(self.end_value.a-self.current_value.a) <= 1:
-                    
+                    abs(self.end_value.g-self.current_value.g) <= 1 and \
+                    abs(self.end_value.b-self.current_value.b) <= 1 and \
+                    abs(self.end_value.a-self.current_value.a) <= 1:
+
                 self.current_value = self.end_value
                 self.completed = True
-                
-            
+
         self.apply_value()
 
 
 class UIAnimUpdater:
+    """Static class that updates element property animations"""
     animations: list[UIPropertyAnim] = []
 
     @classmethod
     def logic(cls):
+        """[Internal] Update animations and remove finished ones. Called by 'static_logic'"""
         for anim in list(cls.animations):
             anim.logic()
             if anim.dead:
@@ -200,5 +220,6 @@ class UIAnimUpdater:
 
     @classmethod
     def register(cls, animation: UIPropertyAnim) -> typing.Self:
+        """[Internal] Add an animation to the animations to update. Called automatically by the animation"""
         cls.animations.append(animation)
         return cls
