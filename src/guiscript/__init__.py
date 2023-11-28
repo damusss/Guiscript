@@ -66,7 +66,10 @@ from .elements.factories import (
     Slideshow,
     GIF,
     Slider,
-    ProgressBar
+    ProgressBar,
+    InvisElement,
+    HLine,
+    VLine
 )
 from .elements.stacks import (
     VStack,

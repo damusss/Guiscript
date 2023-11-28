@@ -62,7 +62,7 @@ class UIElement:
         self.element_id: str = element_id
         self.style_id: str = style_id
         self.element_types: tuple[str] = element_types
-        self.update_types_override()
+        #self.update_types_override()
 
         # attrs
         self.children: list[UIElement] = []
@@ -73,9 +73,11 @@ class UIElement:
         self.static_rect: pygame.Rect = self.relative_rect.copy()
         self.ignore_stack: bool = False
         self.ignore_scroll: bool = False
+        self.ignore_raycast: bool = False
         self.can_destroy: bool = True
         self.z_index: int = common.Z_INDEXES["element"]
         self.scroll_offset: pygame.Vector2 = pygame.Vector2()
+        self.attrs: dict[str] = {}
         self.update_absolute_rect_pos()
 
         # obj attrs
@@ -157,13 +159,13 @@ class UIElement:
         self.refresh_stack()
         return self
 
-    def destroy(self):
-        """Destroy the element and all its children if the 'can_destroy' flag is True"""
-        if not self.can_destroy:
+    def destroy(self, force: bool = False):
+        """Destroy the element and all its children if the 'can_destroy' flag is True or 'force' is True"""
+        if not self.can_destroy and not force:
             return
         self.parent.remove_child(self)
         for child in list(self.children):
-            child.destroy()
+            child.destroy(True)
         self.children.clear()
         if self in self.ui_manager.all_elements:
             self.ui_manager.all_elements.remove(self)
@@ -173,7 +175,6 @@ class UIElement:
         """Destroy all children of this element if the children have the 'can_destroy' flag set to True"""
         for child in list(self.children):
             child.destroy()
-        self.children.clear()
         return self
 
     # flags
@@ -207,6 +208,8 @@ class UIElement:
     def first_frame(self):
         """[Internal] called on the first frame, refresh the stack"""
         self.refresh_stack()
+        self.build()
+        self.position_changed()
 
     def logic(self):
         """[Internal] Called every frame to update children, style and ghost"""
@@ -264,6 +267,14 @@ class UIElement:
         """Return the topleft position from the origin of the window"""
         return pygame.Vector2(self.parent.get_absolute_topleft()+self.relative_rect.topleft)-(self.ui_manager.root.scroll_offset if self.ignore_scroll else self.parent.scroll_offset)
 
+    def get_attr(self, name: str):
+        """Retrive a custom element attribute or None if it doesn't exist"""
+        return self.attrs.get(name, None)
+    
+    def has_attr(self, name: str) -> bool:
+        """Check if a custom element attribute exists"""
+        return name in self.attrs
+    
     def calc_style(self) -> typing.Self:
         """[Internal] Set the current style based on status"""
         style: UIStyle = None
@@ -317,10 +328,11 @@ class UIElement:
         return count
 
     # set
-    def set_ignore(self, ignore_stack: bool = False, ignore_scroll: bool = False) -> typing.Self:
+    def set_ignore(self, stack: bool|None = None, scroll: bool|None = None, raycast: bool|None = None) -> typing.Self:
         """Set the 'ignore_stack' and 'ignore_scroll' flags"""
-        self.ignore_stack = ignore_stack
-        self.ignore_scroll = ignore_scroll
+        self.ignore_stack = stack if stack is not None else self.ignore_stack
+        self.ignore_scroll = scroll if scroll is not None else self.ignore_scroll
+        self.ignore_raycast = raycast if raycast is not None else self.ignore_raycast
         return self
     
     def set_can_destroy(self, can_destroy: bool) -> typing.Self:
@@ -331,6 +343,17 @@ class UIElement:
     def set_z_index(self, z_index: int) -> typing.Self:
         """Set the Z index used for interaction and rendering"""
         self.z_index = z_index
+        return self
+    
+    def set_attr(self, name: str, value) -> typing.Self:
+        """Set a custom element attribute"""
+        self.attrs[name] = value
+        return self
+    
+    def set_attrs(self, **names_values) -> typing.Self:
+        """Set multiple custom element attributes using kwargs"""
+        for name, val in names_values.items():
+            self.attrs[name] = val
         return self
 
     def set_absolute_pos(self, position: common.Coordinate) -> typing.Self:
@@ -413,7 +436,7 @@ class UIElement:
     def set_element_types(self, element_types: tuple[str]) -> typing.Self:
         """Set the element types of the element and build a new style group"""
         self.element_types = element_types
-        self.update_types_override()
+        #self.update_types_override()
         self.set_style_group(UIStyles.get_style_group(self))
         return self
 
@@ -463,8 +486,8 @@ class UIElement:
         if self.ghost_element is not None:
             self.ghost_element.destroy()
             self.ghost_element = None
-        self.set_ignore(True, self.ignore_scroll)
-        self.ghost_element = UIElement(relative_rect, self.element_id+"_ghost", "invis_cont",
+        self.set_ignore(stack=True)
+        self.ghost_element = UIElement(relative_rect, self.element_id+"_ghost", "invisible",
                                        ("element", "ghost"), self.parent, self.ui_manager).set_z_index(common.Z_INDEXES["ghost"])
         return self
 
@@ -472,7 +495,7 @@ class UIElement:
     def add_element_type(self, element_type: str) -> typing.Self:
         """Add one element type to the tuple and build a new style group"""
         self.element_types = (*self.element_types, element_type)
-        self.update_types_override()
+        #self.update_types_override()
         self.set_style_group(UIStyles.get_style_group(self))
         return self
 
@@ -600,13 +623,13 @@ class UIElement:
             comp.build(self.style)
         self.style.enter()
         
-    def update_types_override(self):
-        """[Internal]"""
-        new_types = []
-        for el_type in self.element_types:
-            if not "_override" in el_type:
-                new_types.append(el_type)
-        self.element_types = ()
-        for el_type in new_types:
-            self.element_types = (*self.element_types, el_type)
-            self.element_types = (*self.element_types, el_type+"_override")
+    #def update_types_override(self):
+    #    """[Internal]"""
+    #    new_types = []
+    #    for el_type in self.element_types:
+    #        if not "_override" in el_type:
+    #            new_types.append(el_type)
+    #    self.element_types = ()
+    #    for el_type in new_types:
+    #        self.element_types = (*self.element_types, el_type)
+    #        self.element_types = (*self.element_types, el_type+"_override")

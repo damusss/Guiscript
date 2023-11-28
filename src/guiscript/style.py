@@ -13,8 +13,8 @@ from .error import UIError
 class UICompStyle:
     """Base style class for element components"""
 
-    def __init__(self):
-        self.enabled: bool = True
+    def __init__(self, enabled: bool):
+        self.enabled: bool = enabled
 
     def set(self, **properties) -> typing.Self:
         """Set multiple style properties at once"""
@@ -52,7 +52,7 @@ class UIBGStyle(UICompStyle):
     """Style class for the background element component"""
 
     def __init__(self):
-        super().__init__()
+        super().__init__(True)
         self.color: common.Color = (25, 25, 25)
         self.border_radius: int = 7
 
@@ -61,7 +61,7 @@ class UIImageStyle(UICompStyle):
     """Style class for the image element component"""
 
     def __init__(self):
-        super().__init__()
+        super().__init__(False)
         self.image: pygame.Surface | None = None
         self.padding: int = 5
         self.border_radius: int = 7
@@ -69,6 +69,7 @@ class UIImageStyle(UICompStyle):
         self.stretch_y: bool = False
         self.fill: bool = False
         self.border_size: int = 0
+        self.border_scale: float = 1
         self.outline_width = 0
         self.outline_color = (50, 50, 50)
 
@@ -77,7 +78,7 @@ class UIShapeStyle(UICompStyle):
     """Style class for the shape element component"""
 
     def __init__(self):
-        super().__init__()
+        super().__init__(False)
         self.color: common.Color = (0, 120, 255)
         self.outline_width: int = 0
         self.type: enums.ShapeType | str = "rect"
@@ -92,7 +93,7 @@ class UITextStyle(UICompStyle):
     """Style class for the text element component"""
 
     def __init__(self):
-        super().__init__()
+        super().__init__(False)
         self.text: str = ""
         self.color: common.Color = (255, 255, 255)
         self.selection_color: common.Color = (0, 100, 200)
@@ -109,9 +110,6 @@ class UITextStyle(UICompStyle):
         self.italic: bool = False
         self.underline: bool = False
         self.strikethrough: bool = False
-
-        self.build_font()
-        self.apply_mods()
 
     def build_font(self) -> typing.Self:
         """Build the font object after changes in the font properties"""
@@ -138,7 +136,7 @@ class UIIconStyle(UICompStyle):
     """Style class for the icon element component"""
 
     def __init__(self):
-        super().__init__()
+        super().__init__(False)
         self.name: str | None = None
         self.scale: float = 1
         self.padding: int = 5
@@ -149,7 +147,7 @@ class UIOutlineStyle(UICompStyle):
     """Style class for the outline element component"""
 
     def __init__(self):
-        super().__init__()
+        super().__init__(True)
         self.color: common.Color = (50, 50, 50)
         self.width: int = 1
         self.border_radius: int = 7
@@ -309,7 +307,7 @@ class UIStyles:
                 continue
             if style_holder.style_target == "element_type" and style_holder.target_id in el_type_styles:
                 el_type_styles[style_holder.target_id].append(style_holder)
-            elif style_holder.style_target == "style_id" and (style_holder.target_id == style_id or ";"+style_holder.target_id+";" in style_id or style_id.endswith(";"+style_holder.target_id) or style_id.startswith(style_holder.target_id+";")):
+            elif style_holder.style_target == "style_id" and style_holder.target_id in style_id.replace(" ", "").split(";"):
                 style_id_styles.append(style_holder)
             elif style_holder.style_target == "element_id" and style_holder.target_id == el_id:
                 el_id_styles.append(style_holder)
@@ -326,6 +324,8 @@ class UIStyles:
             cls.apply_style_properties(el_id_style.properties, style)
             animations = cls.update_style_animations(
                 animations, el_id_style.animations)
+        style.text.build_font()
+        style.text.apply_mods()
         return style, animations
 
     @classmethod
@@ -339,8 +339,6 @@ class UIStyles:
                         raise UIError(
                             f"{comp_name.title()} style has no property '{name}'")
                     setattr(comp, name, value)
-        style.text.build_font()
-        style.text.apply_mods()
 
     @classmethod
     def update_style_animations(cls, current_animations: list, holder_animations: list) -> list:

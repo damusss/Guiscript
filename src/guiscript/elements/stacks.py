@@ -16,19 +16,21 @@ class HStack(UIElement):
                  parent: UIElement | None = None,
                  ui_manager: UIManager | None = None,
                  ):
+        self.__done = False
         super().__init__(relative_rect, element_id, style_id, ("element", "stack", "hstack"), parent,
                          ui_manager)
         self.scroll_w: int = 1
         self.scroll_h: int = 1
         self.vscrollbar: UIVScrollbar = UIVScrollbar(self)
         self.hscrollbar: UIHScrollbar = UIHScrollbar(self)
+        self.__done = True
         self.deactivate()
         
     def first_frame(self):
         self.refresh_stack()
 
     def refresh_stack(self):
-        if not self.ui_manager.running:
+        if not self.ui_manager.running or not self.__done:
             return
         style = self.style
         total_x = style.stack.padding
@@ -139,19 +141,21 @@ class VStack(UIElement):
                  parent: UIElement | None = None,
                  ui_manager: UIManager | None = None,
                  ):
+        self.__done = False
         super().__init__(relative_rect, element_id, style_id, ("element", "stack", "vstack"), parent,
                          ui_manager)
         self.scroll_w: int = 1
         self.scroll_h: int = 1
         self.vscrollbar: UIVScrollbar = UIVScrollbar(self)
         self.hscrollbar: UIHScrollbar = UIHScrollbar(self)
+        self.__done = True
         self.deactivate()
         
     def first_frame(self):
         self.refresh_stack()
 
     def refresh_stack(self):
-        if not self.ui_manager.running:
+        if not self.ui_manager.running or not self.__done:
             return
         style = self.style
         total_x = 0

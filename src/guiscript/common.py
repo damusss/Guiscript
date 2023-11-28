@@ -359,6 +359,7 @@ STYLE_ANIMATION_TYPES = {
         "padding": "number",
         "border_radius": "number",
         "border_size": "number",
+        "border_scale": "number",
         "outline_width": "number",
         "outline_color": "color"
     },
@@ -391,13 +392,6 @@ STYLE_ANIMATION_TYPES = {
 
 DEFAULT_STYLE_GSS: str = """
 // BUILTIN ELEMENT TYPES
-element:: {
-    text.enabled false;
-    shape.enabled false;
-    image.enabled false;
-    icon.enabled false;
-}
-
 label:: {
     text.enabled true;
     bg.enabled false;
@@ -468,6 +462,12 @@ selectionlist:: {
     stack.anchor top;
 }
 
+line:: {
+    bg.color (50, 50, 50);
+    bg.border_radius 1;
+    outline.border_radius 1;
+}
+
 // SPECIFIC
 slideshow_arrow:: {
     text.font_name googleicons;
@@ -514,10 +514,32 @@ tooltip_description:: {
 }
 
 // BUILTIN STYLE GROUPS
+.active_cont:hover {
+    bg.color (32, 32, 32);
+}
+
+.active_cont:press {
+    bg.color (17, 17, 17);
+}
+
+.active_cont {
+    bg.color (25, 25, 25);
+}
+
 .invis_cont, invisible_container:: {
     bg.enabled false;
     outline.enabled false;
     stack.padding 0;
+}
+
+.invisible:: {
+    bg.enabled false;
+    outline.enabled false;
+    text.enabled false;
+    image.enabled false;
+    icon.enabled false;
+    shape.enabled false;
+    stack.padding false;
 }
 
 .icons_font:: {
@@ -539,6 +561,14 @@ tooltip_description:: {
 
 .fill:: {
     stack.fill_x true;
+    stack.fill_y true;
+}
+
+.fill_x:: {
+    stack.fill_x true;
+}
+
+.fill_y:: {
     stack.fill_y true;
 }
 """

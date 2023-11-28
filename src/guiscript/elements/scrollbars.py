@@ -23,6 +23,11 @@ class UIVScrollbar(UIElement):
             if total_h > self.parent.relative_rect.h:
                 return True
             else:
+                if self.parent.scroll_offset.y != 0:
+                    self.parent.scroll_offset.y = 0
+                    self.handle.set_relative_pos((0, 0))
+                    for child in self.parent.children:
+                        child.update_absolute_rect_pos()
                 return False
 
     def update_size_position(self, total_h: int, size: int, can_scroll: bool, scroll_y: int, grow_y: bool):
@@ -35,10 +40,15 @@ class UIVScrollbar(UIElement):
             if total_h > self.parent.relative_rect.h:
                 self.visible = True
             else:
+                if self.parent.scroll_offset.y != 0:
+                    self.parent.scroll_offset.y = 0
+                    self.handle.set_relative_pos((0, 0))
+                    for child in self.parent.children:
+                        child.update_absolute_rect_pos()
                 self.visible = False
         handle_size_y = (self.parent.relative_rect.h *
                          (self.parent.relative_rect.h-scroll_y))/total_h
-        self.handle.set_size((size, handle_size_y), False)
+        self.handle.set_size((size, min(handle_size_y, self.relative_rect.h)), False)
 
     def on_logic(self):
         if not self.visible:
@@ -46,7 +56,7 @@ class UIVScrollbar(UIElement):
 
         prev_y = self.handle.relative_rect.y
 
-        if self.handle.status.pressed:
+        if self.handle.status.pressed and self.handle.active:
             self.handle.set_relative_pos(
                 (0, self.handle.relative_rect.y+UIState.mouse_rel[1]))
 
@@ -86,6 +96,11 @@ class UIHScrollbar(UIElement):
             if total_w > self.parent.relative_rect.w:
                 return True
             else:
+                if self.parent.scroll_offset.x != 0:
+                    self.parent.scroll_offset.x = 0
+                    self.handle.set_relative_pos((0, 0))
+                    for child in self.parent.children:
+                        child.update_absolute_rect_pos()
                 return False
 
     def update_size_position(self, total_w: int, size: int, can_scroll: bool, scroll_x: int, grow_x: bool):
@@ -98,10 +113,15 @@ class UIHScrollbar(UIElement):
             if total_w > self.parent.relative_rect.w:
                 self.visible = True
             else:
+                if self.parent.scroll_offset.x != 0:
+                    self.parent.scroll_offset.x = 0
+                    self.handle.set_relative_pos((0, 0))
+                    for child in self.parent.children:
+                        child.update_absolute_rect_pos()
                 self.visible = False
         handle_size_x = (self.parent.relative_rect.w *
                          (self.parent.relative_rect.w-scroll_x*2))/total_w
-        self.handle.set_size((handle_size_x, size), False)
+        self.handle.set_size((min(handle_size_x, self.relative_rect.w), size), False)
 
     def on_logic(self):
         if not self.visible:
@@ -109,7 +129,7 @@ class UIHScrollbar(UIElement):
 
         prev_x = self.handle.relative_rect.x
 
-        if self.handle.status.pressed:
+        if self.handle.status.pressed and self.handle.active:
             self.handle.set_relative_pos(
                 (self.handle.relative_rect.x+UIState.mouse_rel[0], 0))
 

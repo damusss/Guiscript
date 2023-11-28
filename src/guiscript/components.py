@@ -65,6 +65,8 @@ class UIComponent:
 
 
 class UIBackgroundComp(UIComponent):
+    """Element component that renders a background"""
+    
     def render(self):
         if not self.element.style.bg.enabled and not self.force_visibility:
             return
@@ -76,6 +78,8 @@ class UIBackgroundComp(UIComponent):
 
 
 class UIImageComp(UIComponent):
+    """Element component that renders an image"""
+    
     def init(self):
         self.image_surf: pygame.Surface = None
         self.original_surface: pygame.Surface | None = None
@@ -104,6 +108,7 @@ class UIImageComp(UIComponent):
         original_surface = self.original_surface if self.original_surface else style.image.image
         if not original_surface:
             return
+        original_surface = pygame.transform.scale_by(original_surface, style.image.border_scale)
 
         iw, ih = original_surface.get_size()
         tw, th = max(self.element.relative_rect.w-style.image.padding*2, 5), \
@@ -132,7 +137,7 @@ class UIImageComp(UIComponent):
             original_surface = common.generate_menu_surface(original_surface,
                                                             w-(style.image.padding)*2,
                                                             h-(style.image.padding)*2,
-                                                            style.image.border_size)
+                                                            int(style.image.border_size*style.image.border_scale))
 
         w, h = max(w, 1), max(h, 1)
         if style.image.border_size <= 0:
@@ -169,6 +174,8 @@ class UIImageComp(UIComponent):
 
 
 class UIShapeComp(UIComponent):
+    """Element component that renders a shape"""
+    
     def init(self):
         self.custom_rect = None
 
@@ -223,6 +230,8 @@ class UIShapeComp(UIComponent):
 
 
 class UITextComp(UIComponent):
+    """Element component that renders text"""
+    
     def init(self):
         self.text: str = None
         self.selection_rects: list[pygame.Rect] = []
@@ -280,6 +289,8 @@ class UITextComp(UIComponent):
 
 
 class UIIconComp(UIComponent):
+    """Element component that renders icon surfaces"""
+    
     def init(self):
         self.icon_name = ""
         self.set_icon(None)
@@ -321,6 +332,8 @@ class UIIconComp(UIComponent):
 
 
 class UIOutlineComp(UIComponent):
+    """Element component that renders an outline"""
+    
     def render(self):
         style = self.element.style
         if not style.outline.enabled and not self.force_visibility:

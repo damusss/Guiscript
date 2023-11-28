@@ -16,6 +16,7 @@ class UIRoot:
         self.visible: bool = True
         self.scroll_offset = pygame.Vector2()
         self.children: list[UIElement] = []
+        self.ignore_raycast: bool = False
 
     def refresh_stack(self):
         """[Internal] Empty"""

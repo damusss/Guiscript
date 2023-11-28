@@ -471,6 +471,9 @@ class UIScriptParser:
                 self.tok)+"' instead"+self.error_suffix())
         self.advance()
         expressions = []
+        if self.tok.type == UISTT.right_brace:
+            self.advance()
+            return expressions
         expressions.append(self.parse_style_instruction())
         while self.tok.type == UISTT.semicolon:
             self.advance()

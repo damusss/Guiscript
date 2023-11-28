@@ -1,10 +1,9 @@
 THINGS
 
-...
+- scroll hover/refactor/fix
 
 ELEMENTS
 
-selection list
 entry line
 window
 file dialog
@@ -37,6 +36,8 @@ DONE THINGS
 - property animations
 - style animations
 - docstrings
+- drop menu bug
+- scrollbar scroll lock bug
 
 DONE ELEMENTS
 
@@ -56,3 +57,4 @@ audio player
 video player
 progress bar
 drop menu
+selection list

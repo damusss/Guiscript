@@ -162,18 +162,18 @@ class UIInteract:
             return self.ui_manager.navigation.tabbed_element
         if start_parent is None or not start_parent.visible:
             return
-        if not start_parent.absolute_rect.collidepoint(position) and can_recurse_above:
+        if (not start_parent.absolute_rect.collidepoint(position) or start_parent.ignore_raycast) and can_recurse_above:
             return self.raycast(position, start_parent.parent, True)
 
         for rev_child in reversed(sorted(start_parent.children, key=lambda el: el.z_index)):
-            if not rev_child.absolute_rect.collidepoint(position) or not rev_child.visible:
+            if not rev_child.absolute_rect.collidepoint(position) or not rev_child.visible or rev_child.ignore_raycast:
                 continue
             if len(rev_child.children) > 0:
                 res = self.raycast(position, rev_child)
                 if res and res.visible:
                     return res
             return rev_child
-
+        
         if can_recurse_above:
             return self.raycast(position, start_parent.parent, True)
 

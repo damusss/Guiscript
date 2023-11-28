@@ -85,6 +85,9 @@ def help_element_types() -> typing.LiteralString:
             DropMenu.menu_cont.*: (*Button, dropmenu_option)
     SelectionList: (*VStack, menu, selectionlist)
         SelectionList.*: (*Button, selectionlist_option)
+    InvisElement: (element, invisible_element)
+    HLine: (element, line, hline)
+    VLine: (element, line, vline)
     """
     
     

@@ -28,7 +28,7 @@ class DropMenu(UIElement):
         self.deactivate().status.register_callbacks(
             "on_option_select", "on_menu_toggle")
         self.settings: settings_.DropMenuSettings = settings
-        self._done = False
+        self.__done = False
         self.options: list[str] = options
         self.option_button: Button = Button(start_option,
                                             pygame.Rect(0, 0, 0, 0),
@@ -48,8 +48,8 @@ class DropMenu(UIElement):
                                         self.element_id+"_menu",
                                         style_id_or_copy(
                                             self, self.settings.menu_style_id),
-                                        self.parent, self.ui_manager).set_ignore(True).hide().set_z_index(Z_INDEXES["menu"]).add_element_type("dropmenu_menu")
-        self._done = True
+                                        self.parent, self.ui_manager).set_ignore(stack=True).hide().set_z_index(Z_INDEXES["menu"]).add_element_type("dropmenu_menu")
+        self.__done = True
         self.build()
         self.position_changed()
 
@@ -107,7 +107,9 @@ class DropMenu(UIElement):
         _post_dropmenu_event("toggle", self)
 
     def build(self):
-        if not self._done:
+        if not self.ui_manager.running:
+            return
+        if not self.__done:
             return
         self.arrow_button.set_size(
             (self.relative_rect.w*self.settings.arrow_rel_w, self.relative_rect.h-self.style.stack.padding*2))
@@ -126,8 +128,11 @@ class DropMenu(UIElement):
                    f"_option_{i}", style_id_or_copy(
                 self.menu_cont, self.settings.option_style_id),
                 False, self.menu_cont, self.ui_manager).status.add_listener("on_click", self.on_option_click).element.add_element_type("dropmenu_option")
+        self.menu_cont.refresh_stack()
 
     def position_changed(self):
+        if not self.ui_manager.running:
+            return
         if self.settings.direction == "down":
             self.menu_cont.set_relative_pos(
                 (self.relative_rect.x+self.style.stack.padding, self.relative_rect.bottom+self.style.stack.spacing))
@@ -205,6 +210,8 @@ class SelectionList(VStack):
         _post_selectionlist_event("deselect", self, btn.text.text)
 
     def build(self):
+        if not self.ui_manager.running:
+            return
         self.destroy_children()
         for i, option in enumerate(self.options):
             btn = Button(option, pygame.Rect(0, 0, 0, self.settings.option_height),

@@ -7,8 +7,7 @@ from .interact import UIInteract
 from .navigation import UINavigation
 from .elements.element import UIElement
 from .script import UIScript
-from .tooltip import UITooltips
-from .animation import UIAnimUpdater
+from .style import UIStyles
 from . import common
 
 
@@ -39,7 +38,7 @@ class UIManager:
         if gs_sources is not None:
             for i, gs_source in enumerate(gs_sources):
                 UIScript.parse_source(gs_source, f"gss.source.idx:{i}", self.gs_variables)
-
+                
         self.running: bool = False
         self.all_elements: list[UIElement] = []
         self.last_rendered: UIElement = None

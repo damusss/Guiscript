@@ -30,7 +30,7 @@ class SoundPlayer(HStack):
                  ui_manager: UIManager | None = None,
                  settings: settings_.SoundPlayerSettings = settings_.SoundPlayerDefaultSettings
                  ):
-        self._done = False
+        self.__done = False
         super().__init__(relative_rect, element_id, style_id,
                          StackAnchor.max_spacing, parent, ui_manager)
         self.add_element_types("player", "soundplayer")
@@ -77,7 +77,7 @@ class SoundPlayer(HStack):
             self, self.ui_manager, ElementAlign.middle,
             self.settings.sliders_settings
         )
-        self._done = True
+        self.__done = True
 
         self.play_button.add_element_types(
             "soundplayer_button", "soundplayer_play_button")
@@ -243,7 +243,9 @@ class SoundPlayer(HStack):
                 self.track_slider.set_value(0)
 
     def build(self):
-        if not self._done:
+        if not self.ui_manager.running:
+            return
+        if not self.__done:
             return
         style = self.callback_component.get_style()
         btn_size = (self.settings.buttons_size,
@@ -295,7 +297,7 @@ class VideoPlayer(UIElement):
         self.play_start_time = self.start_position = self.pause_position = 0
         self.deactivate()
 
-        self._done = False
+        self.__done = False
         style = self.callback_component.get_style()
         self.video_image = Image(None,
                                  pygame.Rect(0, 0, 100, 100),
@@ -340,7 +342,7 @@ class VideoPlayer(UIElement):
             self.control_stack, self.ui_manager, ElementAlign.middle,
             self.settings.sliders_settings
         )
-        self._done = True
+        self.__done = True
 
         self.video_image.add_element_types("videoplayer_video")
         self.control_stack.add_element_types("videoplayer_control_stack")
@@ -541,7 +543,9 @@ class VideoPlayer(UIElement):
                 self.track_slider.set_value(0)
 
     def build(self):
-        if not self._done:
+        if not self.ui_manager.running:
+            return
+        if not self.__done:
             return
         style = self.callback_component.get_style()
         self.video_image.set_relative_pos(

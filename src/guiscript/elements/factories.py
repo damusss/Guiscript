@@ -13,7 +13,7 @@ from .. import settings as settings_
 
 class ProgressBar(UIElement):
     """Element with a bar that can progress"""
-    
+
     def __init__(self,
                  value: int,
                  relative_rect: pygame.Rect,
@@ -23,26 +23,29 @@ class ProgressBar(UIElement):
                  ui_manager: UIManager | None = None,
                  settings: settings_.ProgressBarSettings = settings_.ProgressBarDefaultSettings,
                  ):
-        super().__init__(relative_rect, element_id, style_id, ("element", "progressbar"), parent, ui_manager)
+        super().__init__(relative_rect, element_id, style_id,
+                         ("element", "progressbar"), parent, ui_manager)
         self.deactivate()
         self.settings: settings_.ProgressBarSettings = settings
         self.set_value(value)
-        
+
     def get_percent(self) -> float:
         """Return the current value as a percentage"""
         return (self.value/self.settings.max_value)*100
-    
+
     def get_01(self) -> float:
         """Return the current value in the range 0-1"""
         return self.value/self.settings.max_value
-    
+
     def set_value(self, value: float) -> typing.Self:
         """Clamp and set the current value and build the rect"""
-        self.value: float = pygame.math.clamp(value, 0, self.settings.max_value)
+        self.value: float = pygame.math.clamp(
+            value, 0, self.settings.max_value)
         if "left" in self.settings.direction and "right" in self.settings.direction:
             y = self.style.shape.padding
             height = max(self.relative_rect.h-self.style.stack.padding*2, 1)
-            width = max((self.relative_rect.w-self.style.shape.padding*2)*(self.value/self.settings.max_value), 1)
+            width = max((self.relative_rect.w-self.style.shape.padding*2)
+                        * (self.value/self.settings.max_value), 1)
             if self.settings.direction == "left_right":
                 x = self.style.shape.padding
             elif self.settings.direction == "right_left":
@@ -50,7 +53,8 @@ class ProgressBar(UIElement):
         elif "top" in self.settings.direction and "bottom" in self.settings.direction:
             x = self.style.shape.padding
             width = max(self.relative_rect.w-self.style.stack.padding*2, 1)
-            height = max((self.relative_rect.h-self.style.shape.padding*2)*(self.value/self.settings.max_value), 1)
+            height = max((self.relative_rect.h-self.style.shape.padding*2)
+                         * (self.value/self.settings.max_value), 1)
             if self.settings.direction == "top_bottom":
                 y = self.style.shape.padding
             elif self.settings.direction == "bottom_top":
@@ -58,15 +62,15 @@ class ProgressBar(UIElement):
         self.shape_rect = pygame.Rect(x, y, width, height)
         self.shape.set_custom_rect(self.shape_rect)
         return self
-    
+
     def set_percent(self, value_percent: float) -> typing.Self:
         """Clamp and set the current value as a percentage and build the rect"""
         return self.set_value((value_percent/100)*self.settings.max_value)
-        
+
     def set_01(self, value_01: float) -> typing.Self:
         """Clamp and set the current value from the range 0-1 and build the rect"""
         return self.set_value(value_01*self.settings.max_value)
-    
+
     def build(self):
         self.set_value(self.value)
 
@@ -145,7 +149,7 @@ class Slider(UIElement):
         return self.set_value(value_percent/100)
 
     def on_logic(self):
-        if not self.handle.status.pressed:
+        if not self.handle.status.pressed or not self.handle.active:
             return
         if self.settings.axis == "horizontal" and UIState.mouse_rel[0] != 0:
             prev = self.get_value()
@@ -171,16 +175,17 @@ class Slider(UIElement):
                 self.buffers.update("value", val)
 
     def build(self):
+        if not self.ui_manager.running:
+            return
         cur_value = self.get_value()
-        style = self.get_style()
         self.handle.set_size(
             (self.settings.handle_size, self.settings.handle_size))
         if self.settings.axis == "horizontal":
             self.bar.set_size(
-                (self.relative_rect.w-self.settings.handle_size-style.stack.padding*2, self.settings.bar_size))
+                (self.relative_rect.w-self.settings.handle_size-self.style.stack.padding*2, self.settings.bar_size))
         elif self.settings.axis == "vertical":
             self.bar.set_size(
-                (self.settings.bar_size, self.relative_rect.h-self.settings.handle_size-style.stack.padding*2))
+                (self.settings.bar_size, self.relative_rect.h-self.settings.handle_size-self.style.stack.padding*2))
         self.bar.set_relative_pos((self.relative_rect.w//2-self.bar.relative_rect.w //
                                   2, self.relative_rect.h//2-self.bar.relative_rect.h//2))
         self.set_value(cur_value)
@@ -342,7 +347,9 @@ class Slideshow(UIElement):
         _post_slideshow_event("left", self)
         self.status.invoke_callback("on_move", "left")
 
-    def size_changed(self):
+    def build(self):
+        if not self.ui_manager.running:
+            return
         size = (self.settings.arrows_w, self.relative_rect.h *
                 self.settings.arrows_rel_h)
         self.left_arrow.set_size(size)
@@ -499,7 +506,6 @@ class Checkbox(UIElement):
                  style_id: str = "default",
                  parent: UIElement | None = None,
                  ui_manager: UIManager | None = None,
-                 # align: ElementAlign = ElementAlign.middle,
                  ):
         super().__init__(relative_rect, element_id, style_id, ("element", "button", "checkbox"), parent,
                          ui_manager)
@@ -527,3 +533,48 @@ class Checkbox(UIElement):
         else:
             self.status.select()
         return self
+
+
+class InvisElement(UIElement):
+    """Simple element with default style id 'invisible'"""
+
+    def __init__(self,
+                 relative_rect: pygame.Rect,
+                 element_id: str = "none",
+                 style_id: str = "invisible",
+                 parent: UIElement | None = None,
+                 ui_manager: UIManager | None = None,
+                 ):
+        super().__init__(relative_rect, element_id, style_id,
+                         ("element", "invisible_element"), parent, ui_manager)
+        self.deactivate()
+
+
+class HLine(UIElement):
+    """Simple element with proper default styling to quickly make a horizontal line"""
+
+    def __init__(self,
+                 relative_rect: pygame.Rect,
+                 element_id: str = "none",
+                 style_id: str = "fill_x",
+                 parent: UIElement | None = None,
+                 ui_manager: UIManager | None = None,
+                 ):
+        super().__init__(relative_rect, element_id, style_id,
+                         ("element", "line", "hline"), parent, ui_manager)
+        self.deactivate()
+
+
+class VLine(UIElement):
+    """Simple element with proper default styling to quickly make a vertical line"""
+
+    def __init__(self,
+                 relative_rect: pygame.Rect,
+                 element_id: str = "none",
+                 style_id: str = "fill_y",
+                 parent: UIElement | None = None,
+                 ui_manager: UIManager | None = None,
+                 ):
+        super().__init__(relative_rect, element_id, style_id,
+                         ("element", "line", "vline"), parent, ui_manager)
+        self.deactivate()
