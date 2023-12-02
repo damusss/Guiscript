@@ -40,6 +40,7 @@ class UIStackStyle:
         self.anchor: enums.StackAnchor = enums.StackAnchor.middle
         self.align: enums.ElementAlign = enums.ElementAlign.middle
         self.scrollbar_size: int = 10
+        self.mask_padding: int = 0
 
     def set(self, **properties) -> typing.Self:
         """Set multiple style properties at once"""
@@ -110,6 +111,9 @@ class UITextStyle(UICompStyle):
         self.italic: bool = False
         self.underline: bool = False
         self.strikethrough: bool = False
+        self.do_wrap: bool = True
+        self.grow_x: bool = False
+        self.grow_y: bool = False
 
     def build_font(self) -> typing.Self:
         """Build the font object after changes in the font properties"""
@@ -307,7 +311,7 @@ class UIStyles:
                 continue
             if style_holder.style_target == "element_type" and style_holder.target_id in el_type_styles:
                 el_type_styles[style_holder.target_id].append(style_holder)
-            elif style_holder.style_target == "style_id" and style_holder.target_id in style_id.replace(" ", "").split(";"):
+            elif style_holder.style_target == "style_id" and style_holder.target_id in style_id.replace(" ", "").replace(",", ";").split(";"):
                 style_id_styles.append(style_holder)
             elif style_holder.style_target == "element_id" and style_holder.target_id == el_id:
                 el_id_styles.append(style_holder)

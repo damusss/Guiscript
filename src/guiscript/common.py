@@ -332,7 +332,9 @@ DEFAULT_CALLBACKS: list[str] = [
     "on_deselect",
     "on_click",
     "on_right_click",
-    "on_move"
+    "on_move",
+    "on_first_frame",
+    "on_animation_end"
 ]
 
 

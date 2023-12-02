@@ -8,8 +8,8 @@ from .. import common
 class UIVScrollbar(UIElement):
     """Element used for scrolling vertically in a stack"""
 
-    def __init__(self, stack: UIElement):
-        super().__init__(pygame.Rect(0, 0, 10, 10), stack.element_id+"_vscrollbar", stack.style_id,
+    def __init__(self, stack: UIElement, style_id: str):
+        super().__init__(pygame.Rect(0, 0, 10, 10), stack.element_id+"_vscrollbar", common.style_id_or_copy(stack, style_id),
                          ("element", "scrollbar", "vscrollbar"), stack, stack.ui_manager)
         self.set_ignore(True, True).set_can_destroy(False).deactivate().set_z_index(common.Z_INDEXES["scrollbar"])
         self.handle: UIElement = UIElement(pygame.Rect(
@@ -47,11 +47,11 @@ class UIVScrollbar(UIElement):
                         child.update_absolute_rect_pos()
                 self.visible = False
         handle_size_y = (self.parent.relative_rect.h *
-                         (self.parent.relative_rect.h-scroll_y))/total_h
+                         (self.parent.relative_rect.h-scroll_y))/(total_h+1)
         self.handle.set_size((size, min(handle_size_y, self.relative_rect.h)), False)
 
     def on_logic(self):
-        if not self.visible:
+        if not self.visible or not self.parent.status.scroll_hovered:
             return
 
         prev_y = self.handle.relative_rect.y
@@ -81,9 +81,9 @@ class UIVScrollbar(UIElement):
 class UIHScrollbar(UIElement):
     """Element used for scrolling horizontally in a stack"""
 
-    def __init__(self, stack: UIElement):
+    def __init__(self, stack: UIElement, style_id: str):
         super().__init__(pygame.Rect(0, 0, 10, 10), stack.element_id+"_hscrollbar",
-                         stack.style_id, ("element", "scrollbar", "hscrollbar"), stack, stack.ui_manager)
+                         common.style_id_or_copy(stack, style_id), ("element", "scrollbar", "hscrollbar"), stack, stack.ui_manager)
         self.set_ignore(True, True).set_can_destroy(False).deactivate().set_z_index(common.Z_INDEXES["scrollbar"])
         self.handle: UIElement = UIElement(pygame.Rect(
             0, 0, 10, 10), self.element_id+"_handle", self.style_id, ("element", "handle", "scrollbar_handle", "hscrollbar_handle"), self, self.ui_manager)
@@ -120,11 +120,11 @@ class UIHScrollbar(UIElement):
                         child.update_absolute_rect_pos()
                 self.visible = False
         handle_size_x = (self.parent.relative_rect.w *
-                         (self.parent.relative_rect.w-scroll_x*2))/total_w
+                         (self.parent.relative_rect.w-scroll_x*2))/(total_w+1)
         self.handle.set_size((min(handle_size_x, self.relative_rect.w), size), False)
 
     def on_logic(self):
-        if not self.visible:
+        if not self.visible or not self.parent.status.scroll_hovered:
             return
 
         prev_x = self.handle.relative_rect.x
@@ -133,7 +133,7 @@ class UIHScrollbar(UIElement):
             self.handle.set_relative_pos(
                 (self.handle.relative_rect.x+UIState.mouse_rel[0], 0))
 
-        if UIState.mouse_wheel and UIState.keys_pressed[pygame.K_LCTRL]:
+        if UIState.mouse_wheel and (UIState.keys_pressed[pygame.K_LCTRL] or not self.parent.vscrollbar.visible):
             self.handle.set_relative_pos(
                 (self.handle.relative_rect.x-UIState.mouse_wheel*self.ui_manager.scroll_multiplier, 0))
 

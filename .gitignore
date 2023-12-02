@@ -162,4 +162,3 @@ cython_debug/
 # custom
 .VSCodeCounter/
 .vscode/
-gradestest.py

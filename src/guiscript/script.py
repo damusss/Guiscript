@@ -404,8 +404,11 @@ class UIScriptParser:
             )
         self.advance()
         value = self.parse_property_value()
-        if comp_name == "image" and property_name == "image" and value is not None and isinstance(value, str) and os.path.exists(value):
-            value = pygame.image.load(value).convert_alpha()
+        if comp_name == "image" and property_name == "image" and value is not None and isinstance(value, str):
+            try:
+                value = pygame.image.load(value).convert_alpha()
+            except:
+                raise UIScriptError(f"Could not auto-load surface from path '{value}'"+self.error_suffix())
         if comp_name == "icon" and comp_name == "name" and value is not None and not value in UIIcons.icons and os.path.exists(value):
             path = pathlib.Path(value)
             if path.is_file():

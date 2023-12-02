@@ -41,6 +41,10 @@ class UIRoot:
             (0, 0), screen_surface.get_size())
         self.absolute_rect: pygame.Rect = self.relative_rect.copy()
         return self
+    
+    def set_dirty(self):
+        """[Internal] Empty"""
+        ...
 
     def __enter__(self):
         raise UIError(
@@ -63,11 +67,15 @@ class UIRoot:
     def render(self):
         """[Internal] Called every frame, render children"""
         for child in self.children:
-            child.render()
+            child.render(0, True)
 
     def get_absolute_topleft(self) -> pygame.Vector2:
         """Return an empty pygame.Vector2"""
         return pygame.Vector2(0, 0)
+    
+    def is_stack(self) -> bool:
+        """Always return False"""
+        return False
 
     def can_navigate(self) -> typing.Literal[False]:
         """Return False"""

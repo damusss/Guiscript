@@ -19,6 +19,9 @@ from .script import UIScript
 from .icon import UIIcons
 from .buffer import UIBuffer
 from .tooltip import UITooltips
+from .animation import (
+    UIPropertyAnim
+)
 from .components import (
     UIBackgroundComp, 
     UIShapeComp, 
@@ -116,3 +119,4 @@ from .utils import (
     PosRect as PosR
 )
 from .events import *
+print(f"Guiscript {VERSION}")

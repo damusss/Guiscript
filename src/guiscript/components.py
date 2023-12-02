@@ -82,6 +82,7 @@ class UIImageComp(UIComponent):
     
     def init(self):
         self.image_surf: pygame.Surface = None
+        self.image_rect: pygame.Rect = None
         self.original_surface: pygame.Surface | None = None
         self.set_surface(None)
 
@@ -159,12 +160,12 @@ class UIImageComp(UIComponent):
             mask = pygame.mask.from_surface(mask_surf)
             self.image_surf = mask.to_surface(
                 None, self.image_surf, None, None, (0, 0, 0, 0))
+        self.element.set_dirty()
 
     def render(self):
         original_surface = self.original_surface if self.original_surface else self.element.style.image.image
-        if not original_surface:
+        if not original_surface or not self.image_surf or not self.image_rect:
             return
-
         if not self.element.style.image.enabled and not self.force_visibility:
             return
         self.element.element_surface.blit(self.image_surf, self.image_rect)
@@ -182,6 +183,7 @@ class UIShapeComp(UIComponent):
     def set_custom_rect(self, rect: pygame.Rect | None) -> typing.Self:
         """If the shape type is 'rect', draw the given rect instead of the automated one"""
         self.custom_rect = rect
+        self.element.set_dirty()
         return self
 
     def render(self):
@@ -260,12 +262,28 @@ class UITextComp(UIComponent):
                                                                 style.text.antialas,
                                                                 style.text.color,
                                                                 style.text.bg_color,
-                                                                self.element.relative_rect.w)
+                                                                self.element.relative_rect.w if style.text.do_wrap else 0)
         self.text_rect: pygame.Rect = common.align_text(self.text_surf.get_rect(),
                                                         self.element.static_rect,
                                                         style.text.padding,
                                                         style.text.y_padding,
                                                         style.text.align)
+        if not style.text.do_wrap and style.text.grow_x:
+            self.element.set_size((self.text_surf.get_width()+style.text.padding*2, 
+                                self.element.relative_rect.h if not style.text.grow_y else self.text_surf.get_height()+style.text.y_padding*2))
+        elif style.text.grow_y:
+            self.element.set_size((self.element.relative_rect.w, self.text_surf.get_height()+style.text.y_padding*2))
+        self.element.set_dirty()
+        
+    def minimum_text_height(self, text, max_w: int|None = None) -> float:
+        """Return the minimum height necessary to fit some text with the current style and width, useful for dynamic-sizing text elements. A custom width can be provided as argument"""
+        style = self.element.style.text
+        style.apply_mods()
+        return style.font.render(text,
+                                style.antialas,
+                                style.color,
+                                style.bg_color,
+                                (self.element.relative_rect.w if style.do_wrap else 0) if not max_w else max_w).get_height()+style.y_padding*2
 
     def set_text(self, text) -> typing.Self:
         """Manually set the text. This will not override the style's text.text"""
@@ -285,6 +303,7 @@ class UITextComp(UIComponent):
         """Prevent the user from selecting or copying text on the element"""
         self.can_select = False
         self.selection_rects = []
+        self.element.set_dirty()
         return self
 
 
@@ -324,6 +343,7 @@ class UIIconComp(UIComponent):
                                                         style.icon.padding,
                                                         style.icon.padding,
                                                         style.icon.align)
+        self.element.set_dirty()
 
     def render(self):
         if not self.element.style.icon.enabled and not self.force_visibility:

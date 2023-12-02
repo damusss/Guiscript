@@ -10,7 +10,6 @@ clock = pygame.Clock()
 
 test_surf = pygame.image.load("tests/test.jpg").convert()
 menu_surf = pygame.transform.scale_by(pygame.image.load("tests/menu.png").convert_alpha(), 3)
-player_surf = pygame.transform.scale_by(pygame.image.load("tests/player.png").convert_alpha(), 4)
 
 manager = guis.UIManager(screen, True, ["tests/example.gss"], None, {
     "MENU": menu_surf,
@@ -24,7 +23,7 @@ def on_start_hover(element: guis.UIElement):
 def on_stop_hover(element: guis.UIElement):
     element.animate_wh_to(base, 300, guis.AnimRepeatMode.norepeat, guis.AnimEaseFunc.out_expo)
 
-surfaces = [test_surf, menu_surf, player_surf, test_surf]
+surfaces = [test_surf, menu_surf, test_surf]
 
 v = 0
 

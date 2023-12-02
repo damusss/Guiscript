@@ -6,6 +6,7 @@ if typing.TYPE_CHECKING:
 
 from .enums import AnimPropertyType, AnimRepeatMode, AnimEaseFunc, StyleAnimPropertyType
 from . import common
+from . import events
 
 
 class UIAnimation:
@@ -50,8 +51,11 @@ class UIPropertyAnim(UIAnimation):
         self.duration_ms: float = duration_ms
         if self.duration_ms <= 0:
             self.duration_ms = 1
-        self.start_value: float = getattr(
-            element.relative_rect, self.property_type)
+        if not "render" in property_type:
+            self.start_value: float = getattr(
+                element.relative_rect, self.property_type)
+        else:
+            self.start_value: float = element.render_offset.x if property_type == AnimPropertyType.render_x else element.render_offset.y
         self.current_value: float = 0
         self.started: bool = False
         self.start_time: int = -1
@@ -85,7 +89,19 @@ class UIPropertyAnim(UIAnimation):
             case AnimPropertyType.height:
                 self.element.set_size(
                     (self.element.relative_rect.width, self.start_value+self.current_value*self.increase_dir), True)
+            case AnimPropertyType.render_x:
+                self.element.set_render_offset(
+                    pygame.Vector2(self.start_value+self.current_value*self.increase_dir, self.element.render_offset.y))
+            case AnimPropertyType.render_y:
+                self.element.set_render_offset(
+                    pygame.Vector2(self.element.render_offset.x, self.start_value+self.current_value*self.increase_dir))
         return self
+    
+    def on_finish(self):
+        """[Internal]"""
+        events._post_animation_event(self)
+        self.element.status.invoke_callback("on_animation_end", self)
+        self.element.set_dirty()
 
     def logic(self):
         if not self.started:
@@ -98,11 +114,14 @@ class UIPropertyAnim(UIAnimation):
                 self.current_value = self.end_value
                 match self.repeat_mode:
                     case AnimRepeatMode.norepeat:
+                        self.on_finish()
                         self.started = False
                         self.dead = True
                     case AnimRepeatMode.restart:
+                        self.on_finish()
                         self.start()
                     case AnimRepeatMode.repeat:
+                        self.on_finish()
                         self.direction = -1
                         self.start_time = pygame.time.get_ticks()
         else:
@@ -111,13 +130,16 @@ class UIPropertyAnim(UIAnimation):
                 self.current_value = 0
                 match self.repeat_mode:
                     case AnimRepeatMode.norepeat:
+                        self.on_finish()
                         self.started = False
                         self.direction = 1
                         self.dead = True
                     case AnimRepeatMode.restart:
+                        self.on_finish()
                         self.direction = 1
                         self.start()
                     case AnimRepeatMode.repeat:
+                        self.on_finish()
                         self.direction = 1
                         self.start_time = pygame.time.get_ticks()
 

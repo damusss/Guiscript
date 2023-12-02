@@ -3,7 +3,7 @@ import pygame
 from .element import UIElement
 from ..manager import UIManager
 from .scrollbars import UIVScrollbar, UIHScrollbar
-from ..enums import StackAnchor, ElementAlign
+from ..state import UIState
 
 
 class HStack(UIElement):
@@ -15,19 +15,20 @@ class HStack(UIElement):
                  style_id: str = "default",
                  parent: UIElement | None = None,
                  ui_manager: UIManager | None = None,
+                 scrollbars_style_id: str = "copy"
                  ):
         self.__done = False
         super().__init__(relative_rect, element_id, style_id, ("element", "stack", "hstack"), parent,
                          ui_manager)
         self.scroll_w: int = 1
         self.scroll_h: int = 1
-        self.vscrollbar: UIVScrollbar = UIVScrollbar(self)
-        self.hscrollbar: UIHScrollbar = UIHScrollbar(self)
+        self.vscrollbar: UIVScrollbar = UIVScrollbar(self, scrollbars_style_id)
+        self.hscrollbar: UIHScrollbar = UIHScrollbar(self, scrollbars_style_id)
         self.__done = True
         self.deactivate()
         
-    def first_frame(self):
-        self.refresh_stack()
+    def is_stack(self) -> bool:
+        return True
 
     def refresh_stack(self):
         if not self.ui_manager.running or not self.__done:
@@ -140,19 +141,20 @@ class VStack(UIElement):
                  style_id: str = "default",
                  parent: UIElement | None = None,
                  ui_manager: UIManager | None = None,
+                 scrollbars_style_id: str = "copy"
                  ):
         self.__done = False
         super().__init__(relative_rect, element_id, style_id, ("element", "stack", "vstack"), parent,
                          ui_manager)
         self.scroll_w: int = 1
         self.scroll_h: int = 1
-        self.vscrollbar: UIVScrollbar = UIVScrollbar(self)
-        self.hscrollbar: UIHScrollbar = UIHScrollbar(self)
+        self.vscrollbar: UIVScrollbar = UIVScrollbar(self, scrollbars_style_id)
+        self.hscrollbar: UIHScrollbar = UIHScrollbar(self, scrollbars_style_id)
         self.__done = True
         self.deactivate()
         
-    def first_frame(self):
-        self.refresh_stack()
+    def is_stack(self) -> bool:
+        return True
 
     def refresh_stack(self):
         if not self.ui_manager.running or not self.__done:

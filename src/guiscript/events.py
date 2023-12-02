@@ -1,5 +1,7 @@
 import pygame
-from .elements.element import UIElement
+import typing
+if typing.TYPE_CHECKING:
+    from .elements.element import UIElement
 
 HOVERED = pygame.event.custom_type()
 PRESSED = pygame.event.custom_type()
@@ -38,8 +40,10 @@ DROPMENU_TOGGLE = pygame.event.custom_type()
 SELECTIONLIST_SELECT = pygame.event.custom_type()
 SELECTIONLIST_DESELECT = pygame.event.custom_type()
 
+ANIMATION_END = pygame.event.custom_type()
 
-def _post_base_event(type_: int, element: UIElement):
+
+def _post_base_event(type_: int, element: "UIElement"):
     pygame.event.post(pygame.Event(type_, {
         "id": element.element_id,
         "element_id": element.element_id,
@@ -48,7 +52,7 @@ def _post_base_event(type_: int, element: UIElement):
     }))
 
 
-def _post_slideshow_event(mode: str, element: UIElement):
+def _post_slideshow_event(mode: str, element: "UIElement"):
     pygame.event.post(pygame.Event(
         SLIDESHOW_MOVE_LEFT if mode == "left" else SLIDESHOW_MOVE_RIGHT,
         {
@@ -61,7 +65,7 @@ def _post_slideshow_event(mode: str, element: UIElement):
     ))
 
 
-def _post_slider_event(old: float, new: float, element: UIElement):
+def _post_slider_event(old: float, new: float, element: "UIElement"):
     pygame.event.post(pygame.Event(SLIDER_MOVE, {
         "id": element.element_id,
         "element_id": element.element_id,
@@ -75,7 +79,7 @@ def _post_slider_event(old: float, new: float, element: UIElement):
     }))
 
 
-def _post_sound_player_event(type_: int, element: UIElement):
+def _post_sound_player_event(type_: int, element: "UIElement"):
     pygame.event.post(pygame.Event(type_, {
         "id": element.element_id,
         "element_id": element.element_id,
@@ -91,7 +95,7 @@ def _post_sound_player_event(type_: int, element: UIElement):
     }))
 
 
-def _post_video_player_event(type_: int, element: UIElement):
+def _post_video_player_event(type_: int, element: "UIElement"):
     pygame.event.post(pygame.Event(type_, {
         "id": element.element_id,
         "element_id": element.element_id,
@@ -107,7 +111,7 @@ def _post_video_player_event(type_: int, element: UIElement):
     }))
     
     
-def _post_dropmenu_event(mode: str, element: UIElement):
+def _post_dropmenu_event(mode: str, element: "UIElement"):
     pygame.event.post(pygame.Event(
         DROPMENU_SELECT if mode == "select" else DROPMENU_TOGGLE,
         {
@@ -121,7 +125,7 @@ def _post_dropmenu_event(mode: str, element: UIElement):
         }))
     
 
-def _post_selectionlist_event(mode: str, element: UIElement, option: str):
+def _post_selectionlist_event(mode: str, element: "UIElement", option: str):
     pygame.event.post(pygame.Event(
         SELECTIONLIST_SELECT if mode == "select" else SELECTIONLIST_DESELECT,
         {
@@ -133,3 +137,13 @@ def _post_selectionlist_event(mode: str, element: UIElement, option: str):
             "selected": element.get_selected(),
             "option": option
         }))
+
+
+def _post_animation_event(animation):
+    pygame.event.post(pygame.Event(
+        ANIMATION_END,
+        {
+            "animation": animation,
+            "element": animation.element
+        }
+    ))

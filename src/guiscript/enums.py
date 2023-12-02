@@ -93,6 +93,8 @@ class AnimPropertyType(StrEnum):
     y = "y"
     width = "width"
     height = "height"
+    render_x = "render_x"
+    render_y = "render_y"
 
 
 class AnimRepeatMode(StrEnum):
