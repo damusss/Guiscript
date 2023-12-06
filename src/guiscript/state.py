@@ -9,7 +9,7 @@ class UIState:
     """[Internal] Hold global UI information"""
     current_manager: "Manager" = None
     current_parent: "Element" = None
-    current_style_id: str|None = None
+    current_style_id: str | None = None
 
     delta_time: float = 1
     mouse_wheel: float = 0

@@ -96,7 +96,7 @@ class UIPropertyAnim(UIAnimation):
                 self.element.set_render_offset(
                     pygame.Vector2(self.element.render_offset.x, self.start_value+self.current_value*self.increase_dir))
         return self
-    
+
     def on_finish(self):
         """[Internal]"""
         events._post_animation_event(self)

@@ -26,7 +26,7 @@ class UIRoot:
         """Add a child to the children"""
         self.children.append(element)
         return self
-    
+
     def remove_child(self, element: Element) -> typing.Self:
         """Remove a child from the children, without destroying it"""
         if element in self.children:
@@ -41,7 +41,7 @@ class UIRoot:
             (0, 0), screen_surface.get_size())
         self.absolute_rect: pygame.Rect = self.relative_rect.copy()
         return self
-    
+
     def set_dirty(self):
         """[Internal] Empty"""
         ...
@@ -72,7 +72,7 @@ class UIRoot:
     def get_absolute_topleft(self) -> pygame.Vector2:
         """Return an empty pygame.Vector2"""
         return pygame.Vector2(0, 0)
-    
+
     def is_stack(self) -> bool:
         """Always return False"""
         return False

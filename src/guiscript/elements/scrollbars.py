@@ -19,18 +19,21 @@ class UIScrollbar(Element):
     def refresh(self):
         """[Internal] Refresh the scrollbar size, position and handle when the stack refreshes"""
 
+
 class UIVScrollbar(UIScrollbar):
     """[Internal] Element used for scrolling vertically in a stack"""
 
     def __init__(self, stack: Element, style_id: str):
         super().__init__(stack, style_id, "v")
-        
+
     def refresh(self, scroll_y):
         style = self.parent.style.stack
-        
-        self.set_relative_pos((self.parent.relative_rect.w-style.scrollbar_size, 0))
-        self.set_size((style.scrollbar_size, self.parent.relative_rect.h), False)
-        
+
+        self.set_relative_pos(
+            (self.parent.relative_rect.w-style.scrollbar_size, 0))
+        self.set_size(
+            (style.scrollbar_size, self.parent.relative_rect.h), False)
+
         if not style.scroll_y or style.grow_y:
             self.visible = False
             return
@@ -42,12 +45,14 @@ class UIVScrollbar(UIScrollbar):
                     child.update_absolute_rect_pos()
             self.visible = False
             return
-            
+
         self.visible = True
-        
-        handle_y = (self.relative_rect.h*(self.relative_rect.h-scroll_y))/(self.parent.content_y+0.000001)
-        self.handle.set_size((style.scrollbar_size, min(handle_y, self.relative_rect.h)), False)
-        
+
+        handle_y = (self.relative_rect.h*(self.relative_rect.h -
+                    scroll_y))/(self.parent.content_y+0.000001)
+        self.handle.set_size((style.scrollbar_size, min(
+            handle_y, self.relative_rect.h)), False)
+
     def on_logic(self):
         if not self.visible or not self.parent.status.scroll_hovered:
             return
@@ -81,14 +86,16 @@ class UIHScrollbar(UIScrollbar):
 
     def __init__(self, stack: Element, style_id: str):
         super().__init__(stack, style_id, "h")
-        
+
     def refresh(self, scroll_x):
         style = self.parent.style.stack
-        
+
         x_remove = style.scrollbar_size if self.parent.vscrollbar.visible else 0
-        self.set_relative_pos((0, self.parent.relative_rect.h-style.scrollbar_size))
-        self.set_size((self.parent.relative_rect.w-x_remove, style.scrollbar_size), False)
-        
+        self.set_relative_pos(
+            (0, self.parent.relative_rect.h-style.scrollbar_size))
+        self.set_size((self.parent.relative_rect.w -
+                      x_remove, style.scrollbar_size), False)
+
         if not style.scroll_x or style.grow_x:
             self.visible = False
             return
@@ -101,9 +108,11 @@ class UIHScrollbar(UIScrollbar):
             self.visible = False
             return
         self.visible = True
-        
-        handle_x = (self.relative_rect.w*(self.relative_rect.w-scroll_x))/(self.parent.content_x+0.000001)
-        self.handle.set_size((min(handle_x, self.relative_rect.w), style.scrollbar_size), False)
+
+        handle_x = (self.relative_rect.w*(self.relative_rect.w -
+                    scroll_x))/(self.parent.content_x+0.000001)
+        self.handle.set_size(
+            (min(handle_x, self.relative_rect.w), style.scrollbar_size), False)
 
     def on_logic(self):
         if not self.visible or not self.parent.status.scroll_hovered:
@@ -127,8 +136,10 @@ class UIHScrollbar(UIScrollbar):
 
         if self.handle.relative_rect.x != prev_x:
             x_add = self.parent.style.stack.scrollbar_size if self.parent.vscrollbar.visible and not self.parent.style.stack.floating_scrollbars else 0
-            handle_size = ((self.relative_rect.w+x_add)*self.handle.relative_rect.w)/max(1,self.relative_rect.w)
-            handle_x = ((self.relative_rect.w-handle_size)*self.handle.relative_rect.x)/max(self.relative_rect.w-self.handle.relative_rect.w, 0.0001)
+            handle_size = ((self.relative_rect.w+x_add) *
+                           self.handle.relative_rect.w)/max(1, self.relative_rect.w)
+            handle_x = ((self.relative_rect.w-handle_size)*self.handle.relative_rect.x) / \
+                max(self.relative_rect.w-self.handle.relative_rect.w, 0.0001)
             self.parent.scroll_offset.x = (
                 handle_x*(self.parent.content_x-x_add/2))/self.relative_rect.w
             for child in self.parent.children:

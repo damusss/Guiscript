@@ -60,7 +60,8 @@ class Element:
 
         # str attrs
         self.element_id: str = element_id
-        self.style_id: str = (UIState.current_style_id+";" if UIState.current_style_id is not None else "") + style_id
+        self.style_id: str = (
+            UIState.current_style_id+";" if UIState.current_style_id is not None else "") + style_id
         self.element_types: tuple[str] = element_types
 
         # attrs
@@ -89,7 +90,7 @@ class Element:
         self._last_style: UIStyle = None
         self.style_group: UIStyleGroup = UIStyles.get_style_group(self)
         self.style: UIStyle = self.style_group.style
-        self.masked_surface: pygame.Surface = pygame.Surface((max(1, self.relative_rect.w-self.style.stack.mask_padding*2), 
+        self.masked_surface: pygame.Surface = pygame.Surface((max(1, self.relative_rect.w-self.style.stack.mask_padding*2),
                                                               max(1, self.relative_rect.h-self.style.stack.mask_padding*2)), pygame.SRCALPHA)
 
         # components
@@ -139,7 +140,7 @@ class Element:
     def style_changed(self):
         """Called when the style changes, overridable"""
         ...
-        
+
     def position_changed(self):
         """Called when the position changes, overridable"""
         ...
@@ -178,7 +179,7 @@ class Element:
         if self in self.ui_manager.all_elements:
             self.ui_manager.all_elements.remove(self)
         del self
-        
+
     def destroy_children(self) -> typing.Self:
         """Destroy all children of this element if the children have the 'can_destroy' flag set to True"""
         for child in list(self.children):
@@ -242,13 +243,13 @@ class Element:
 
         self.on_logic()
 
-    def render(self, parent_mask_padding:int = 0, force_render:bool = False):
+    def render(self, parent_mask_padding: int = 0, force_render: bool = False):
         """[Internal] Called every frame to render children and components"""
         if not self.visible or (not self.dirty and not force_render):
             return
         if not self.absolute_rect.colliderect(self.parent.absolute_rect):
             return
-        
+
         if self.dirty:
             mask_padding = self.style.stack.mask_padding
             self.ui_manager.last_rendered = self
@@ -261,18 +262,19 @@ class Element:
                     for child in sorted(self.children, key=lambda el: el.z_index):
                         child.render(mask_padding, True)
                     if mask_padding > 0:
-                        self.element_surface.blit(self.masked_surface, (mask_padding, mask_padding))
+                        self.element_surface.blit(
+                            self.masked_surface, (mask_padding, mask_padding))
                 if comp.enabled:
                     comp.render()
 
             self.on_render()
         if parent_mask_padding <= 0:
-            self.parent.element_surface.blit(self.element_surface, self.relative_rect.topleft-
-                    (self.ui_manager.root.scroll_offset if self.ignore_scroll else self.parent.scroll_offset)+self.render_offset)
+            self.parent.element_surface.blit(self.element_surface, self.relative_rect.topleft -
+                                             (self.ui_manager.root.scroll_offset if self.ignore_scroll else self.parent.scroll_offset)+self.render_offset)
         else:
-            self.parent.masked_surface.blit(self.element_surface, self.relative_rect.topleft-
-                    (pygame.Vector2(parent_mask_padding, parent_mask_padding))-
-                    (self.ui_manager.root.scroll_offset if self.ignore_scroll else self.parent.scroll_offset)+self.render_offset)
+            self.parent.masked_surface.blit(self.element_surface, self.relative_rect.topleft -
+                                            (pygame.Vector2(parent_mask_padding, parent_mask_padding)) -
+                                            (self.ui_manager.root.scroll_offset if self.ignore_scroll else self.parent.scroll_offset)+self.render_offset)
         self.dirty = False
 
     def event(self, event: pygame.Event):
@@ -301,15 +303,15 @@ class Element:
     def get_attr(self, name: str):
         """Retrive a custom element attribute or None if it doesn't exist"""
         return self.attrs.get(name, None)
-    
+
     def has_attr(self, name: str) -> bool:
         """Check if a custom element attribute exists"""
         return name in self.attrs
-    
+
     def is_stack(self) -> bool:
         """Return whether this is a stack element. Useful since properties like scrollbars are only accessible for stacks"""
         return False
-    
+
     def calc_style(self) -> typing.Self:
         """[Internal] Set the current style based on status"""
         style: UIStyle = None
@@ -363,20 +365,21 @@ class Element:
         return count
 
     # set
-    def set_ignore(self, stack: bool|None = None, scroll: bool|None = None, raycast: bool|None = None) -> typing.Self:
+    def set_ignore(self, stack: bool | None = None, scroll: bool | None = None, raycast: bool | None = None) -> typing.Self:
         """Set the 'ignore_stack' and 'ignore_scroll' flags"""
         self.ignore_stack = stack if stack is not None else self.ignore_stack
         self.ignore_scroll = scroll if scroll is not None else self.ignore_scroll
         self.ignore_raycast = raycast if raycast is not None else self.ignore_raycast
         return self
-    
+
     def set_dirty(self, dirty: bool = True) -> typing.Self:
         """Change the dirty flag, usually to True. This will cause the element to re-render"""
-        if dirty == self.dirty: return self
+        if dirty == self.dirty:
+            return self
         self.dirty = dirty
         self.parent.set_dirty()
         return self
-    
+
     def set_can_destroy(self, can_destroy: bool) -> typing.Self:
         """Set the 'can_destroy' flag. If it is False, destroy() won't work"""
         self.can_destroy = can_destroy
@@ -387,12 +390,12 @@ class Element:
         self.z_index = z_index
         self.set_dirty()
         return self
-    
+
     def set_attr(self, name: str, value) -> typing.Self:
         """Set a custom element attribute"""
         self.attrs[name] = value
         return self
-    
+
     def set_attrs(self, **names_values) -> typing.Self:
         """Set multiple custom element attributes using kwargs"""
         for name, val in names_values.items():
@@ -491,30 +494,30 @@ class Element:
         self.parent.add_child(self)
         return self
 
-    def set_tooltip(self, title: str, description: str, width: int = 200, height: int = 200, title_h: int = 40, style_id: str="copy", title_style_id: str = "copy", descr_style_id:str = "copy") -> "Element":
+    def set_tooltip(self, title: str, description: str, width: int = 200, height: int = 200, title_h: int = 40, style_id: str = "copy", title_style_id: str = "copy", descr_style_id: str = "copy") -> "Element":
         """Build a new tooltip object with the provided settings and register it"""
         tooltip_cont = Element(pygame.Rect(0, 0, width, height),
-                                 self.element_id+"tooltip_container",
-                                 common.style_id_or_copy(self, style_id),
-                                 ("element", "tooltip", "tooltip_container"),
-                                 self.ui_manager.root, self.ui_manager).set_z_index(common.Z_INDEXES["tooltip"])
+                               self.element_id+"tooltip_container",
+                               common.style_id_or_copy(self, style_id),
+                               ("element", "tooltip", "tooltip_container"),
+                               self.ui_manager.root, self.ui_manager).set_z_index(common.Z_INDEXES["tooltip"])
         if title:
             Element(pygame.Rect(0, 0, width, title_h),
-                      self.element_id+"tooltip_title",
-                      common.style_id_or_copy(tooltip_cont, title_style_id),
-                      ("element", "tooltip", "label",
-                       "tooltip_label", "tooltip_title"),
-                      tooltip_cont, self.ui_manager).text.set_text(title).element
+                    self.element_id+"tooltip_title",
+                    common.style_id_or_copy(tooltip_cont, title_style_id),
+                    ("element", "tooltip", "label",
+                     "tooltip_label", "tooltip_title"),
+                    tooltip_cont, self.ui_manager).text.set_text(title).element
         Element(pygame.Rect(0, title_h if title else 0, width, height-title_h if title else height),
-                  self.element_id+"tooltip_description",
-                  common.style_id_or_copy(tooltip_cont, descr_style_id),
-                  ("element", "tooltip", "label",
-                   "tooltip_label", "tooltip_description"),
-                  tooltip_cont, self.ui_manager).text.set_text(description).element
+                self.element_id+"tooltip_description",
+                common.style_id_or_copy(tooltip_cont, descr_style_id),
+                ("element", "tooltip", "label",
+                 "tooltip_label", "tooltip_description"),
+                tooltip_cont, self.ui_manager).text.set_text(description).element
         tooltip_cont.hide()
         Tooltips.register(tooltip_cont, self)
         return tooltip_cont
-    
+
     def set_custom_tooltip(self, tooltip: "Element") -> typing.Self:
         """Register a given tooltip object to appear when hovering this element"""
         if tooltip.z_index < common.Z_INDEXES["tooltip"]:
@@ -530,9 +533,9 @@ class Element:
             self.ghost_element = None
         self.set_ignore(stack=True)
         self.ghost_element = Element(relative_rect, self.element_id+"_ghost", "invisible",
-                                       ("element", "ghost"), self.parent, self.ui_manager).set_z_index(common.Z_INDEXES["ghost"])
+                                     ("element", "ghost"), self.parent, self.ui_manager).set_z_index(common.Z_INDEXES["ghost"])
         return self
-    
+
     def set_render_offset(self, render_offset: pygame.Vector2) -> typing.Self:
         """Set the offset where to render element onto the parent"""
         self.render_offset = render_offset
@@ -559,9 +562,9 @@ class Element:
         UIPropertyAnim(self, AnimPropertyType.x, increase,
                        duration_ms, repeat_mode, ease_func_name)
         return self
-    
+
     def animate_offset_x(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
-                  ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
+                         ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the x render offset coordinate"""
         UIPropertyAnim(self, AnimPropertyType.render_x, increase,
                        duration_ms, repeat_mode, ease_func_name)
@@ -573,9 +576,9 @@ class Element:
         UIPropertyAnim(self, AnimPropertyType.y, increase,
                        duration_ms, repeat_mode, ease_func_name)
         return self
-    
+
     def animate_render_y(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
-                  ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
+                         ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the y render offset coordinate"""
         UIPropertyAnim(self, AnimPropertyType.render_y, increase,
                        duration_ms, repeat_mode, ease_func_name)
@@ -589,9 +592,9 @@ class Element:
         UIPropertyAnim(self, AnimPropertyType.y, increase,
                        duration_ms, repeat_mode, ease_func_name)
         return self
-    
+
     def animate_offset_xy(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
-                   ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
+                          ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the x and y render offset coordinates"""
         UIPropertyAnim(self, AnimPropertyType.render_x, increase,
                        duration_ms, repeat_mode, ease_func_name)
@@ -626,9 +629,9 @@ class Element:
                      ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the x coordinate setting the increase relative to the current value and end value"""
         return self.animate_x(value-self.relative_rect.x, duration_ms, repeat_mode, ease_func_name)
-    
+
     def animate_offset_x_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
-                     ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
+                            ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the x render offset coordinate setting the increase relative to the current value and end value"""
         return self.animate_offset_x(value-self.render_offset.x, duration_ms, repeat_mode, ease_func_name)
 
@@ -636,9 +639,9 @@ class Element:
                      ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the y coordinate setting the increase relative to the current value and end value"""
         return self.animate_y(value-self.relative_rect.y, duration_ms, repeat_mode, ease_func_name)
-    
+
     def animate_offset_y_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
-                     ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
+                            ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the y render offset coordinate setting the increase relative to the current value and end value"""
         return self.animate_offset_y(value-self.render_offset.y, duration_ms, repeat_mode, ease_func_name)
 
@@ -650,14 +653,14 @@ class Element:
         self.animate_y(value-self.relative_rect.y, duration_ms,
                        repeat_mode, ease_func_name)
         return self
-    
+
     def animate_offset_xy_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
-                      ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
+                             ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the x and y render offset coordinates setting the increase relative to the current value and end value"""
         self.animate_offset_x(value-self.render_offset.x, duration_ms,
-                       repeat_mode, ease_func_name)
+                              repeat_mode, ease_func_name)
         self.animate_offset_y(value-self.render_offset.y, duration_ms,
-                       repeat_mode, ease_func_name)
+                              repeat_mode, ease_func_name)
         return self
 
     def animate_w_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
@@ -700,10 +703,10 @@ class Element:
         if self.element_surface.get_size() != self.relative_rect.size:
             self.element_surface = pygame.Surface(
                 (max(self.relative_rect.w, 1), max(self.relative_rect.h, 1)), pygame.SRCALPHA)
-            self.masked_surface: pygame.Surface = pygame.Surface((max(1, self.relative_rect.w-self.style.stack.mask_padding*2), 
+            self.masked_surface: pygame.Surface = pygame.Surface((max(1, self.relative_rect.w-self.style.stack.mask_padding*2),
                                                                   max(1, self.relative_rect.h-self.style.stack.mask_padding*2)), pygame.SRCALPHA)
         self.set_dirty()
-        
+
     def update_style(self):
         """[Internal]"""
         self.set_dirty()

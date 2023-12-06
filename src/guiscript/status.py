@@ -10,7 +10,7 @@ class UIStatus:
 
     def __init__(self, element: "Element"):
         self.element: "Element" = element
-        
+
         self.hovered: bool = False
         self.pressed: bool = False
         self.right_pressed: bool = False
@@ -20,7 +20,7 @@ class UIStatus:
 
         self.can_select: bool = False
         self.can_navigate: bool = True
-        
+
         self.hover_start_time: float = 0
         self.press_start_time: float = 0
         self.right_press_start_time: float = 0
@@ -54,7 +54,7 @@ class UIStatus:
         for callback in callbacks:
             self.add_listener(callback_name, callback)
         return self
-    
+
     def add_multi_listeners(self, **names_callbacks: common.StatusCallback) -> typing.Self:
         """Add different callbacks to different callback types provided with kwargs. Callbacks will be called passing the element and the invoker args. If the function takes no arguments the element will not be passed"""
         for name, callback in names_callbacks.items():
@@ -114,19 +114,19 @@ class UIStatus:
         self.selected = False
         self.element.buffers.update("selected", False)
         return self
-    
+
     def get_hover_time(self) -> float:
         """Return the time elapsed since the user started hovering the element. If the element is not hovered, return -1"""
         if not self.hovered:
             return -1
         return pygame.time.get_ticks()-self.hover_start_time
-    
+
     def get_press_time(self) -> float:
         """Return the time elapsed since the user started pressing the element. If the element is not pressed, return -1"""
         if not self.pressed:
             return -1
         return pygame.time.get_ticks()-self.press_start_time
-    
+
     def get_right_press_time(self) -> float:
         """Return the time elapsed since the user started right pressing the element. If the element is not right pressed, return -1"""
         if not self.right_pressed:

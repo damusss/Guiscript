@@ -109,8 +109,8 @@ def _post_video_player_event(type_: int, element: "Element"):
         "time_remaining": element.get_time_remaining(),
         "volume": element.get_volume()
     }))
-    
-    
+
+
 def _post_dropmenu_event(mode: str, element: "Element"):
     pygame.event.post(pygame.Event(
         DROPMENU_SELECT if mode == "select" else DROPMENU_TOGGLE,
@@ -123,7 +123,7 @@ def _post_dropmenu_event(mode: str, element: "Element"):
             "selected_option": element.get_selected(),
             "selected": element.get_selected()
         }))
-    
+
 
 def _post_selectionlist_event(mode: str, element: "Element", option: str):
     pygame.event.post(pygame.Event(

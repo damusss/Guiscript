@@ -75,19 +75,21 @@ class UIInteract:
                     if old_selected:
                         self.pressed_el.status.invoke_callback("on_deselect")
                         self.pressed_el.buffers.update("selected", False)
-                        events._post_base_event(events.DESELECT, self.pressed_el)
+                        events._post_base_event(
+                            events.DESELECT, self.pressed_el)
                     else:
                         self.pressed_el.status.invoke_callback("on_select")
                         self.pressed_el.buffers.update("selected", True)
                         events._post_base_event(events.SELECT, self.pressed_el)
-                    
+
                 # remove pressed el
                 self.pressed_el = None
         # we are pressing with right
         elif self.right_pressed_el is not None:
             # fire when_right_pressed
             self.right_pressed_el.status.invoke_callback("when_right_pressed")
-            events._post_base_event(events.RIGHT_PRESSED, self.right_pressed_el)
+            events._post_base_event(
+                events.RIGHT_PRESSED, self.right_pressed_el)
             # update hover
             self.right_pressed_el.status.hovered = self.right_pressed_el.absolute_rect.collidepoint(
                 UIState.mouse_pos)
@@ -99,8 +101,9 @@ class UIInteract:
                 self.right_pressed_el.status.invoke_callbacks(
                     "on_stop_right_press", "on_right_click")
                 events._post_base_event(events.STOP_RIGHT_PRESS,
-                                 self.right_pressed_el)
-                events._post_base_event(events.RIGHT_CLICK, self.right_pressed_el)
+                                        self.right_pressed_el)
+                events._post_base_event(
+                    events.RIGHT_CLICK, self.right_pressed_el)
                 self.right_pressed_el = None
         else:
             # we aint pressing anything
@@ -133,7 +136,8 @@ class UIInteract:
                     self.hovered_el.status.hovered = True
                     self.hovered_el.status.invoke_callback("on_start_hover")
                     self.hovered_el.status.hover_start_time = pygame.time.get_ticks()
-                    events._post_base_event(events.START_HOVER, self.hovered_el)
+                    events._post_base_event(
+                        events.START_HOVER, self.hovered_el)
                     self.find_scroll_hovered(self.hovered_el)
                 # fire when_hovered
                 self.hovered_el.status.invoke_callback("when_hovered")
@@ -146,7 +150,8 @@ class UIInteract:
                         self.hovered_el.status.invoke_callback(
                             "on_start_press")
                         self.hovered_el.status.press_start_time = pygame.time.get_ticks()
-                        events._post_base_event(events.START_PRESS, self.hovered_el)
+                        events._post_base_event(
+                            events.START_PRESS, self.hovered_el)
                         # set pressed and set pressed el
                         self.pressed_el = self.hovered_el
                         self.text_select_start_press(self.pressed_el)
@@ -180,7 +185,7 @@ class UIInteract:
                 if res and res.visible:
                     return res
             return rev_child
-        
+
         if can_recurse_above:
             return self.raycast(position, start_parent.parent, True)
 
@@ -193,7 +198,7 @@ class UIInteract:
                                                  self.text_select_el.relative_rect.w, self.text_select_el.style.text.font)
                     common.text_select_copy(
                         self.start_idxs[1], self.start_idxs[0], self.last_idxs[1], self.last_idxs[0], lines)
-                    
+
     def find_scroll_hovered(self, element: Element):
         """[Internal] Find a stack that needs to scroll and enables it"""
         if element.is_stack() and (element.vscrollbar.visible or element.hscrollbar.visible):

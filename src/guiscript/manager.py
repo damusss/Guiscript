@@ -36,8 +36,9 @@ class Manager:
                 UIScript.parse_script(gs_path, self.gs_variables)
         if gs_sources is not None:
             for i, gs_source in enumerate(gs_sources):
-                UIScript.parse_source(gs_source, f"gss.source.idx:{i}", self.gs_variables)
-                
+                UIScript.parse_source(gs_source, f"gss.source.idx:{
+                                      i}", self.gs_variables)
+
         self.running: bool = False
         self.all_elements: list[Element] = []
         self.last_rendered: Element = None
@@ -48,12 +49,12 @@ class Manager:
 
         if current:
             self.set_current()
-            
+
     def restart(self) -> typing.Self:
         """Set the running flag to False. Useful when recreating the UI elements tree, to avoid errors"""
         self.running = False
         return self
-            
+
     def set_screen_surface(self, screen_surface: pygame.Surface) -> typing.Self:
         """Set the screen surface to draw on"""
         self.root.set_screen_surface(screen_surface)

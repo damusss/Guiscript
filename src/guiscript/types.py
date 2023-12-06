@@ -6,6 +6,8 @@ from . import interact
 from . import navigation
 from . import status
 from . import buffer
+from .elements import stacks
+from .elements import scrollbars
 from .elements import root
 
 AnimType = animation.UIAnimation
@@ -41,3 +43,8 @@ StyleHolderType = style.UIStyleHolder
 
 StatusType = status.UIStatus
 BuffersType = buffer.Buffers
+
+StackType = stacks.UIStack
+ScrollbarType = scrollbars.UIScrollbar
+VScrollbarType = scrollbars.UIVScrollbar
+HScrollbarType = scrollbars.UIHScrollbar

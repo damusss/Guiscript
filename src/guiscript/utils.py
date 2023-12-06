@@ -56,34 +56,36 @@ def quick_style(style_source: str, gs_variables: dict = None) -> str:
         raise UIError(
             f"Source of quick style should include 'ID' for the style name, that will be later replaced with the actual id (in this case '{ID}')")
     style_source = style_source.replace("ID", ID)
-    UIScript.parse_source(style_source, f"quickstyle.ID:{ID}.gss", gs_variables)
+    UIScript.parse_source(style_source, f"quickstyle.ID:{
+                          ID}.gss", gs_variables)
     return ID
 
 
-def default_style_id(style_id: str|None):
+def set_default_style_id(style_id: str | None):
     """
     Set the default style id for the next elements. NOTE: exiting the DefaultStyleID context manager might override this call
-    
+
     Next elements will add their style id to this default one
     """
     UIState.current_style_id = style_id
-    
-    
+
+
 class DefaultStyleID:
     """
     Context manager to set a default style id for the next elements. Will go back to the previous one on exit
-    
+
     Next elements will add their style id to this default one
     """
+
     def __init__(self, style_id: str):
         self.style_id: str = style_id
-        self.previous_style_id: str|None = UIState.current_style_id
-        
+        self.previous_style_id: str | None = UIState.current_style_id
+
     def __enter__(self, *args):
         self.previous_style_id: str = UIState.current_style_id
         UIState.current_style_id = self.style_id
         return self
-    
+
     def __exit__(self, *args):
         UIState.current_style_id = self.previous_style_id
 

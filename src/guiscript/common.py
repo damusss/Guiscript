@@ -134,7 +134,8 @@ def text_select_rects(start_li: int, start_ci: int, end_li: int, end_ci: int, li
                 if not rel_move or not UIState.mouse_pressed[0]:
                     return rects
                 char = lines[start_li][start_ci]
-                rects.append(pygame.Rect(rect.left+offset+font.size(line[:start_ci])[0], font_h*start_li+rect.top, font.size(char)[0], font_h))
+                rects.append(pygame.Rect(rect.left+offset+font.size(line[:start_ci])[
+                             0], font_h*start_li+rect.top, font.size(char)[0], font_h))
                 return rects
             if start_ci > end_ci:
                 start_ci, end_ci = end_ci, start_ci

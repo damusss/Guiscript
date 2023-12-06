@@ -8,6 +8,7 @@ from .scrollbars import UIVScrollbar, UIHScrollbar
 
 class UIStack(Element):
     """[Internal] Base element for VStack and HStack"""
+
     def __init__(self,
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
@@ -28,11 +29,11 @@ class UIStack(Element):
         self.hscrollbar: UIHScrollbar = UIHScrollbar(self, scrollbars_style_id)
         self._done = True
         self.deactivate()
-        
+
     def is_stack(self) -> bool:
         return True
-    
-    def set_scroll(self, pixels_x:int, pixels_y:int) -> typing.Self:
+
+    def set_scroll(self, pixels_x: int, pixels_y: int) -> typing.Self:
         """Set the scroll offset and update the children position"""
         self.scroll_offset.x = pygame.math.clamp(pixels_x, 0, self.total_x)
         self.scroll_offset.y = pygame.math.clamp(pixels_y, 0, self.total_y)
@@ -41,8 +42,8 @@ class UIStack(Element):
         self.vscrollbar.refresh(self.total_y-self.content_y)
         self.hscrollbar.refresh(self.total_x-self.content_x)
         return self
-    
-    def scroll_to(self, x: float=0, y: float=0) -> typing.Self:
+
+    def scroll_to(self, x: float = 0, y: float = 0) -> typing.Self:
         """Set the scroll offset relative to the content size, where x and y are in range 0-1"""
         self.scroll_offset = pygame.Vector2(self.content_x*x, self.content_y*y)
         for child in self.children:
@@ -65,7 +66,7 @@ class VStack(UIStack):
                  ):
         super().__init__(relative_rect, element_id, style_id, parent,
                          ui_manager, scrollbars_style_id, "v")
-        
+
     def refresh_stack(self):
         if not self.ui_manager.running or not self._done:
             return
@@ -91,18 +92,18 @@ class VStack(UIStack):
 
         total_y += style.stack.padding
         total_x += style.stack.padding * 2
-        
+
         old_total_y = total_y
         if len(children_with_fill_y) > 0 and total_y < self.relative_rect.h:
-            total_y = self.relative_rect.h        
+            total_y = self.relative_rect.h
 
         if (total_x < self.relative_rect.w and style.stack.shrink_x) or \
                 (total_x > self.relative_rect.w and style.stack.grow_x):
             self.set_size((total_x, self.relative_rect.h))
-        
+
         self.content_x = total_x
         self.content_y = total_y
-        
+
         if style.stack.floating_scrollbars:
             scroll_x = scroll_y = 0
             self.vscrollbar.refresh(0)
@@ -120,10 +121,10 @@ class VStack(UIStack):
                 if self.vscrollbar.visible:
                     scroll_x = style.stack.scrollbar_size
                     self.hscrollbar.refresh(scroll_x)
-        
+
         self.total_x = self.content_x+scroll_x
         self.total_y = self.content_y+scroll_y
-        
+
         if len(children_with_fill_y) > 0:
             space_available = self.relative_rect.h-old_total_y-scroll_y
             space_available -= style.stack.spacing * \
@@ -221,7 +222,7 @@ class HStack(UIStack):
 
         total_x += style.stack.padding
         total_y += style.stack.padding * 2
-        
+
         old_total_x = total_x
         if len(children_with_fill_x) > 0 and total_x < self.relative_rect.w:
             total_x = self.relative_rect.w
@@ -232,7 +233,7 @@ class HStack(UIStack):
 
         self.content_x = total_x
         self.content_y = total_y
-        
+
         if style.stack.floating_scrollbars:
             scroll_x = scroll_y = 0
             self.vscrollbar.refresh(0)
@@ -250,10 +251,10 @@ class HStack(UIStack):
                 if self.vscrollbar.visible:
                     scroll_x = style.stack.scrollbar_size
                     self.hscrollbar.refresh(scroll_x)
-        
+
         self.total_x = self.content_x+scroll_x
         self.total_y = self.content_y+scroll_y
-        
+
         if len(children_with_fill_x) > 0:
             space_available = self.relative_rect.w-old_total_x-scroll_x
             space_available -= style.stack.spacing * \

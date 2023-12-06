@@ -65,7 +65,7 @@ class UIComponent:
 
 class UIBackgroundComp(UIComponent):
     """Element component that renders a background"""
-    
+
     def render(self):
         if not self.element.style.bg.enabled and not self.force_visibility:
             return
@@ -78,7 +78,7 @@ class UIBackgroundComp(UIComponent):
 
 class UIImageComp(UIComponent):
     """Element component that renders an image"""
-    
+
     def init(self):
         self.image_surf: pygame.Surface = None
         self.image_rect: pygame.Rect = None
@@ -108,7 +108,8 @@ class UIImageComp(UIComponent):
         original_surface = self.original_surface if self.original_surface else style.image.image
         if not original_surface:
             return
-        original_surface = pygame.transform.scale_by(original_surface, style.image.border_scale)
+        original_surface = pygame.transform.scale_by(
+            original_surface, style.image.border_scale)
 
         iw, ih = original_surface.get_size()
         tw, th = max(self.element.relative_rect.w-style.image.padding*2, 5), \
@@ -175,7 +176,7 @@ class UIImageComp(UIComponent):
 
 class UIShapeComp(UIComponent):
     """Element component that renders a shape"""
-    
+
     def init(self):
         self.custom_rect = None
 
@@ -232,7 +233,7 @@ class UIShapeComp(UIComponent):
 
 class UITextComp(UIComponent):
     """Element component that renders text"""
-    
+
     def init(self):
         self.text: str = None
         self.selection_rects: list[pygame.Rect] = []
@@ -268,21 +269,22 @@ class UITextComp(UIComponent):
                                                         style.text.y_padding,
                                                         style.text.align)
         if not style.text.do_wrap and style.text.grow_x:
-            self.element.set_size((self.text_surf.get_width()+style.text.padding*2, 
-                                self.element.relative_rect.h if not style.text.grow_y else self.text_surf.get_height()+style.text.y_padding*2))
+            self.element.set_size((self.text_surf.get_width()+style.text.padding*2,
+                                   self.element.relative_rect.h if not style.text.grow_y else self.text_surf.get_height()+style.text.y_padding*2))
         elif style.text.grow_y:
-            self.element.set_size((self.element.relative_rect.w, self.text_surf.get_height()+style.text.y_padding*2))
+            self.element.set_size(
+                (self.element.relative_rect.w, self.text_surf.get_height()+style.text.y_padding*2))
         self.element.set_dirty()
-        
-    def minimum_text_height(self, text, max_w: int|None = None) -> float:
+
+    def minimum_text_height(self, text, max_w: int | None = None) -> float:
         """Return the minimum height necessary to fit some text with the current style and width, useful for dynamic-sizing text elements. A custom width can be provided as argument"""
         style = self.element.style.text
         style.apply_mods()
         return style.font.render(text,
-                                style.antialas,
-                                style.color,
-                                style.bg_color,
-                                (self.element.relative_rect.w if style.do_wrap else 0) if not max_w else max_w).get_height()+style.y_padding*2
+                                 style.antialas,
+                                 style.color,
+                                 style.bg_color,
+                                 (self.element.relative_rect.w if style.do_wrap else 0) if not max_w else max_w).get_height()+style.y_padding*2
 
     def set_text(self, text) -> typing.Self:
         """Manually set the text. This will not override the style's text.text"""
@@ -308,7 +310,7 @@ class UITextComp(UIComponent):
 
 class UIIconComp(UIComponent):
     """Element component that renders icon surfaces"""
-    
+
     def init(self):
         self.icon_name = ""
         self.set_icon(None)
@@ -352,7 +354,7 @@ class UIIconComp(UIComponent):
 
 class UIOutlineComp(UIComponent):
     """Element component that renders an outline"""
-    
+
     def render(self):
         style = self.element.style
         if not style.outline.enabled and not self.force_visibility:

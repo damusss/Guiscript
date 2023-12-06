@@ -39,6 +39,7 @@ DONE THINGS
 - drop menu bug
 - quick style
 - scroll hover/refactor/fix
+- renaming
 
 DONE ELEMENTS
 

@@ -58,14 +58,14 @@ class VideoPlayerSettings:
     video_style_id: str = "copy"
     control_style_id: str = "copy"
     sliders_settings: SliderSettings = None
-    
-    
+
+
 @dataclasses.dataclass(slots=True)
 class ProgressBarSettings:
     """Initialization settings for the progress bar element"""
     direction: str = ProgressBarDirection.left_right
     max_value: float = 100
-    
+
 
 @dataclasses.dataclass(slots=True)
 class DropMenuSettings:
@@ -78,7 +78,7 @@ class DropMenuSettings:
     menu_style_id: str = "copy"
     option_style_id: str = "copy"
     inner_buttons_style_id: str = "copy"
-    
+
 
 @dataclasses.dataclass(slots=True)
 class SelectionListSettings:
@@ -86,7 +86,7 @@ class SelectionListSettings:
     option_height: float = 30
     multi_select: bool = False
     option_style_id: str = "copy"
-    
+
 
 SlideshowDefaultSettings = SlideshowSettings()
 SliderDefaultSettings = SliderSettings()
