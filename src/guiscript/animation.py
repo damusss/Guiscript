@@ -1,7 +1,7 @@
 import pygame
 import typing
 if typing.TYPE_CHECKING:
-    from .elements.element import UIElement
+    from .elements.element import Element
     from .style import UIStyle
 
 from .enums import AnimPropertyType, AnimRepeatMode, AnimEaseFunc, StyleAnimPropertyType
@@ -33,7 +33,7 @@ class UIPropertyAnim(UIAnimation):
     """Animation object for element properties"""
 
     def __init__(self,
-                 element: "UIElement",
+                 element: "Element",
                  property_type: AnimPropertyType,
                  increase: float,
                  duration_ms: float,
@@ -41,7 +41,7 @@ class UIPropertyAnim(UIAnimation):
                  ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in,
                  start: bool = True
                  ):
-        self.element: "UIElement" = element
+        self.element: "Element" = element
         self.property_type: AnimPropertyType = property_type
         self.repeat_mode: AnimRepeatMode = repeat_mode
         self.ease_func = common.ANIMATION_FUNCTIONS[ease_func_name]

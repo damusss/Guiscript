@@ -1,10 +1,10 @@
 import typing
 from . import common
 if typing.TYPE_CHECKING:
-    from .elements.element import UIElement
+    from .elements.element import Element
 
 
-class UIBuffer[T]:
+class Buffer[T]:
     """Buffer objects used to sync some properties of elements like the selected status. The on_change call back will be called passing (value, element, name, specific_name) arguments"""
 
     def __init__(self, value: T, on_change: common.StatusCallback = None, specific_name: str = "UnnamedBuffer"):
@@ -13,7 +13,7 @@ class UIBuffer[T]:
         self.name: str = specific_name
         self.specific_name: str = specific_name
 
-    def update(self, value: T, element: "UIElement" = None) -> typing.Self:
+    def update(self, value: T, element: "Element" = None) -> typing.Self:
         """Update the buffer's value and call the on_change callback"""
         if value == self.value:
             return self
@@ -23,20 +23,20 @@ class UIBuffer[T]:
         return self
 
 
-class UIBuffers:
+class Buffers:
     """Keeps bound buffers of an element"""
 
-    def __init__(self, element: "UIElement"):
-        self.element: "UIElement" = element
-        self.buffers: dict[str, UIBuffer] = {}
+    def __init__(self, element: "Element"):
+        self.element: "Element" = element
+        self.buffers: dict[str, Buffer] = {}
 
-    def bind(self, name: str, buffer: UIBuffer, idk) -> typing.Self:
+    def bind(self, name: str, buffer: Buffer, idk) -> typing.Self:
         """Bind a buffer object to a name. The element will sync the buffer value"""
         self.buffers[name] = buffer
         buffer.name = name
         return self
 
-    def get(self, name: str) -> UIBuffer:
+    def get(self, name: str) -> Buffer:
         """Return the buffer object bound to a name"""
         return self.buffers.get(name, None)
 

@@ -1,55 +1,53 @@
 import pygame
 
-from .element import UIElement
+from .element import Element
 from ..state import UIState
 from .. import common
 
 
-class UIVScrollbar(UIElement):
-    """Element used for scrolling vertically in a stack"""
+class UIScrollbar(Element):
+    """[Internal] Base class for UIVScrollbar and UIHScrollbar"""
 
-    def __init__(self, stack: UIElement, style_id: str):
-        super().__init__(pygame.Rect(0, 0, 10, 10), stack.element_id+"_vscrollbar", common.style_id_or_copy(stack, style_id),
-                         ("element", "scrollbar", "vscrollbar"), stack, stack.ui_manager)
-        self.set_ignore(True, True).set_can_destroy(False).deactivate().set_z_index(common.Z_INDEXES["scrollbar"])
-        self.handle: UIElement = UIElement(pygame.Rect(
-            0, 0, 10, 10), self.element_id+"_handle", self.style_id, ("element", "handle", "scrollbar_handle", "vscrollbar_handle"), self, self.ui_manager)
+    def __init__(self, stack: Element, style_id: str, scrollbar_dir_prefix: str):
+        super().__init__(pygame.Rect(0, 0, 10, 10), stack.element_id+f"_{scrollbar_dir_prefix}scrollbar", common.style_id_or_copy(stack, style_id),
+                         ("element", "scrollbar", f"{scrollbar_dir_prefix}scrollbar"), stack, stack.ui_manager)
+        self.set_ignore(True, True).set_can_destroy(
+            False).deactivate().set_z_index(common.Z_INDEXES["scrollbar"])
+        self.handle: Element = Element(pygame.Rect(
+            0, 0, 10, 10), self.element_id+"_handle", self.style_id, ("element", "handle", "scrollbar_handle", f"{scrollbar_dir_prefix}scrollbar_handle"), self, self.ui_manager)
 
-    def is_needed(self, total_h: int, can_scroll: bool, grow_y: bool) -> bool:
-        """[Internal]"""
-        if not can_scroll or grow_y:
-            return False
-        else:
-            if total_h > self.parent.relative_rect.h:
-                return True
-            else:
-                if self.parent.scroll_offset.y != 0:
-                    self.parent.scroll_offset.y = 0
-                    self.handle.set_relative_pos((0, 0))
-                    for child in self.parent.children:
-                        child.update_absolute_rect_pos()
-                return False
+    def refresh(self):
+        """[Internal] Refresh the scrollbar size, position and handle when the stack refreshes"""
 
-    def update_size_position(self, total_h: int, size: int, can_scroll: bool, scroll_y: int, grow_y: bool):
-        """[Internal]"""
-        self.set_relative_pos((self.parent.relative_rect.w-size, 0))
-        self.set_size((size, self.parent.relative_rect.h), False)
-        if not can_scroll or grow_y:
+class UIVScrollbar(UIScrollbar):
+    """[Internal] Element used for scrolling vertically in a stack"""
+
+    def __init__(self, stack: Element, style_id: str):
+        super().__init__(stack, style_id, "v")
+        
+    def refresh(self, scroll_y):
+        style = self.parent.style.stack
+        
+        self.set_relative_pos((self.parent.relative_rect.w-style.scrollbar_size, 0))
+        self.set_size((style.scrollbar_size, self.parent.relative_rect.h), False)
+        
+        if not style.scroll_y or style.grow_y:
             self.visible = False
-        else:
-            if total_h > self.parent.relative_rect.h:
-                self.visible = True
-            else:
-                if self.parent.scroll_offset.y != 0:
-                    self.parent.scroll_offset.y = 0
-                    self.handle.set_relative_pos((0, 0))
-                    for child in self.parent.children:
-                        child.update_absolute_rect_pos()
-                self.visible = False
-        handle_size_y = (self.parent.relative_rect.h *
-                         (self.parent.relative_rect.h-scroll_y))/(total_h+1)
-        self.handle.set_size((size, min(handle_size_y, self.relative_rect.h)), False)
-
+            return
+        if self.parent.total_y <= self.parent.relative_rect.h:
+            if self.parent.scroll_offset.y != 0:
+                self.parent.scroll_offset.y = 0
+                self.handle.set_relative_pos((0, 0))
+                for child in self.parent.children:
+                    child.update_absolute_rect_pos()
+            self.visible = False
+            return
+            
+        self.visible = True
+        
+        handle_y = (self.relative_rect.h*(self.relative_rect.h-scroll_y))/(self.parent.content_y+0.000001)
+        self.handle.set_size((style.scrollbar_size, min(handle_y, self.relative_rect.h)), False)
+        
     def on_logic(self):
         if not self.visible or not self.parent.status.scroll_hovered:
             return
@@ -62,7 +60,7 @@ class UIVScrollbar(UIElement):
 
         if UIState.mouse_wheel and not UIState.keys_pressed[pygame.K_LCTRL]:
             self.handle.set_relative_pos(
-                (0, self.handle.relative_rect.y-UIState.mouse_wheel*self.ui_manager.scroll_multiplier))
+                (0, self.handle.relative_rect.y-(UIState.mouse_wheel*self.ui_manager.scroll_multiplier)))
 
         if self.handle.relative_rect.y < 0:
             self.handle.set_relative_pos((0, 0))
@@ -72,56 +70,40 @@ class UIVScrollbar(UIElement):
 
         if self.handle.relative_rect.y != prev_y:
             self.parent.scroll_offset.y = (
-                self.handle.relative_rect.y*self.parent.scroll_h)/self.relative_rect.h
+                self.handle.relative_rect.y*(self.parent.content_y-self.parent.style.stack.scrollbar_size))/self.relative_rect.h
             for child in self.parent.children:
                 child.update_absolute_rect_pos()
             self.status.invoke_callback("on_move")
 
 
-class UIHScrollbar(UIElement):
+class UIHScrollbar(UIScrollbar):
     """Element used for scrolling horizontally in a stack"""
 
-    def __init__(self, stack: UIElement, style_id: str):
-        super().__init__(pygame.Rect(0, 0, 10, 10), stack.element_id+"_hscrollbar",
-                         common.style_id_or_copy(stack, style_id), ("element", "scrollbar", "hscrollbar"), stack, stack.ui_manager)
-        self.set_ignore(True, True).set_can_destroy(False).deactivate().set_z_index(common.Z_INDEXES["scrollbar"])
-        self.handle: UIElement = UIElement(pygame.Rect(
-            0, 0, 10, 10), self.element_id+"_handle", self.style_id, ("element", "handle", "scrollbar_handle", "hscrollbar_handle"), self, self.ui_manager)
-
-    def is_needed(self, total_w: int, can_scroll: bool, grow_x: bool):
-        """[Internal]"""
-        if not can_scroll or grow_x:
-            return False
-        else:
-            if total_w > self.parent.relative_rect.w:
-                return True
-            else:
-                if self.parent.scroll_offset.x != 0:
-                    self.parent.scroll_offset.x = 0
-                    self.handle.set_relative_pos((0, 0))
-                    for child in self.parent.children:
-                        child.update_absolute_rect_pos()
-                return False
-
-    def update_size_position(self, total_w: int, size: int, can_scroll: bool, scroll_x: int, grow_x: bool):
-        """[Internal]"""
-        self.set_relative_pos((0, self.parent.relative_rect.h-size))
-        self.set_size((self.parent.relative_rect.w-scroll_x, size), False)
-        if not can_scroll or grow_x:
+    def __init__(self, stack: Element, style_id: str):
+        super().__init__(stack, style_id, "h")
+        
+    def refresh(self, scroll_x):
+        style = self.parent.style.stack
+        
+        x_remove = style.scrollbar_size if self.parent.vscrollbar.visible else 0
+        self.set_relative_pos((0, self.parent.relative_rect.h-style.scrollbar_size))
+        self.set_size((self.parent.relative_rect.w-x_remove, style.scrollbar_size), False)
+        
+        if not style.scroll_x or style.grow_x:
             self.visible = False
-        else:
-            if total_w > self.parent.relative_rect.w:
-                self.visible = True
-            else:
-                if self.parent.scroll_offset.x != 0:
-                    self.parent.scroll_offset.x = 0
-                    self.handle.set_relative_pos((0, 0))
-                    for child in self.parent.children:
-                        child.update_absolute_rect_pos()
-                self.visible = False
-        handle_size_x = (self.parent.relative_rect.w *
-                         (self.parent.relative_rect.w-scroll_x*2))/(total_w+1)
-        self.handle.set_size((min(handle_size_x, self.relative_rect.w), size), False)
+            return
+        if self.parent.total_x <= self.parent.relative_rect.w:
+            if self.parent.scroll_offset.x != 0:
+                self.parent.scroll_offset.x = 0
+                self.handle.set_relative_pos((0, 0))
+                for child in self.parent.children:
+                    child.update_absolute_rect_pos()
+            self.visible = False
+            return
+        self.visible = True
+        
+        handle_x = (self.relative_rect.w*(self.relative_rect.w-scroll_x))/(self.parent.content_x+0.000001)
+        self.handle.set_size((min(handle_x, self.relative_rect.w), style.scrollbar_size), False)
 
     def on_logic(self):
         if not self.visible or not self.parent.status.scroll_hovered:
@@ -144,8 +126,11 @@ class UIHScrollbar(UIElement):
                 (self.relative_rect.w-self.handle.relative_rect.w, 0))
 
         if self.handle.relative_rect.x != prev_x:
+            x_add = self.parent.style.stack.scrollbar_size if self.parent.vscrollbar.visible and not self.parent.style.stack.floating_scrollbars else 0
+            handle_size = ((self.relative_rect.w+x_add)*self.handle.relative_rect.w)/max(1,self.relative_rect.w)
+            handle_x = ((self.relative_rect.w-handle_size)*self.handle.relative_rect.x)/max(self.relative_rect.w-self.handle.relative_rect.w, 0.0001)
             self.parent.scroll_offset.x = (
-                self.handle.relative_rect.x*self.parent.scroll_w)/self.relative_rect.w
+                handle_x*(self.parent.content_x-x_add/2))/self.relative_rect.w
             for child in self.parent.children:
                 child.update_absolute_rect_pos()
             self.status.invoke_callback("on_move")

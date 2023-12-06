@@ -5,13 +5,12 @@ from .state import UIState
 from .elements.root import UIRoot
 from .interact import UIInteract
 from .navigation import UINavigation
-from .elements.element import UIElement
+from .elements.element import Element
 from .script import UIScript
-from .style import UIStyles
 from . import common
 
 
-class UIManager:
+class Manager:
     """
     Manager of ui elements bound to it. A UIRoot is created automatically as well as interaction and keyboard navigation
 
@@ -40,8 +39,8 @@ class UIManager:
                 UIScript.parse_source(gs_source, f"gss.source.idx:{i}", self.gs_variables)
                 
         self.running: bool = False
-        self.all_elements: list[UIElement] = []
-        self.last_rendered: UIElement = None
+        self.all_elements: list[Element] = []
+        self.last_rendered: Element = None
         self.interact: UIInteract = UIInteract(self)
         self.navigation: UINavigation = UINavigation(self)
         self.scroll_multiplier: float = 12
@@ -103,19 +102,19 @@ class UIManager:
         """Execute a style script"""
         UIScript.parse_script(filepath, self.gs_variables)
 
-    def get_with_element_id(self, element_id: str) -> UIElement | None:
+    def get_with_element_id(self, element_id: str) -> Element | None:
         """Return the element with the given id"""
         for el in self.all_elements:
             if el.element_id == element_id:
                 return el
 
-    def get_with_style_id(self, style_id: str) -> typing.Generator[UIElement, typing.Any, typing.Any]:
+    def get_with_style_id(self, style_id: str) -> typing.Generator[Element, typing.Any, typing.Any]:
         """Return (as a generator) all elements that match the given style id"""
         for el in self.all_elements:
             if el.style_id == style_id or ";"+style_id+";" in el.style_id or el.style_id.endswith(";"+style_id) or el.style_id.startswith(style_id+";"):
                 yield el
 
-    def get_with_element_type(self, element_type: str) -> typing.Generator[UIElement, typing.Any, typing.Any]:
+    def get_with_element_type(self, element_type: str) -> typing.Generator[Element, typing.Any, typing.Any]:
         """Return (as a generator) all elements that have the given element type"""
         for el in self.all_elements:
             if element_type in el.element_types:

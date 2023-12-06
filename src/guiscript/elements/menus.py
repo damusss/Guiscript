@@ -1,16 +1,17 @@
 import pygame
 import typing
 
-from ..manager import UIManager
-from .element import UIElement
+from ..manager import Manager
+from .element import Element
 from .factories import Button
 from .stacks import VStack
+
 from .. import settings as settings_
-from ..common import style_id_or_copy, Z_INDEXES
-from ..events import _post_dropmenu_event, _post_selectionlist_event
+from .. import common
+from .. import events
 
 
-class DropMenu(UIElement):
+class DropMenu(Element):
     """An element with a menu that can open and closes with options to choose from"""
 
     def __init__(self,
@@ -18,9 +19,9 @@ class DropMenu(UIElement):
                  start_option: str,
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
-                 style_id: str = "default",
-                 parent: UIElement | None = None,
-                 ui_manager: UIManager | None = None,
+                 style_id: str = "",
+                 parent: Element | None = None,
+                 ui_manager: Manager | None = None,
                  settings: settings_.DropMenuSettings = settings_.DropMenuDefaultSettings,
                  ):
         super().__init__(relative_rect, element_id, style_id,
@@ -33,22 +34,22 @@ class DropMenu(UIElement):
         self.option_button: Button = Button(start_option,
                                             pygame.Rect(0, 0, 0, 0),
                                             self.element_id+"_selected_option",
-                                            style_id_or_copy(
+                                            common.style_id_or_copy(
                                                 self, self.settings.inner_buttons_style_id),
                                             False, self, self.ui_manager).status.add_listener("on_click", self.on_arrow_click).element\
             .add_element_types("dropmenu_button", "dropmenu_selected_option")
         self.arrow_button: Button = Button(self.settings.down_arrow_txt if self.settings.direction == "down" else self.settings.up_arrow_txt,
                                            pygame.Rect(0, 0, 0, 0),
                                            self.element_id+"_arrow",
-                                           style_id_or_copy(
+                                           common.style_id_or_copy(
                                                self, self.settings.inner_buttons_style_id),
                                            False, self, self.ui_manager).status.add_listener("on_click", self.on_arrow_click).element\
             .add_element_types("dropmenu_button", "dropmenu_arrow")
         self.menu_cont: VStack = VStack(pygame.Rect(0, 0, 0, 0),
                                         self.element_id+"_menu",
-                                        style_id_or_copy(
+                                        common.style_id_or_copy(
                                             self, self.settings.menu_style_id),
-                                        self.parent, self.ui_manager).set_ignore(stack=True).hide().set_z_index(Z_INDEXES["menu"]).add_element_type("dropmenu_menu")
+                                        self.parent, self.ui_manager).set_ignore(stack=True).hide().set_z_index(common.Z_INDEXES["menu"]).add_element_type("dropmenu_menu")
         self.__done = True
         self.build()
         self.position_changed()
@@ -97,14 +98,14 @@ class DropMenu(UIElement):
         self.select(btn.text.get_active_text())
         self.status.invoke_callback(
             "on_option_select", btn.text.get_active_text())
-        _post_dropmenu_event("select", self)
-        _post_dropmenu_event("toggle", self)
+        events._post_dropmenu_event("select", self)
+        events._post_dropmenu_event("toggle", self)
 
     def on_arrow_click(self):
         """[Internal] Child callback"""
         self.toggle_menu()
         self.status.invoke_callback("on_menu_toggle")
-        _post_dropmenu_event("toggle", self)
+        events._post_dropmenu_event("toggle", self)
 
     def build(self):
         if not self.ui_manager.running:
@@ -125,7 +126,7 @@ class DropMenu(UIElement):
         for i, opt in enumerate(self.options):
             Button(opt, pygame.Rect(0, 0, 0, self.settings.option_height),
                    self.element_id +
-                   f"_option_{i}", style_id_or_copy(
+                   f"_option_{i}", common.style_id_or_copy(
                 self.menu_cont, self.settings.option_style_id),
                 False, self.menu_cont, self.ui_manager).status.add_listener("on_click", self.on_option_click).element.add_element_type("dropmenu_option")
         self.menu_cont.refresh_stack()
@@ -148,9 +149,9 @@ class SelectionList(VStack):
                  options: list[str],
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
-                 style_id: str = "default",
-                 parent: UIElement | None = None,
-                 ui_manager: UIManager | None = None,
+                 style_id: str = "",
+                 parent: Element | None = None,
+                 ui_manager: Manager | None = None,
                  settings: settings_.SelectionListSettings = settings_.SelectionListDefaultSettings,
                  ):
         super().__init__(relative_rect, element_id, style_id, parent, ui_manager)
@@ -202,12 +203,12 @@ class SelectionList(VStack):
                 if opt.text.text != btn.text.text:
                     opt.status.deselect()
         self.status.invoke_callback("on_option_select", btn.text.text)
-        _post_selectionlist_event("select", self, btn.text.text)
+        events._post_selectionlist_event("select", self, btn.text.text)
 
     def on_option_deselect(self, btn: Button):
         """[Internal] Child callback"""
         self.status.invoke_callback("on_option_deselect", btn.text.text)
-        _post_selectionlist_event("deselect", self, btn.text.text)
+        events._post_selectionlist_event("deselect", self, btn.text.text)
 
     def build(self):
         if not self.ui_manager.running:
@@ -216,7 +217,7 @@ class SelectionList(VStack):
         for i, option in enumerate(self.options):
             btn = Button(option, pygame.Rect(0, 0, 0, self.settings.option_height),
                          self.element_id +
-                         f"_option_{i}", style_id_or_copy(
+                         f"_option_{i}", common.style_id_or_copy(
                              self, self.settings.option_style_id),
                          True, self, self.ui_manager).add_element_types("selectionlist_option").\
                 status.add_multi_listeners(

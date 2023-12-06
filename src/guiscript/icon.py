@@ -17,15 +17,15 @@ def _download_add(name: str, url: str, is_async: bool = False):
         warnings.warn(
             f"Request for icon '{name}' at url '{url}' failed with status code", category=UserWarning)
     image = pygame.image.load(io.BytesIO(response.content)).convert_alpha()
-    UIIcons.icons[name] = image
+    Icons.icons[name] = image
     if is_async:
-        if name in UIIcons.adding_async:
-            UIIcons.adding_async.remove(name)
-        for icon_comp in UIIcons.rebuild_async:
+        if name in Icons.adding_async:
+            Icons.adding_async.remove(name)
+        for icon_comp in Icons.rebuild_async:
             icon_comp.build(icon_comp.get_style())
 
 
-class UIIcons:
+class Icons:
     """Icon manager for the icon element component"""
     icons: dict[str, pygame.Surface] = {
         "empty": _empty

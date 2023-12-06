@@ -7,7 +7,7 @@ from enum import StrEnum
 from .style import UIStyles, UIStyleHolder
 from .error import UIScriptError
 from .enums import StyleType, StyleTarget, AnimEaseFunc, StyleAnimPropertyType
-from .icon import UIIcons
+from .icon import Icons
 from . import common
 
 
@@ -409,10 +409,10 @@ class UIScriptParser:
                 value = pygame.image.load(value).convert_alpha()
             except:
                 raise UIScriptError(f"Could not auto-load surface from path '{value}'"+self.error_suffix())
-        if comp_name == "icon" and comp_name == "name" and value is not None and not value in UIIcons.icons and os.path.exists(value):
+        if comp_name == "icon" and comp_name == "name" and value is not None and not value in Icons.icons and os.path.exists(value):
             path = pathlib.Path(value)
             if path.is_file():
-                UIIcons.add(path.name, pygame.image.load(
+                Icons.add(path.name, pygame.image.load(
                     value).convert_alpha())
             value = path.name
         return (False, comp_name, property_name, value)

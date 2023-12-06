@@ -2,25 +2,25 @@ import pygame
 import typing
 import warnings
 
-from .element import UIElement
-from ..manager import UIManager
+from .element import Element
+from ..manager import Manager
 from ..error import UIError
 from ..state import UIState
-from ..events import _post_slideshow_event, _post_slider_event
-from ..common import StatusCallback
+
+from ..import events
 from .. import settings as settings_
 
 
-class ProgressBar(UIElement):
+class ProgressBar(Element):
     """Element with a bar that can progress"""
 
     def __init__(self,
                  value: int,
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
-                 style_id: str = "default",
-                 parent: UIElement | None = None,
-                 ui_manager: UIManager | None = None,
+                 style_id: str = "",
+                 parent: Element | None = None,
+                 ui_manager: Manager | None = None,
                  settings: settings_.ProgressBarSettings = settings_.ProgressBarDefaultSettings,
                  ):
         super().__init__(relative_rect, element_id, style_id,
@@ -75,15 +75,15 @@ class ProgressBar(UIElement):
         self.set_value(self.value)
 
 
-class Slider(UIElement):
+class Slider(Element):
     """Element with a handle that can move"""
 
     def __init__(self,
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
-                 style_id: str = "default",
-                 parent: UIElement | None = None,
-                 ui_manager: UIManager | None = None,
+                 style_id: str = "",
+                 parent: Element | None = None,
+                 ui_manager: Manager | None = None,
                  settings: settings_.SliderSettings = settings_.SliderDefaultSettings,
                  ):
         super().__init__(relative_rect, element_id, style_id,
@@ -92,7 +92,7 @@ class Slider(UIElement):
         if not self.settings.axis in ["horizontal", "vertical"]:
             warnings.warn(
                 f"Slider axis '{self.settings.axis}' is not supported", category=UserWarning)
-        self.bar = UIElement(
+        self.bar = Element(
             (pygame.Rect(0, 0, self.relative_rect.w-self.settings.handle_size*2, self.settings.bar_size)
              if self.settings.axis == "horizontal" else
              pygame.Rect(0, 0, self.settings.bar_size, self.relative_rect.h-self.settings.handle_size*2)),
@@ -103,7 +103,7 @@ class Slider(UIElement):
             self,
             self.ui_manager
         )
-        self.handle = UIElement(
+        self.handle = Element(
             pygame.Rect(0, 0, self.settings.handle_size,
                         self.settings.handle_size),
             self.element_id+"_handle",
@@ -159,7 +159,7 @@ class Slider(UIElement):
                                           self.handle.relative_rect.y))
             val = self.get_value()
             if prev != val:
-                _post_slider_event(prev, val, self)
+                events._post_slider_event(prev, val, self)
                 self.status.invoke_callback("on_move")
                 self.buffers.update("value", val)
         elif self.settings.axis == "vertical" and UIState.mouse_rel[1] != 0:
@@ -170,7 +170,7 @@ class Slider(UIElement):
                                                             self.bar.relative_rect.bottom-self.settings.handle_size//2), ))
             val = self.get_value()
             if prev != val:
-                _post_slider_event(prev, val, self)
+                events._post_slider_event(prev, val, self)
                 self.status.invoke_callback("on_move")
                 self.buffers.update("value", val)
 
@@ -191,7 +191,7 @@ class Slider(UIElement):
         self.set_value(cur_value)
 
 
-class GIF(UIElement):
+class GIF(Element):
     """Element that iterates surfaces quickly"""
 
     def __init__(self,
@@ -199,9 +199,9 @@ class GIF(UIElement):
                  relative_rect: pygame.Rect,
                  frame_speed: float = 0.04,
                  element_id: str = "none",
-                 style_id: str = "default",
-                 parent: UIElement | None = None,
-                 ui_manager: UIManager | None = None,
+                 style_id: str = "",
+                 parent: Element | None = None,
+                 ui_manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id, style_id, ("element", "image", "gif"), parent,
                          ui_manager)
@@ -253,16 +253,16 @@ class GIF(UIElement):
         return self
 
 
-class Slideshow(UIElement):
+class Slideshow(Element):
     """Element that iterates surfaces using control arrow buttons"""
 
     def __init__(self,
                  surfaces: list[pygame.Surface],
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
-                 style_id: str = "default",
-                 parent: UIElement | None = None,
-                 ui_manager: UIManager | None = None,
+                 style_id: str = "",
+                 parent: Element | None = None,
+                 ui_manager: Manager | None = None,
                  settings: settings_.SlideshowSettings = settings_.SlideshowDefaultSettings
                  ):
         super().__init__(relative_rect, element_id, style_id,
@@ -338,13 +338,13 @@ class Slideshow(UIElement):
     def on_right_click(self):
         """[Internal] Child callback"""
         self.move_right()
-        _post_slideshow_event("right", self)
+        events._post_slideshow_event("right", self)
         self.status.invoke_callback("on_move", "right")
 
     def on_left_click(self):
         """[Internal] Child callback"""
         self.move_left()
-        _post_slideshow_event("left", self)
+        events._post_slideshow_event("left", self)
         self.status.invoke_callback("on_move", "left")
 
     def build(self):
@@ -360,16 +360,16 @@ class Slideshow(UIElement):
                                            self.relative_rect.h//2-self.left_arrow.relative_rect.h//2))
 
 
-class Label(UIElement):
+class Label(Element):
     """Inactive element with a shortcut to set the text"""
 
     def __init__(self,
                  text: str,
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
-                 style_id: str = "default",
-                 parent: UIElement | None = None,
-                 ui_manager: UIManager | None = None,
+                 style_id: str = "",
+                 parent: Element | None = None,
+                 ui_manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id,
                          style_id, ("element", "label"), parent, ui_manager)
@@ -382,16 +382,16 @@ class Label(UIElement):
         return self
 
 
-class Icon(UIElement):
+class Icon(Element):
     """Inactive element with a shortcut to set the icon"""
 
     def __init__(self,
                  name: str | None,
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
-                 style_id: str = "default",
-                 parent: UIElement | None = None,
-                 ui_manager: UIManager | None = None,
+                 style_id: str = "",
+                 parent: Element | None = None,
+                 ui_manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id,
                          style_id, ("element", "icon"), parent, ui_manager)
@@ -404,16 +404,16 @@ class Icon(UIElement):
         return self
 
 
-class Image(UIElement):
+class Image(Element):
     """Inactive element with a shortcut to set the image"""
 
     def __init__(self,
                  surface: pygame.Surface,
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
-                 style_id: str = "default",
-                 parent: UIElement | None = None,
-                 ui_manager: UIManager | None = None,
+                 style_id: str = "",
+                 parent: Element | None = None,
+                 ui_manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id,
                          style_id, ("element", "image"), parent, ui_manager)
@@ -426,17 +426,17 @@ class Image(UIElement):
         return self
 
 
-class Button(UIElement):
+class Button(Element):
     """Active element with a shortcut to set the text"""
 
     def __init__(self,
                  text: str,
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
-                 style_id: str = "default",
+                 style_id: str = "",
                  selectable: bool = False,
-                 parent: UIElement | None = None,
-                 ui_manager: UIManager | None = None,
+                 parent: Element | None = None,
+                 ui_manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id, style_id, ("element", "label", "button"), parent,
                          ui_manager)
@@ -449,17 +449,17 @@ class Button(UIElement):
         return self
 
 
-class ImageButton(UIElement):
+class ImageButton(Element):
     """Active element with a shortcut to set the image"""
 
     def __init__(self,
                  surface: pygame.Surface,
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
-                 style_id: str = "default",
+                 style_id: str = "",
                  selectable: bool = False,
-                 parent: UIElement | None = None,
-                 ui_manager: UIManager | None = None,
+                 parent: Element | None = None,
+                 ui_manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id,
                          style_id, ("element", "image", "button", "imagebutton"), parent, ui_manager)
@@ -472,17 +472,17 @@ class ImageButton(UIElement):
         return self
 
 
-class IconButton(UIElement):
+class IconButton(Element):
     """Active element with a shortcut to set the icon"""
 
     def __init__(self,
                  name: str | None,
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
-                 style_id: str = "default",
+                 style_id: str = "",
                  selectable: bool = False,
-                 parent: UIElement | None = None,
-                 ui_manager: UIManager | None = None,
+                 parent: Element | None = None,
+                 ui_manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id,
                          style_id, ("element", "icon", "button", "iconbutton"), parent, ui_manager)
@@ -496,16 +496,16 @@ class IconButton(UIElement):
         return self
 
 
-class Checkbox(UIElement):
+class Checkbox(Element):
     """Selectable element with shortcuts for selection and deselection"""
 
     def __init__(self,
                  relative_rect: pygame.Rect,
                  start_selected: bool = False,
                  element_id: str = "none",
-                 style_id: str = "default",
-                 parent: UIElement | None = None,
-                 ui_manager: UIManager | None = None,
+                 style_id: str = "",
+                 parent: Element | None = None,
+                 ui_manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id, style_id, ("element", "button", "checkbox"), parent,
                          ui_manager)
@@ -535,45 +535,45 @@ class Checkbox(UIElement):
         return self
 
 
-class InvisElement(UIElement):
+class InvisElement(Element):
     """Simple element with default style id 'invisible'"""
 
     def __init__(self,
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
                  style_id: str = "invisible",
-                 parent: UIElement | None = None,
-                 ui_manager: UIManager | None = None,
+                 parent: Element | None = None,
+                 ui_manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id, style_id,
                          ("element", "invisible_element"), parent, ui_manager)
         self.deactivate()
 
 
-class HLine(UIElement):
+class HLine(Element):
     """Simple element with proper default styling to quickly make a horizontal line"""
 
     def __init__(self,
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
                  style_id: str = "fill_x",
-                 parent: UIElement | None = None,
-                 ui_manager: UIManager | None = None,
+                 parent: Element | None = None,
+                 ui_manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id, style_id,
                          ("element", "line", "hline"), parent, ui_manager)
         self.deactivate()
 
 
-class VLine(UIElement):
+class VLine(Element):
     """Simple element with proper default styling to quickly make a vertical line"""
 
     def __init__(self,
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
                  style_id: str = "fill_y",
-                 parent: UIElement | None = None,
-                 ui_manager: UIManager | None = None,
+                 parent: Element | None = None,
+                 ui_manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id, style_id,
                          ("element", "line", "vline"), parent, ui_manager)

@@ -2,12 +2,12 @@ import pygame
 import typing
 import pathlib
 if typing.TYPE_CHECKING:
-    from .elements.element import UIElement
+    from .elements.element import Element
 
-from . import common
-from . import enums
 from .animation import UIStyleAnim
 from .error import UIError
+from . import common
+from . import enums
 
 
 class UICompStyle:
@@ -37,6 +37,7 @@ class UIStackStyle:
         self.shrink_y: bool = False
         self.fill_x: bool = False
         self.fill_y: bool = False
+        self.floating_scrollbars: bool = False
         self.anchor: enums.StackAnchor = enums.StackAnchor.middle
         self.align: enums.ElementAlign = enums.ElementAlign.middle
         self.scrollbar_size: int = 10
@@ -192,13 +193,13 @@ class UIStyle:
         return self
 
     def logic(self):
-        """[Internal] Update animations. Called by UIElement"""
+        """[Internal] Update animations. Called by Element"""
         for anim in self.animations:
             if not anim.completed:
                 anim.logic()
 
     def enter(self):
-        """[Internal] Start animations. Called when the style changes by UIElement"""
+        """[Internal] Start animations. Called when the style changes by Element"""
         for anim in self.animations:
             anim.start()
 
@@ -272,7 +273,7 @@ class UIStyles:
         return cls
 
     @classmethod
-    def get_style_group(cls, element: "UIElement") -> UIStyleGroup:
+    def get_style_group(cls, element: "Element") -> UIStyleGroup:
         """[Internal] Return a new style group for a given element using matching style holders"""
         normal_style, normal_anims = cls.get_style_of_type(element, "normal")
         hover_style, hover_anims = cls.get_style_of_type(element, "hover")
@@ -291,7 +292,7 @@ class UIStyles:
         return group
 
     @classmethod
-    def get_style_of_type(cls, element: "UIElement", type_: enums.StyleType | str) -> tuple[UIStyle, list]:
+    def get_style_of_type(cls, element: "Element", type_: enums.StyleType | str) -> tuple[UIStyle, list]:
         """[Internal] Return a new style for a given element using matching style holders of a given type"""
         match type_:
             case "normal":

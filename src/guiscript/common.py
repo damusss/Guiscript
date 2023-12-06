@@ -2,7 +2,7 @@ import math
 import pygame
 import typing
 if typing.TYPE_CHECKING:
-    from .elements.element import UIElement
+    from .elements.element import Element
 
 from .error import UIError
 from .state import UIState
@@ -10,10 +10,10 @@ from .state import UIState
 Coordinate: typing.TypeAlias = typing.Iterable[float] | pygame.Vector2
 Color: typing.TypeAlias = typing.Iterable[int] | str | pygame.Color
 StatusCallback: typing.TypeAlias = typing.Callable[[
-    "UIElement"], typing.Any] | None
+    "Element"], typing.Any] | None
 
 
-def style_id_or_copy(element: "UIElement", style_id: str) -> str:
+def style_id_or_copy(element: "Element", style_id: str) -> str:
     return element.style_id if style_id == "copy" else style_id
 
 
@@ -532,6 +532,7 @@ tooltip_description:: {
     bg.enabled false;
     outline.enabled false;
     stack.padding 0;
+    stack.floating_scrollbars true;
 }
 
 .invisible:: {
@@ -542,6 +543,7 @@ tooltip_description:: {
     icon.enabled false;
     shape.enabled false;
     stack.padding false;
+    stack.floating_scrollbars true;
 }
 
 .icons_font:: {

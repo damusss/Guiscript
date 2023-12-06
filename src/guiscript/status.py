@@ -2,14 +2,14 @@ import pygame
 import typing
 from . import common
 if typing.TYPE_CHECKING:
-    from .elements.element import UIElement
+    from .elements.element import Element
 
 
 class UIStatus:
     """Hold an element current status and callbacks"""
 
-    def __init__(self, element: "UIElement"):
-        self.element: "UIElement" = element
+    def __init__(self, element: "Element"):
+        self.element: "Element" = element
         
         self.hovered: bool = False
         self.pressed: bool = False

@@ -1,14 +1,14 @@
 import pygame
 import typing
 if typing.TYPE_CHECKING:
-    from ..manager import UIManager
+    from ..manager import Manager
     from .root import UIRoot
 
 from ..state import UIState
 from ..error import UIError
 from ..status import UIStatus
-from ..buffer import UIBuffers
-from ..tooltip import UITooltips
+from ..buffer import Buffers
+from ..tooltip import Tooltips
 from ..animation import UIPropertyAnim
 from ..style import UIStyleGroup, UIStyles, UIStyle
 from ..enums import AnimRepeatMode, AnimEaseFunc, AnimPropertyType
@@ -16,7 +16,7 @@ from .. import components as comps
 from .. import common
 
 
-class UIElement:
+class Element:
     """
     Base class for elements\n
     Use the generator syntax 'with element:...' to set it as the current parent
@@ -32,22 +32,22 @@ class UIElement:
     def __init__(self,
                  relative_rect: pygame.Rect,
                  element_id: str = "none",
-                 style_id: str = "default",
+                 style_id: str = "",
                  element_types: str = ("element",),
-                 parent: "UIElement" = None,
-                 ui_manager: "UIManager" = None,
+                 parent: "Element" = None,
+                 ui_manager: "Manager" = None,
                  ):
 
         # parameters
         self.relative_rect: pygame.Rect = relative_rect
-        self.ui_manager: "UIManager" = ui_manager or UIState.current_manager
+        self.ui_manager: "Manager" = ui_manager or UIState.current_manager
 
         # None checking
         if self.ui_manager is None:
             raise UIError(
                 f"Element ui manager can't be None. Make sure to give a valid ui_manager parameter or set the correct current manager")
 
-        self.parent: UIElement | "UIRoot" = parent or UIState.current_parent or self.ui_manager.root
+        self.parent: Element | "UIRoot" = parent or UIState.current_parent or self.ui_manager.root
         self.ui_manager.all_elements.append(self)
 
         if self.relative_rect is None:
@@ -60,12 +60,12 @@ class UIElement:
 
         # str attrs
         self.element_id: str = element_id
-        self.style_id: str = style_id
+        self.style_id: str = (UIState.current_style_id+";" if UIState.current_style_id is not None else "") + style_id
         self.element_types: tuple[str] = element_types
 
         # attrs
-        self.children: list[UIElement] = []
-        self.ghost_element: UIElement | None = None
+        self.children: list[Element] = []
+        self.ghost_element: Element | None = None
         self.element_surface: pygame.Surface = pygame.Surface(
             self.relative_rect.size, pygame.SRCALPHA)
         self.absolute_rect: pygame.Rect = self.relative_rect.copy()
@@ -83,7 +83,7 @@ class UIElement:
 
         # obj attrs
         self.status: UIStatus = UIStatus(self)
-        self.buffers: UIBuffers = UIBuffers(self)
+        self.buffers: Buffers = Buffers(self)
         self.visible: bool = True
         self.active: bool = True
         self._last_style: UIStyle = None
@@ -149,7 +149,7 @@ class UIElement:
         ...
 
     # children
-    def add_child(self, element: "UIElement") -> typing.Self:
+    def add_child(self, element: "Element") -> typing.Self:
         """[Internal] Add a child element. Automated when creating the child"""
         if element not in self.children:
             self.children.append(element)
@@ -157,7 +157,7 @@ class UIElement:
         self.set_dirty()
         return self
 
-    def remove_child(self, element: "UIElement") -> typing.Self:
+    def remove_child(self, element: "Element") -> typing.Self:
         """Remove a child from the children, without destroying it"""
         if element in self.children:
             self.children.remove(element)
@@ -277,6 +277,8 @@ class UIElement:
 
     def event(self, event: pygame.Event):
         """[Internal] Called for every event"""
+        if not self.visible:
+            return
         for child in self.children:
             child.event(event)
         self.on_event(event)
@@ -332,7 +334,7 @@ class UIElement:
         """Return whether the element can be navigated"""
         return self.status.can_navigate and self.visible
 
-    def find_navigable_child(self) -> "UIElement":
+    def find_navigable_child(self) -> "Element":
         """Find a child that can be navigated between the element's children and their children"""
         if not self.can_navigate():
             return None
@@ -480,7 +482,7 @@ class UIElement:
         self.set_style_group(UIStyles.get_style_group(self))
         return self
 
-    def set_parent(self, parent: "UIElement") -> typing.Self:
+    def set_parent(self, parent: "Element") -> typing.Self:
         """Set the element's parent """
         if parent is self.parent:
             return self
@@ -489,36 +491,36 @@ class UIElement:
         self.parent.add_child(self)
         return self
 
-    def set_tooltip(self, title: str, description: str, width: int = 200, height: int = 200, title_h: int = 40, style_id: str="copy", title_style_id: str = "copy", descr_style_id:str = "copy") -> "UIElement":
+    def set_tooltip(self, title: str, description: str, width: int = 200, height: int = 200, title_h: int = 40, style_id: str="copy", title_style_id: str = "copy", descr_style_id:str = "copy") -> "Element":
         """Build a new tooltip object with the provided settings and register it"""
-        tooltip_cont = UIElement(pygame.Rect(0, 0, width, height),
+        tooltip_cont = Element(pygame.Rect(0, 0, width, height),
                                  self.element_id+"tooltip_container",
                                  common.style_id_or_copy(self, style_id),
                                  ("element", "tooltip", "tooltip_container"),
                                  self.ui_manager.root, self.ui_manager).set_z_index(common.Z_INDEXES["tooltip"])
         if title:
-            UIElement(pygame.Rect(0, 0, width, title_h),
+            Element(pygame.Rect(0, 0, width, title_h),
                       self.element_id+"tooltip_title",
                       common.style_id_or_copy(tooltip_cont, title_style_id),
                       ("element", "tooltip", "label",
                        "tooltip_label", "tooltip_title"),
                       tooltip_cont, self.ui_manager).text.set_text(title).element
-        UIElement(pygame.Rect(0, title_h if title else 0, width, height-title_h if title else height),
+        Element(pygame.Rect(0, title_h if title else 0, width, height-title_h if title else height),
                   self.element_id+"tooltip_description",
                   common.style_id_or_copy(tooltip_cont, descr_style_id),
                   ("element", "tooltip", "label",
                    "tooltip_label", "tooltip_description"),
                   tooltip_cont, self.ui_manager).text.set_text(description).element
         tooltip_cont.hide()
-        UITooltips.register(tooltip_cont, self)
+        Tooltips.register(tooltip_cont, self)
         return tooltip_cont
     
-    def set_custom_tooltip(self, tooltip: "UIElement") -> typing.Self:
+    def set_custom_tooltip(self, tooltip: "Element") -> typing.Self:
         """Register a given tooltip object to appear when hovering this element"""
         if tooltip.z_index < common.Z_INDEXES["tooltip"]:
             tooltip.set_z_index(common.Z_INDEXES["tooltip"])
         tooltip.hide()
-        UITooltips.register(tooltip, self)
+        Tooltips.register(tooltip, self)
         return self
 
     def set_ghost(self, relative_rect: pygame.Rect) -> typing.Self:
@@ -527,7 +529,7 @@ class UIElement:
             self.ghost_element.destroy()
             self.ghost_element = None
         self.set_ignore(stack=True)
-        self.ghost_element = UIElement(relative_rect, self.element_id+"_ghost", "invisible",
+        self.ghost_element = Element(relative_rect, self.element_id+"_ghost", "invisible",
                                        ("element", "ghost"), self.parent, self.ui_manager).set_z_index(common.Z_INDEXES["ghost"])
         return self
     
@@ -690,9 +692,8 @@ class UIElement:
         """[Internal]"""
         self.absolute_rect.size = self.relative_rect.size
         self.static_rect.size = self.relative_rect.size
-        if propagate_up:
+        if propagate_up and not self.ignore_stack:
             self.parent.refresh_stack()
-        #self.refresh_stack()
 
     def update_surface_size(self):
         """[Internal]"""
@@ -710,7 +711,8 @@ class UIElement:
         self.size_changed()
         self.style_changed()
         self.build()
-        self.parent.refresh_stack()
+        if not self.ignore_stack:
+            self.parent.refresh_stack()
         for comp in self.components:
             comp.build(self.style)
         self.style.enter()

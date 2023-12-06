@@ -1,33 +1,33 @@
 import pygame
 import typing
 if typing.TYPE_CHECKING:
-    from .manager import UIManager
+    from .manager import Manager
 
 from .state import UIState
-from .elements.element import UIElement
-from .events import _post_base_event
+from .elements.element import Element
+from . import events
 from . import common
 from . import events
 
 
 class UIInteract:
-    """Update the status of the elements bound to a UIManager"""
+    """Update the status of the elements bound to a Manager"""
 
-    def __init__(self, ui_manager: "UIManager"):
+    def __init__(self, ui_manager: "Manager"):
         pygame.scrap.init()
-        self.ui_manager: "UIManager" = ui_manager
+        self.ui_manager: "Manager" = ui_manager
 
-        self.hovered_el: UIElement = None
-        self.pressed_el: UIElement = None
-        self.right_pressed_el: UIElement = None
-        self.last_scroll_hovered: UIElement = None
+        self.hovered_el: Element = None
+        self.pressed_el: Element = None
+        self.right_pressed_el: Element = None
+        self.last_scroll_hovered: Element = None
 
         self.start_idxs: list[int] = None
         self.last_idxs: list[int] = None
-        self.text_select_el: UIElement = None
+        self.text_select_el: Element = None
 
     def logic(self):
-        """[Internal] Main update function called by the UIManager"""
+        """[Internal] Main update function called by the Manager"""
         if self.ui_manager.last_rendered is None:
             return
 
@@ -53,7 +53,7 @@ class UIInteract:
         if self.pressed_el is not None:
             # fire when_pressed
             self.pressed_el.status.invoke_callback("when_pressed")
-            _post_base_event(events.PRESSED, self.pressed_el)
+            events._post_base_event(events.PRESSED, self.pressed_el)
             # update hover
             self.pressed_el.status.hovered = self.pressed_el.absolute_rect.collidepoint(
                 UIState.mouse_pos)
@@ -64,8 +64,8 @@ class UIInteract:
                 # fire on_stop_press
                 self.pressed_el.status.invoke_callbacks(
                     "on_stop_press", "on_click")
-                _post_base_event(events.STOP_PRESS, self.pressed_el)
-                _post_base_event(events.CLICK, self.pressed_el)
+                events._post_base_event(events.STOP_PRESS, self.pressed_el)
+                events._post_base_event(events.CLICK, self.pressed_el)
                 # update selection
                 if self.pressed_el.status.can_select:
                     # toggle selection
@@ -75,11 +75,11 @@ class UIInteract:
                     if old_selected:
                         self.pressed_el.status.invoke_callback("on_deselect")
                         self.pressed_el.buffers.update("selected", False)
-                        _post_base_event(events.DESELECT, self.pressed_el)
+                        events._post_base_event(events.DESELECT, self.pressed_el)
                     else:
                         self.pressed_el.status.invoke_callback("on_select")
                         self.pressed_el.buffers.update("selected", True)
-                        _post_base_event(events.SELECT, self.pressed_el)
+                        events._post_base_event(events.SELECT, self.pressed_el)
                     
                 # remove pressed el
                 self.pressed_el = None
@@ -87,7 +87,7 @@ class UIInteract:
         elif self.right_pressed_el is not None:
             # fire when_right_pressed
             self.right_pressed_el.status.invoke_callback("when_right_pressed")
-            _post_base_event(events.RIGHT_PRESSED, self.right_pressed_el)
+            events._post_base_event(events.RIGHT_PRESSED, self.right_pressed_el)
             # update hover
             self.right_pressed_el.status.hovered = self.right_pressed_el.absolute_rect.collidepoint(
                 UIState.mouse_pos)
@@ -98,9 +98,9 @@ class UIInteract:
                 # fire on_stop_right_press
                 self.right_pressed_el.status.invoke_callbacks(
                     "on_stop_right_press", "on_right_click")
-                _post_base_event(events.STOP_RIGHT_PRESS,
+                events._post_base_event(events.STOP_RIGHT_PRESS,
                                  self.right_pressed_el)
-                _post_base_event(events.RIGHT_CLICK, self.right_pressed_el)
+                events._post_base_event(events.RIGHT_CLICK, self.right_pressed_el)
                 self.right_pressed_el = None
         else:
             # we aint pressing anything
@@ -115,7 +115,7 @@ class UIInteract:
                 # if we changed hover, fire on_stop_hover
                 if old is not self.hovered_el:
                     old.status.invoke_callback("on_stop_hover")
-                    _post_base_event(events.STOP_HOVER, old)
+                    events._post_base_event(events.STOP_HOVER, old)
                     if self.last_scroll_hovered is not None:
                         self.last_scroll_hovered.status.scroll_hovered = False
                         self.last_scroll_hovered = None
@@ -133,11 +133,11 @@ class UIInteract:
                     self.hovered_el.status.hovered = True
                     self.hovered_el.status.invoke_callback("on_start_hover")
                     self.hovered_el.status.hover_start_time = pygame.time.get_ticks()
-                    _post_base_event(events.START_HOVER, self.hovered_el)
+                    events._post_base_event(events.START_HOVER, self.hovered_el)
                     self.find_scroll_hovered(self.hovered_el)
                 # fire when_hovered
                 self.hovered_el.status.invoke_callback("when_hovered")
-                _post_base_event(events.HOVERED, self.hovered_el)
+                events._post_base_event(events.HOVERED, self.hovered_el)
                 # we start pressing left
                 if UIState.mouse_pressed[0] or (UIState.space_pressed and self.ui_manager.navigation.tabbed_element is self.hovered_el):
                     if not self.hovered_el.status.pressed:
@@ -146,7 +146,7 @@ class UIInteract:
                         self.hovered_el.status.invoke_callback(
                             "on_start_press")
                         self.hovered_el.status.press_start_time = pygame.time.get_ticks()
-                        _post_base_event(events.START_PRESS, self.hovered_el)
+                        events._post_base_event(events.START_PRESS, self.hovered_el)
                         # set pressed and set pressed el
                         self.pressed_el = self.hovered_el
                         self.text_select_start_press(self.pressed_el)
@@ -158,12 +158,12 @@ class UIInteract:
                         self.hovered_el.status.invoke_callback(
                             "on_start_right_press")
                         self.hovered_el.status.right_press_start_time = pygame.time.get_ticks()
-                        _post_base_event(
+                        events._post_base_event(
                             events.START_RIGHT_PRESS, self.hovered_el)
                         # set right pressed and set right pressed el
                         self.right_pressed_el = self.hovered_el
 
-    def raycast(self, position: common.Coordinate, start_parent: UIElement, can_recurse_above=False) -> UIElement | None:
+    def raycast(self, position: common.Coordinate, start_parent: Element, can_recurse_above=False) -> Element | None:
         """Find the hovered element at a certain position. Extra arguments are used for recursion. Keyboard navigated elements have priority"""
         if self.ui_manager.navigation.tabbed_element is not None:
             return self.ui_manager.navigation.tabbed_element
@@ -194,7 +194,7 @@ class UIInteract:
                     common.text_select_copy(
                         self.start_idxs[1], self.start_idxs[0], self.last_idxs[1], self.last_idxs[0], lines)
                     
-    def find_scroll_hovered(self, element: UIElement):
+    def find_scroll_hovered(self, element: Element):
         """[Internal] Find a stack that needs to scroll and enables it"""
         if element.is_stack() and (element.vscrollbar.visible or element.hscrollbar.visible):
             element.status.scroll_hovered = True
@@ -203,7 +203,7 @@ class UIInteract:
         if element.parent is not None:
             self.find_scroll_hovered(element.parent)
 
-    def text_select_start_press(self, element: UIElement):
+    def text_select_start_press(self, element: Element):
         """[Internal] Start selecting text on an element"""
         if not element.text.can_select:
             return

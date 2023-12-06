@@ -1,19 +1,19 @@
 import pygame
 import typing
 if typing.TYPE_CHECKING:
-    from .manager import UIManager
+    from .manager import Manager
 
-from .elements.element import UIElement
+from .elements.element import Element
 
 
 class UINavigation:
-    """Keyboard navigation manager bound to a UIManager"""
+    """Keyboard navigation manager bound to a Manager"""
 
-    def __init__(self, ui_manager: "UIManager"):
-        self.ui_manager: "UIManager" = ui_manager
+    def __init__(self, ui_manager: "Manager"):
+        self.ui_manager: "Manager" = ui_manager
 
         self.enabled: bool = True
-        self.tabbed_element: UIElement | None = None
+        self.tabbed_element: Element | None = None
 
     def enable(self) -> typing.Self:
         """Enable keyboard navigation"""
@@ -26,7 +26,7 @@ class UINavigation:
         return self
 
     def event(self, event: pygame.Event):
-        """[Internal] Navigate using key events. Called by UIManager"""
+        """[Internal] Navigate using key events. Called by Manager"""
         if not event.type == pygame.KEYDOWN:
             return
 

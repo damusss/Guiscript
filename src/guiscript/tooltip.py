@@ -1,16 +1,16 @@
 import pygame
 import typing
 if typing.TYPE_CHECKING:
-    from .elements.element import UIElement
+    from .elements.element import Element
 
 from .state import UIState
 
 
-class UITooltips:
-    """Tooltip Manager. Updated by static_logic, automatically set up by UIElement.set_tooltip"""
+class Tooltips:
+    """Tooltip Manager. Updated by static_logic, automatically set up by Element.set_tooltip"""
     hover_time: float = 1200
     tooltips: list[dict[str]] = []
-    active_tooltip: "UIElement" = None
+    active_tooltip: "Element" = None
 
     @classmethod
     def set_hover_time(cls, hover_time_ms: float) -> typing.Self:
@@ -19,8 +19,8 @@ class UITooltips:
         return cls
 
     @classmethod
-    def register(cls, tooltip: "UIElement", element: "UIElement") -> typing.Self:
-        """Register a tooltip and an element for the tooltip to appear on prolungated hover. Automated by UIElement.set_tooltip"""
+    def register(cls, tooltip: "Element", element: "Element") -> typing.Self:
+        """Register a tooltip and an element for the tooltip to appear on prolungated hover. Automated by Element.set_tooltip"""
         already = False
         for tt_data in list(cls.tooltips):
             if tt_data["el"] is element:
@@ -72,7 +72,7 @@ class UITooltips:
                     tt_data["start_hover_time"] = pygame.time.get_ticks()
                 if pygame.time.get_ticks()-tt_data["start_hover_time"] >= cls.hover_time:
                     cls.active_tooltip.show()
-            tt: "UIElement" = tt_data["tt"]
+            tt: "Element" = tt_data["tt"]
             px, py = UIState.mouse_pos.x, UIState.mouse_pos.y+10
             win_size = pygame.display.get_window_size()
             if px+tt.relative_rect.w > win_size[0]:

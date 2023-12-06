@@ -1,20 +1,19 @@
 import pygame
 import typing
 if typing.TYPE_CHECKING:
-    from .elements.element import UIElement
+    from .elements.element import Element
 
 from .style import UIStyleGroup, UIStyle
 from .error import UIError
-from .icon import UIIcons
-from .state import UIState
+from .icon import Icons
 from . import common
 
 
 class UIComponent:
     """Base class for element components"""
 
-    def __init__(self, element: "UIElement", style_change_callback=None):
-        self.element: "UIElement" = element
+    def __init__(self, element: "Element", style_change_callback=None):
+        self.element: "Element" = element
         self.enabled: bool = True
         self.force_visibility: bool = False
         self.style_group: UIStyleGroup = self.element.style_group
@@ -320,7 +319,7 @@ class UIIconComp(UIComponent):
 
     def get_icon_surface(self) -> pygame.Surface:
         """Return the icon surface the component is rendering before scaling it"""
-        return UIIcons.get(self.icon_name or self.element.style.icon.name)
+        return Icons.get(self.icon_name or self.element.style.icon.name)
 
     def get_active_surface(self) -> pygame.Surface:
         """Return the icon surface the component is blitting"""
@@ -337,7 +336,7 @@ class UIIconComp(UIComponent):
     def build(self, style: UIStyle):
         icon_name = self.icon_name or style.icon.name
         self.icon_surf: pygame.Surface = pygame.transform.scale_by(
-            UIIcons.get(icon_name, self), style.icon.scale)
+            Icons.get(icon_name, self), style.icon.scale)
         self.icon_rect: pygame.Rect = common.align_text(self.icon_surf.get_rect(),
                                                         self.element.static_rect,
                                                         style.icon.padding,

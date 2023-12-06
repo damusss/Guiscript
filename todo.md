@@ -1,6 +1,6 @@
 THINGS
 
-- scroll hover/refactor/fix
+...
 
 ELEMENTS
 
@@ -37,7 +37,8 @@ DONE THINGS
 - style animations
 - docstrings
 - drop menu bug
-- scrollbar scroll lock bug
+- quick style
+- scroll hover/refactor/fix
 
 DONE ELEMENTS
 

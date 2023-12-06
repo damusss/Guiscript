@@ -12,37 +12,11 @@ import pygame
 from pygame import Rect as rect
 pygame.init()
 
-from .elements.element import UIElement
-from .manager import UIManager
-from .elements.root import UIRoot
-from .script import UIScript
-from .icon import UIIcons
-from .buffer import UIBuffer
-from .tooltip import UITooltips
-from .animation import (
-    UIPropertyAnim
-)
-from .components import (
-    UIBackgroundComp, 
-    UIShapeComp, 
-    UITextComp, 
-    UIOutlineComp, 
-    UIComponent
-)
-from .error import (
-    UIError, 
-    UIScriptError
-)
-from .style import (
-    UICompStyle,
-    UIBGStyle,
-    UIImageStyle,
-    UIShapeStyle,
-    UITextStyle,
-    UIOutlineStyle,
-    UIStyle,
-    UIStyleGroup
-)
+from .elements.element import Element
+from .manager import Manager
+from .icon import Icons
+from .buffer import Buffer
+from .tooltip import Tooltips
 from .enums import (
     TextAlign, 
     FontAlign, 
@@ -106,17 +80,49 @@ from .settings import (
 )
 from .utils import (
     VERSION,
-    element,
     static_logic,
     ZeroRect,
     SizeRect,
     PosRect,
+    quick_style,
+    default_style_id,
+    DefaultStyleID,
     help_element_types,
     help_style_script,
     help_z_index,
     ZeroRect as ZeroR,
     SizeRect as SizeR,
     PosRect as PosR
+)
+from .types import (
+    AnimType,
+    StyleAnimType,
+    PropertyAnimType,
+    ErrorType,
+    ScriptErrorType,
+    RootType,
+    InteractType,
+    NavigationType,
+    CompType,
+    BGCompType,
+    ImageCompType,
+    ShapeCompType,
+    TextCompType,
+    IconCompType,
+    OutlineCompType,
+    CompStyleType,
+    StackStyleType,
+    BGStyleType,
+    ImageStyleType,
+    ShapeStyleType,
+    TextStyleType,
+    IconStyleType,
+    OutlineStyleType,
+    StyleObjType,
+    StyleGroupType,
+    StyleHolderType,
+    StatusType,
+    BuffersType
 )
 from .events import *
 print(f"Guiscript {VERSION}")
