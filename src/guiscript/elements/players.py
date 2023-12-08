@@ -88,11 +88,11 @@ class SoundPlayer(HStack):
         self.volume_slider.add_element_types(
             "soundplayer_slider", "soundplayer_volume_slider")
         self.play_button.status.add_listener(
-            "on_stop_press", self.on_play_click)
+            "on_stop_press", self._on_play_click)
         self.volume_button.status.add_listener(
-            "on_stop_press", self.on_volume_click)
-        self.track_slider.status.add_listener("on_move", self.on_track_move)
-        self.volume_slider.status.add_listener("on_move", self.on_volume_move)
+            "on_stop_press", self._on_volume_click)
+        self.track_slider.status.add_listener("on_move", self._on_track_move)
+        self.volume_slider.status.add_listener("on_move", self._on_volume_move)
 
         self.status.register_callbacks(
             "on_toggle", "on_mute", "on_volume_move", "on_track_move")
@@ -183,8 +183,7 @@ class SoundPlayer(HStack):
         """Return how much time is left until the sound stops"""
         return self.duration-self.get_time_passed()
 
-    def on_play_click(self, btn):
-        """[Internal] Child callback"""
+    def _on_play_click(self, btn):
         if not self.playing and not self.paused:
             self.play()
         elif not self.playing and self.paused:
@@ -194,8 +193,7 @@ class SoundPlayer(HStack):
         events._post_sound_player_event(events.SOUND_PLAYER_TOGGLE, self)
         self.status.invoke_callback("on_toggle")
 
-    def on_volume_click(self, btn):
-        """[Internal] Child callback"""
+    def _on_volume_click(self, btn):
         if self.muted:
             self.unmute()
         else:
@@ -203,8 +201,7 @@ class SoundPlayer(HStack):
         events._post_sound_player_event(events.SOUND_PLAYER_MUTE, self)
         self.status.invoke_callback("on_mute")
 
-    def on_track_move(self, slider):
-        """[Internal] Child callback"""
+    def _on_track_move(self, slider):
         was_paused = not self.playing or self.paused
         self.stop(self.duration*self.track_slider.get_value())
         self.play()
@@ -213,8 +210,7 @@ class SoundPlayer(HStack):
         events._post_sound_player_event(events.SOUND_PLAYER_TRACK_MOVE, self)
         self.status.invoke_callback("on_track_move")
 
-    def on_volume_move(self, slider):
-        """[Internal] Child callback"""
+    def _on_volume_move(self, slider):
         self.media_player.set_volume(self.get_volume())
         events._post_sound_player_event(events.SOUND_PLAYER_VOLUME_MOVE, self)
         self.status.invoke_callback("on_volume_move")
@@ -355,11 +351,11 @@ class VideoPlayer(Element):
         self.volume_slider.add_element_types(
             "videoplayer_slider", "videoplayer_volume_slider")
         self.play_button.status.add_listener(
-            "on_stop_press", self.on_play_click)
+            "on_stop_press", self._on_play_click)
         self.volume_button.status.add_listener(
-            "on_stop_press", self.on_volume_click)
-        self.track_slider.status.add_listener("on_move", self.on_track_move)
-        self.volume_slider.status.add_listener("on_move", self.on_volume_move)
+            "on_stop_press", self._on_volume_click)
+        self.track_slider.status.add_listener("on_move", self._on_track_move)
+        self.volume_slider.status.add_listener("on_move", self._on_volume_move)
 
         self.status.register_callbacks(
             "on_toggle", "on_mute", "on_volume_move", "on_track_move")
@@ -466,8 +462,7 @@ class VideoPlayer(Element):
         """Return how much time is left until the sound stops"""
         return self.duration-self.get_time_passed()
 
-    def on_play_click(self):
-        """[Internal] Child callback"""
+    def _on_play_click(self):
         if not self.playing and not self.paused:
             self.play()
         elif not self.playing and self.paused:
@@ -477,8 +472,7 @@ class VideoPlayer(Element):
         events._post_video_player_event(events.VIDEO_PLAYER_TOGGLE, self)
         self.status.invoke_callback("on_toggle")
 
-    def on_volume_click(self):
-        """[Internal] Child callback"""
+    def _on_volume_click(self):
         if self.muted:
             self.unmute()
         else:
@@ -486,8 +480,7 @@ class VideoPlayer(Element):
         events._post_video_player_event(events.VIDEO_PLAYER_MUTE, self)
         self.status.invoke_callback("on_mute")
 
-    def on_track_move(self):
-        """[Internal] Child callback"""
+    def _on_track_move(self):
         was_paused = not self.playing or self.paused
         self.stop(self.duration*self.track_slider.get_value())
         success, frame = self.video_player.read()
@@ -503,8 +496,7 @@ class VideoPlayer(Element):
         events._post_video_player_event(events.VIDEO_PLAYER_TRACK_MOVE, self)
         self.status.invoke_callback("on_track_move")
 
-    def on_volume_move(self):
-        """[Internal] Child callback"""
+    def _on_volume_move(self):
         self.media_player.set_volume(self.get_volume())
         events._post_video_player_event(events.VIDEO_PLAYER_VOLUME_MOVE, self)
         self.status.invoke_callback("on_volume_move")

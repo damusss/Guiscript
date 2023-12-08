@@ -80,7 +80,7 @@ class Element:
         self.scroll_offset: pygame.Vector2 = pygame.Vector2()
         self.render_offset: pygame.Vector2 = pygame.Vector2()
         self.attrs: dict[str] = {}
-        self.update_absolute_rect_pos()
+        self._update_absolute_rect_pos()
 
         # obj attrs
         self.status: UIStatus = UIStatus(self)
@@ -109,7 +109,7 @@ class Element:
         )
 
         # setup
-        self.parent.add_child(self)
+        self.parent._add_child(self)
         self.init()
 
     # override
@@ -129,7 +129,7 @@ class Element:
         """Called on 'event', overridable"""
         ...
 
-    def refresh_stack(self):
+    def _refresh_stack(self):
         """Used by the stack to organize children, overridable"""
         ...
 
@@ -150,11 +150,10 @@ class Element:
         ...
 
     # children
-    def add_child(self, element: "Element") -> typing.Self:
-        """[Internal] Add a child element. Automated when creating the child"""
+    def _add_child(self, element: "Element") -> typing.Self:
         if element not in self.children:
             self.children.append(element)
-        self.refresh_stack()
+        self._refresh_stack()
         self.set_dirty()
         return self
 
@@ -162,7 +161,7 @@ class Element:
         """Remove a child from the children, without destroying it"""
         if element in self.children:
             self.children.remove(element)
-        self.refresh_stack()
+        self._refresh_stack()
         self.set_dirty()
         return self
 
@@ -202,7 +201,7 @@ class Element:
         """Set the visible flag to True, refresh the stack"""
         self.visible = True
         if not self.ignore_stack:
-            self.parent.refresh_stack()
+            self.parent._refresh_stack()
         self.set_dirty()
         return self
 
@@ -212,39 +211,36 @@ class Element:
         if self is self.ui_manager.navigation.tabbed_element:
             self.ui_manager.navigation.stop_navigating()
         if not self.ignore_stack:
-            self.parent.refresh_stack()
+            self.parent._refresh_stack()
         self.set_dirty()
         return self
 
     # runtime
-    def first_frame(self):
-        """[Internal] called on the first frame, refresh the stack"""
-        self.refresh_stack()
+    def _first_frame(self):
+        self._refresh_stack()
         self.build()
         self.position_changed()
         self.status.invoke_callback("on_first_frame")
 
-    def logic(self):
-        """[Internal] Called every frame to update children, style and ghost"""
+    def _logic(self):
         if not self.visible:
             return
         if self.ghost_element is not None:
             self.set_relative_pos((self.ghost_element.relative_rect.centerx-self.relative_rect.w //
                                   2, self.ghost_element.relative_rect.centery-self.relative_rect.h//2))
         for child in sorted(self.children, key=lambda el: el.z_index):
-            child.logic()
-        self.calc_style()
-        self.style.logic()
+            child._logic()
+        self._calc_style()
+        self.style._logic()
         if self.style.dirty:
             for comp in self.components:
-                comp.build(self.style)
+                comp._build(self.style)
             self.style.dirty = False
             self.set_dirty()
 
         self.on_logic()
 
-    def render(self, parent_mask_padding: int = 0, force_render: bool = False):
-        """[Internal] Called every frame to render children and components"""
+    def _render(self, parent_mask_padding: int = 0, force_render: bool = False):
         if not self.visible or (not self.dirty and not force_render):
             return
         if not self.absolute_rect.colliderect(self.parent.absolute_rect):
@@ -260,12 +256,12 @@ class Element:
             for i, comp in enumerate(self.components):
                 if i == len(self.components)-1:
                     for child in sorted(self.children, key=lambda el: el.z_index):
-                        child.render(mask_padding, True)
+                        child._render(mask_padding, True)
                     if mask_padding > 0:
                         self.element_surface.blit(
                             self.masked_surface, (mask_padding, mask_padding))
                 if comp.enabled:
-                    comp.render()
+                    comp._render()
 
             self.on_render()
         if parent_mask_padding <= 0:
@@ -277,12 +273,11 @@ class Element:
                                             (self.ui_manager.root.scroll_offset if self.ignore_scroll else self.parent.scroll_offset)+self.render_offset)
         self.dirty = False
 
-    def event(self, event: pygame.Event):
-        """[Internal] Called for every event"""
+    def _event(self, event: pygame.Event):
         if not self.visible:
             return
         for child in self.children:
-            child.event(event)
+            child._event(event)
         self.on_event(event)
 
     # dunder
@@ -293,7 +288,7 @@ class Element:
 
     def __exit__(self, *args, **kwargs):
         UIState.current_parent = self._previous_parent
-        self.refresh_stack()
+        self._refresh_stack()
 
     # get
     def get_absolute_topleft(self) -> pygame.Vector2:
@@ -312,8 +307,7 @@ class Element:
         """Return whether this is a stack element. Useful since properties like scrollbars are only accessible for stacks"""
         return False
 
-    def calc_style(self) -> typing.Self:
-        """[Internal] Set the current style based on status"""
+    def _calc_style(self) -> typing.Self:
         style: UIStyle = None
         if not self.active:
             style = self.style_group.style
@@ -325,9 +319,9 @@ class Element:
             style = self.style_group.style
         if style is not self._last_style:
             self.style = style
-            self.update_style()
+            self._update_style()
             for comp in self.components:
-                comp.build(style)
+                comp._build(style)
             self._last_style = style
         return self
 
@@ -409,9 +403,9 @@ class Element:
         if old == self.relative_rect.topleft:
             return self
 
-        self.update_absolute_rect_pos()
+        self._update_absolute_rect_pos()
         for comp in self.components:
-            comp.position_changed()
+            comp._position_changed()
         self.position_changed()
         return self
 
@@ -421,9 +415,9 @@ class Element:
             return self
 
         self.relative_rect.topleft = position
-        self.update_absolute_rect_pos()
+        self._update_absolute_rect_pos()
         for comp in self.components:
-            comp.position_changed()
+            comp._position_changed()
         self.position_changed()
         return self
 
@@ -433,10 +427,10 @@ class Element:
             return self
 
         self.relative_rect.size = (max(1, size[0]), max(1, size[1]))
-        self.update_absolute_rect_size(propagate_up)
-        self.update_surface_size()
+        self._update_absolute_rect_size(propagate_up)
+        self._update_surface_size()
         for comp in self.components:
-            comp.size_changed()
+            comp._size_changed()
         self.size_changed()
         self.build()
 
@@ -467,10 +461,10 @@ class Element:
         self.style_group = style_group
         self.style = self.style_group.style
         for comp in self.components:
-            comp.style_changed()
+            comp._style_changed()
         self.style_changed()
         self.build()
-
+        self.set_dirty()
         return self
 
     def set_style_id(self, style_id: str) -> typing.Self:
@@ -491,7 +485,7 @@ class Element:
             return self
         self.parent.remove_child(self)
         self.parent = parent
-        self.parent.add_child(self)
+        self.parent._add_child(self)
         return self
 
     def set_tooltip(self, title: str, description: str, width: int = 200, height: int = 200, title_h: int = 40, style_id: str = "copy", title_style_id: str = "copy", descr_style_id: str = "copy") -> "Element":
@@ -577,7 +571,7 @@ class Element:
                        duration_ms, repeat_mode, ease_func_name)
         return self
 
-    def animate_render_y(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+    def animate_offset_y(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
                          ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the y render offset coordinate"""
         UIPropertyAnim(self, AnimPropertyType.render_y, increase,
@@ -683,23 +677,20 @@ class Element:
         return self
 
     # update
-    def update_absolute_rect_pos(self):
-        """[Internal]"""
+    def _update_absolute_rect_pos(self):
         self.absolute_rect.topleft = self.get_absolute_topleft()
         self.static_rect.topleft = (0, 0)
         for child in self.children:
-            child.update_absolute_rect_pos()
+            child._update_absolute_rect_pos()
         self.set_dirty()
 
-    def update_absolute_rect_size(self, propagate_up: bool = True):
-        """[Internal]"""
+    def _update_absolute_rect_size(self, propagate_up: bool = True):
         self.absolute_rect.size = self.relative_rect.size
         self.static_rect.size = self.relative_rect.size
         if propagate_up and not self.ignore_stack:
-            self.parent.refresh_stack()
+            self.parent._refresh_stack()
 
-    def update_surface_size(self):
-        """[Internal]"""
+    def _update_surface_size(self):
         if self.element_surface.get_size() != self.relative_rect.size:
             self.element_surface = pygame.Surface(
                 (max(self.relative_rect.w, 1), max(self.relative_rect.h, 1)), pygame.SRCALPHA)
@@ -707,15 +698,14 @@ class Element:
                                                                   max(1, self.relative_rect.h-self.style.stack.mask_padding*2)), pygame.SRCALPHA)
         self.set_dirty()
 
-    def update_style(self):
-        """[Internal]"""
+    def _update_style(self):
         self.set_dirty()
-        self.refresh_stack()
+        self._refresh_stack()
         self.size_changed()
         self.style_changed()
         self.build()
         if not self.ignore_stack:
-            self.parent.refresh_stack()
+            self.parent._refresh_stack()
         for comp in self.components:
-            comp.build(self.style)
-        self.style.enter()
+            comp._build(self.style)
+        self.style._enter()

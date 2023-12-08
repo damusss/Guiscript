@@ -27,8 +27,8 @@ class Tooltips:
                 cls.tooltips.remove(tt_data)
                 already = True
         if not already:
-            element.status.add_listener("on_start_hover", cls.on_start_hover)
-            element.status.add_listener("on_stop_hover", cls.on_stop_hover)
+            element.status.add_listener("on_start_hover", cls._on_start_hover)
+            element.status.add_listener("on_stop_hover", cls._on_stop_hover)
             cls.tooltips.append(
                 {
                     "tt": tooltip,
@@ -39,8 +39,7 @@ class Tooltips:
         return cls
 
     @classmethod
-    def on_start_hover(cls, element):
-        """[Internal] Callback given to registered elements"""
+    def _on_start_hover(cls, element):
         if cls.active_tooltip is not None:
             cls.active_tooltip.hide()
         cls.active_tooltip = None
@@ -50,15 +49,13 @@ class Tooltips:
                 cls.active_tooltip = tt_data["tt"]
 
     @classmethod
-    def on_stop_hover(cls):
-        """[Internal] Callback given to registered elements"""
+    def _on_stop_hover(cls):
         if cls.active_tooltip is not None:
             cls.active_tooltip.hide()
         cls.active_tooltip = None
 
     @classmethod
-    def logic(cls):
-        """[Internal] Update tooltips (called by static_logic)"""
+    def _logic(cls):
         if cls.active_tooltip is not None:
             tt_data: dict[str] = None
             for tt_data_i in cls.tooltips:

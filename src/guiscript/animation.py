@@ -13,15 +13,15 @@ class UIAnimation:
     """Base class for UI animations"""
 
     def start(self) -> typing.Self:
-        """Start animating"""
+        """[Internal] Start animating"""
         ...
 
     def logic(self):
-        """Update the value"""
+        """[Internal] Update the value"""
         ...
 
     def apply_value(self) -> typing.Self:
-        """Apply the value to the element/style"""
+        """[Internal] Apply the value to the element/style"""
         ...
 
     def get_elapsed_time(self) -> float:

@@ -335,7 +335,8 @@ DEFAULT_CALLBACKS: list[str] = [
     "on_right_click",
     "on_move",
     "on_first_frame",
-    "on_animation_end"
+    "on_animation_end",
+    "on_text_selection_change"
 ]
 
 
@@ -471,7 +472,21 @@ line:: {
     outline.border_radius 1;
 }
 
+entry:: {
+    stack.scroll_y false;
+    stack.floating_scrollbars true;
+}
+
 // SPECIFIC
+
+entry_text:: {
+    text.do_wrap false;
+    text.grow_x true;
+    stack.fill_y true;
+    stack.align left;
+    text.cursor_enabled true;
+}
+
 slideshow_arrow:: {
     text.font_name googleicons;
     text.font_size 30;
@@ -517,6 +532,10 @@ tooltip_description:: {
 }
 
 // BUILTIN STYLE GROUPS
+.entry_disabled_text:: {
+    text.color (180, 180, 180);
+}
+
 .active_cont:hover {
     bg.color (32, 32, 32);
 }

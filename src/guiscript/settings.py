@@ -86,6 +86,16 @@ class SelectionListSettings:
     option_height: float = 30
     multi_select: bool = False
     option_style_id: str = "copy"
+    
+
+@dataclasses.dataclass(slots=True)
+class EntrySettings:
+    placeholder: str = "Start typing..."
+    inner_style_id: str = ""
+    blink_speed: int = 400
+    repeat_speed: int = 40
+    repeat_start_cooldown: int = 370
+    disabled_text_style_id: str = "entry_disabled_text"
 
 
 SlideshowDefaultSettings = SlideshowSettings()
@@ -97,3 +107,4 @@ VideoPlayerDefaultSettings = VideoPlayerSettings(
 ProgressBarDefaultSettings = ProgressBarSettings()
 DropMenuDefaultSettings = DropMenuSettings()
 SelectionListDefaultSettings = SelectionListSettings()
+EntryDefaultSettings = EntrySettings()

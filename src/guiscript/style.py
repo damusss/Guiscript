@@ -115,6 +115,10 @@ class UITextStyle(UICompStyle):
         self.do_wrap: bool = True
         self.grow_x: bool = False
         self.grow_y: bool = False
+        self.cursor_color: common.Color = (255, 255, 255)
+        self.cursor_width: int = 2
+        self.cursor_rel_h: float = 1.0
+        self.cursor_enabled: bool = False
 
     def build_font(self) -> typing.Self:
         """Build the font object after changes in the font properties"""
@@ -192,14 +196,12 @@ class UIStyle:
         )
         return self
 
-    def logic(self):
-        """[Internal] Update animations. Called by Element"""
+    def _logic(self):
         for anim in self.animations:
             if not anim.completed:
                 anim.logic()
 
-    def enter(self):
-        """[Internal] Start animations. Called when the style changes by Element"""
+    def _enter(self):
         for anim in self.animations:
             anim.start()
 

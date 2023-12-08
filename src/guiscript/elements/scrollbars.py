@@ -16,9 +16,8 @@ class UIScrollbar(Element):
         self.handle: Element = Element(pygame.Rect(
             0, 0, 10, 10), self.element_id+"_handle", self.style_id, ("element", "handle", "scrollbar_handle", f"{scrollbar_dir_prefix}scrollbar_handle"), self, self.ui_manager)
 
-    def refresh(self):
-        """[Internal] Refresh the scrollbar size, position and handle when the stack refreshes"""
-
+    def _refresh(self):
+        ...
 
 class UIVScrollbar(UIScrollbar):
     """[Internal] Element used for scrolling vertically in a stack"""
@@ -26,7 +25,7 @@ class UIVScrollbar(UIScrollbar):
     def __init__(self, stack: Element, style_id: str):
         super().__init__(stack, style_id, "v")
 
-    def refresh(self, scroll_y):
+    def _refresh(self, scroll_y):
         style = self.parent.style.stack
 
         self.set_relative_pos(
@@ -42,7 +41,7 @@ class UIVScrollbar(UIScrollbar):
                 self.parent.scroll_offset.y = 0
                 self.handle.set_relative_pos((0, 0))
                 for child in self.parent.children:
-                    child.update_absolute_rect_pos()
+                    child._update_absolute_rect_pos()
             self.visible = False
             return
 
@@ -77,7 +76,7 @@ class UIVScrollbar(UIScrollbar):
             self.parent.scroll_offset.y = (
                 self.handle.relative_rect.y*(self.parent.content_y-self.parent.style.stack.scrollbar_size))/self.relative_rect.h
             for child in self.parent.children:
-                child.update_absolute_rect_pos()
+                child._update_absolute_rect_pos()
             self.status.invoke_callback("on_move")
 
 
@@ -87,7 +86,7 @@ class UIHScrollbar(UIScrollbar):
     def __init__(self, stack: Element, style_id: str):
         super().__init__(stack, style_id, "h")
 
-    def refresh(self, scroll_x):
+    def _refresh(self, scroll_x):
         style = self.parent.style.stack
 
         x_remove = style.scrollbar_size if self.parent.vscrollbar.visible else 0
@@ -104,7 +103,7 @@ class UIHScrollbar(UIScrollbar):
                 self.parent.scroll_offset.x = 0
                 self.handle.set_relative_pos((0, 0))
                 for child in self.parent.children:
-                    child.update_absolute_rect_pos()
+                    child._update_absolute_rect_pos()
             self.visible = False
             return
         self.visible = True
@@ -143,5 +142,5 @@ class UIHScrollbar(UIScrollbar):
             self.parent.scroll_offset.x = (
                 handle_x*(self.parent.content_x-x_add/2))/self.relative_rect.w
             for child in self.parent.children:
-                child.update_absolute_rect_pos()
+                child._update_absolute_rect_pos()
             self.status.invoke_callback("on_move")

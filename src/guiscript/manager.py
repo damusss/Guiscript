@@ -36,8 +36,7 @@ class Manager:
                 UIScript.parse_script(gs_path, self.gs_variables)
         if gs_sources is not None:
             for i, gs_source in enumerate(gs_sources):
-                UIScript.parse_source(gs_source, f"gss.source.idx:{
-                                      i}", self.gs_variables)
+                UIScript.parse_source(gs_source, f"gss.source.idx:{i}", self.gs_variables)
 
         self.running: bool = False
         self.all_elements: list[Element] = []
@@ -60,32 +59,31 @@ class Manager:
         self.root.set_screen_surface(screen_surface)
         return self
 
-    def running_check(self):
-        """[Internal] check the running flag and call first_frame on all elements"""
+    def _running_check(self):
         if not self.running:
             self.running = True
             for el in self.all_elements:
-                el.first_frame()
+                el._first_frame()
 
     def event(self, event: pygame.Event):
         """Pass events to elements and to interaction and keyboard navigation"""
-        self.running_check()
+        self._running_check()
         if event.type == pygame.MOUSEWHEEL:
             UIState.mouse_wheel = event.y
-        self.root.event(event)
-        self.interact.event(event)
-        self.navigation.event(event)
+        self.root._event(event)
+        self.interact._event(event)
+        self.navigation._event(event)
 
     def logic(self):
         """Update elements and their status"""
-        self.running_check()
-        self.interact.logic()
-        self.root.logic()
+        self._running_check()
+        self.interact._logic()
+        self.root._logic()
 
     def render(self):
         """Render all elements to the screen surface"""
-        self.running_check()
-        self.root.render()
+        self._running_check()
+        self.root._render()
         UIState.mouse_wheel = 0
 
     def set_current(self) -> typing.Self:

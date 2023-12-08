@@ -38,18 +38,18 @@ class UIStack(Element):
         self.scroll_offset.x = pygame.math.clamp(pixels_x, 0, self.total_x)
         self.scroll_offset.y = pygame.math.clamp(pixels_y, 0, self.total_y)
         for child in self.children:
-            child.update_absolute_rect_pos()
-        self.vscrollbar.refresh(self.total_y-self.content_y)
-        self.hscrollbar.refresh(self.total_x-self.content_x)
+            child._update_absolute_rect_pos()
+        self.vscrollbar._refresh(self.total_y-self.content_y)
+        self.hscrollbar._refresh(self.total_x-self.content_x)
         return self
 
     def scroll_to(self, x: float = 0, y: float = 0) -> typing.Self:
         """Set the scroll offset relative to the content size, where x and y are in range 0-1"""
         self.scroll_offset = pygame.Vector2(self.content_x*x, self.content_y*y)
         for child in self.children:
-            child.update_absolute_rect_pos()
-        self.vscrollbar.refresh(self.total_y-self.content_y)
-        self.hscrollbar.refresh(self.total_x-self.content_x)
+            child._update_absolute_rect_pos()
+        self.vscrollbar._refresh(self.total_y-self.content_y)
+        self.hscrollbar._refresh(self.total_x-self.content_x)
         return self
 
 
@@ -67,7 +67,7 @@ class VStack(UIStack):
         super().__init__(relative_rect, element_id, style_id, parent,
                          ui_manager, scrollbars_style_id, "v")
 
-    def refresh_stack(self):
+    def _refresh_stack(self):
         if not self.ui_manager.running or not self._done:
             return
         style = self.style
@@ -106,21 +106,21 @@ class VStack(UIStack):
 
         if style.stack.floating_scrollbars:
             scroll_x = scroll_y = 0
-            self.vscrollbar.refresh(0)
-            self.hscrollbar.refresh(0)
+            self.vscrollbar._refresh(0)
+            self.hscrollbar._refresh(0)
         else:
-            self.vscrollbar.refresh(0)
+            self.vscrollbar._refresh(0)
             scroll_x = 0
             if self.vscrollbar.visible:
                 scroll_x = style.stack.scrollbar_size
             scroll_y = 0
-            self.hscrollbar.refresh(scroll_x)
+            self.hscrollbar._refresh(scroll_x)
             if self.hscrollbar.visible:
                 scroll_y = style.stack.scrollbar_size
-                self.vscrollbar.refresh(scroll_y)
+                self.vscrollbar._refresh(scroll_y)
                 if self.vscrollbar.visible:
                     scroll_x = style.stack.scrollbar_size
-                    self.hscrollbar.refresh(scroll_x)
+                    self.hscrollbar._refresh(scroll_x)
 
         self.total_x = self.content_x+scroll_x
         self.total_y = self.content_y+scroll_y
@@ -196,7 +196,7 @@ class HStack(UIStack):
         super().__init__(relative_rect, element_id, style_id, parent,
                          ui_manager, scrollbars_style_id, "h")
 
-    def refresh_stack(self):
+    def _refresh_stack(self):
         if not self.ui_manager.running or not self._done:
             return
         style = self.style
@@ -236,21 +236,21 @@ class HStack(UIStack):
 
         if style.stack.floating_scrollbars:
             scroll_x = scroll_y = 0
-            self.vscrollbar.refresh(0)
-            self.hscrollbar.refresh(0)
+            self.vscrollbar._refresh(0)
+            self.hscrollbar._refresh(0)
         else:
-            self.vscrollbar.refresh(0)
+            self.vscrollbar._refresh(0)
             scroll_x = 0
             if self.vscrollbar.visible:
                 scroll_x = style.stack.scrollbar_size
             scroll_y = 0
-            self.hscrollbar.refresh(scroll_x)
+            self.hscrollbar._refresh(scroll_x)
             if self.hscrollbar.visible:
                 scroll_y = style.stack.scrollbar_size
-                self.vscrollbar.refresh(scroll_y)
+                self.vscrollbar._refresh(scroll_y)
                 if self.vscrollbar.visible:
                     scroll_x = style.stack.scrollbar_size
-                    self.hscrollbar.refresh(scroll_x)
+                    self.hscrollbar._refresh(scroll_x)
 
         self.total_x = self.content_x+scroll_x
         self.total_y = self.content_y+scroll_y

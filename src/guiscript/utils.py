@@ -39,7 +39,7 @@ def static_logic(delta_time: float = 1):
     UIState.space_pressed = UIState.keys_pressed[pygame.K_SPACE]
     UIState.frame_count += 1
     UIAnimUpdater.logic()
-    Tooltips.logic()
+    Tooltips._logic()
 
 
 def quick_style(style_source: str, gs_variables: dict = None) -> str:
@@ -56,8 +56,7 @@ def quick_style(style_source: str, gs_variables: dict = None) -> str:
         raise UIError(
             f"Source of quick style should include 'ID' for the style name, that will be later replaced with the actual id (in this case '{ID}')")
     style_source = style_source.replace("ID", ID)
-    UIScript.parse_source(style_source, f"quickstyle.ID:{
-                          ID}.gss", gs_variables)
+    UIScript.parse_source(style_source, f"quickstyle.ID:{ID}.gss", gs_variables)
     return ID
 
 
@@ -256,6 +255,10 @@ def help_style_script() -> typing.LiteralString:
         do_wrap: bool Wrap the font to fit in the element width
         grow_x: bool Increase the element width if necessary
         grow_y: bool Increase the element height if necessary
+        cursor_color: Color
+        cursor_width: number
+        cursor_rel_h: number
+        cursor_enabled: bool
 
     icon:
         name: string
@@ -385,6 +388,7 @@ def help_callbacks() -> typing.LiteralString:
         on_frame_start
         on_animation_end (property animation)
         on_move (used by few)
+        on_text_selection_change
         args:
             [Optional] element: Element
             
@@ -413,4 +417,16 @@ def help_buffers() -> typing.LiteralString:
     return """
     Element: selected (sync with Element.status.selected)
     Slider: value (sync with Slider.get_value())
+    """
+    
+def help_navigation() -> typing.LiteralString:
+    """Return keyboard navigation keybinds as a string"""
+    return """
+    Exit: ESC
+    Start: TAB
+    Next Element: TAB
+    Previous Element: LSHIFT+TAB
+    First Child: ENTER
+    Parent: UP
+    Interact: SPACE
     """

@@ -287,9 +287,9 @@ class Slideshow(Element):
                                   self.ui_manager,
                                   )
         self.left_arrow.status.add_listener(
-            "on_stop_press", self.on_left_click)
+            "on_stop_press", self._on_left_click)
         self.right_arrow.status.add_listener(
-            "on_stop_press", self.on_right_click)
+            "on_stop_press", self._on_right_click)
         self.left_arrow.add_element_types(
             "slideshow_arrow", "slideshow_left_arrow")
         self.right_arrow.add_element_types(
@@ -335,14 +335,12 @@ class Slideshow(Element):
         self.set_surface(self.surfaces[self.surface_index])
         return self
 
-    def on_right_click(self):
-        """[Internal] Child callback"""
+    def _on_right_click(self):
         self.move_right()
         events._post_slideshow_event("right", self)
         self.status.invoke_callback("on_move", "right")
 
-    def on_left_click(self):
-        """[Internal] Child callback"""
+    def _on_left_click(self):
         self.move_left()
         events._post_slideshow_event("left", self)
         self.status.invoke_callback("on_move", "left")

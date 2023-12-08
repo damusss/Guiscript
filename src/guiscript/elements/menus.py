@@ -36,14 +36,14 @@ class DropMenu(Element):
                                             self.element_id+"_selected_option",
                                             common.style_id_or_copy(
                                                 self, self.settings.inner_buttons_style_id),
-                                            False, self, self.ui_manager).status.add_listener("on_click", self.on_arrow_click).element\
+                                            False, self, self.ui_manager).status.add_listener("on_click", self._on_arrow_click).element\
             .add_element_types("dropmenu_button", "dropmenu_selected_option")
         self.arrow_button: Button = Button(self.settings.down_arrow_txt if self.settings.direction == "down" else self.settings.up_arrow_txt,
                                            pygame.Rect(0, 0, 0, 0),
                                            self.element_id+"_arrow",
                                            common.style_id_or_copy(
                                                self, self.settings.inner_buttons_style_id),
-                                           False, self, self.ui_manager).status.add_listener("on_click", self.on_arrow_click).element\
+                                           False, self, self.ui_manager).status.add_listener("on_click", self._on_arrow_click).element\
             .add_element_types("dropmenu_button", "dropmenu_arrow")
         self.menu_cont: VStack = VStack(pygame.Rect(0, 0, 0, 0),
                                         self.element_id+"_menu",
@@ -92,8 +92,7 @@ class DropMenu(Element):
             self.open_menu()
         return self
 
-    def on_option_click(self, btn: Button):
-        """[Internal] Child callback"""
+    def _on_option_click(self, btn: Button):
         self.close_menu()
         self.select(btn.text.get_active_text())
         self.status.invoke_callback(
@@ -101,8 +100,7 @@ class DropMenu(Element):
         events._post_dropmenu_event("select", self)
         events._post_dropmenu_event("toggle", self)
 
-    def on_arrow_click(self):
-        """[Internal] Child callback"""
+    def _on_arrow_click(self):
         self.toggle_menu()
         self.status.invoke_callback("on_menu_toggle")
         events._post_dropmenu_event("toggle", self)
@@ -128,8 +126,8 @@ class DropMenu(Element):
                    self.element_id +
                    f"_option_{i}", common.style_id_or_copy(
                 self.menu_cont, self.settings.option_style_id),
-                False, self.menu_cont, self.ui_manager).status.add_listener("on_click", self.on_option_click).element.add_element_type("dropmenu_option")
-        self.menu_cont.refresh_stack()
+                False, self.menu_cont, self.ui_manager).status.add_listener("on_click", self._on_option_click).element.add_element_type("dropmenu_option")
+        self.menu_cont._refresh_stack()
 
     def position_changed(self):
         if not self.ui_manager.running:
@@ -196,8 +194,7 @@ class SelectionList(VStack):
         self.build()
         return self
 
-    def on_option_select(self, btn: Button):
-        """[Internal] Child callback"""
+    def _on_option_select(self, btn: Button):
         if not self.settings.multi_select:
             for opt in self.option_buttons:
                 if opt.text.text != btn.text.text:
@@ -205,8 +202,7 @@ class SelectionList(VStack):
         self.status.invoke_callback("on_option_select", btn.text.text)
         events._post_selectionlist_event("select", self, btn.text.text)
 
-    def on_option_deselect(self, btn: Button):
-        """[Internal] Child callback"""
+    def _on_option_deselect(self, btn: Button):
         self.status.invoke_callback("on_option_deselect", btn.text.text)
         events._post_selectionlist_event("deselect", self, btn.text.text)
 
@@ -221,5 +217,5 @@ class SelectionList(VStack):
                              self, self.settings.option_style_id),
                          True, self, self.ui_manager).add_element_types("selectionlist_option").\
                 status.add_multi_listeners(
-                    on_select=self.on_option_select, on_deselect=self.on_option_deselect).element
+                    on_select=self._on_option_select, on_deselect=self._on_option_deselect).element
             self.option_buttons.append(btn)

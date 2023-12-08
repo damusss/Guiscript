@@ -25,8 +25,7 @@ class UINavigation:
         self.enabled = False
         return self
 
-    def event(self, event: pygame.Event):
-        """[Internal] Navigate using key events. Called by Manager"""
+    def _event(self, event: pygame.Event):
         if not event.type == pygame.KEYDOWN:
             return
 
@@ -93,15 +92,3 @@ class UINavigation:
         """Manually stop navigating"""
         self.tabbed_element = None
         return self
-
-    def help(self) -> typing.LiteralString:
-        """Return keyboard navigation keybinds as a string"""
-        return """
-        Exit: ESC
-        Start: TAB
-        Next Element: TAB
-        Previous Element: LSHIFT+TAB
-        First Child: ENTER
-        Parent: UP
-        Interact: SPACE
-        """

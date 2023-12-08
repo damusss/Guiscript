@@ -18,12 +18,10 @@ class UIRoot:
         self.children: list[Element] = []
         self.ignore_raycast: bool = False
 
-    def refresh_stack(self):
-        """[Internal] Empty"""
+    def _refresh_stack(self):
         ...
 
-    def add_child(self, element: Element) -> typing.Self:
-        """Add a child to the children"""
+    def _add_child(self, element: Element) -> typing.Self:
         self.children.append(element)
         return self
 
@@ -43,31 +41,27 @@ class UIRoot:
         return self
 
     def set_dirty(self):
-        """[Internal] Empty"""
+        """Empty"""
         ...
 
     def __enter__(self):
         raise UIError(
             f"Cannot use context manager with UIRoot, it's alrady the default element parent")
 
-    def first_frame(self):
-        """[Internal] Empty"""
+    def _first_frame(self):
         ...
 
-    def event(self, event: pygame.Event):
-        """[Internal] Called for every event"""
+    def _event(self, event: pygame.Event):
         for child in self.children:
-            child.event(event)
+            child._event(event)
 
-    def logic(self):
-        """[Internal] Called every frame, update children"""
+    def _logic(self):
         for child in self.children:
-            child.logic()
+            child._logic()
 
-    def render(self):
-        """[Internal] Called every frame, render children"""
+    def _render(self):
         for child in self.children:
-            child.render(0, True)
+            child._render(0, True)
 
     def get_absolute_topleft(self) -> pygame.Vector2:
         """Return an empty pygame.Vector2"""
