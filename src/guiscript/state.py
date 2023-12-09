@@ -19,3 +19,4 @@ class UIState:
     keys_pressed = pygame.key.get_pressed()
     frame_count: int = 0
     space_pressed: bool = False
+    num_managers: int = 0

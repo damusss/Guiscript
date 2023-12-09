@@ -42,13 +42,15 @@ SELECTIONLIST_DESELECT = pygame.event.custom_type()
 
 ANIMATION_END = pygame.event.custom_type()
 
+ENTRY_CHANGE = pygame.event.custom_type()
+ENTRY_FOCUS = pygame.event.custom_type()
+ENTRY_UNFOCUS = pygame.event.custom_type()
+
 
 def _post_base_event(type_: int, element: "Element"):
     pygame.event.post(pygame.Event(type_, {
         "id": element.element_id,
-        "element_id": element.element_id,
         "element": element,
-        "obj": element,
     }))
 
 
@@ -57,9 +59,7 @@ def _post_slideshow_event(mode: str, element: "Element"):
         SLIDESHOW_MOVE_LEFT if mode == "left" else SLIDESHOW_MOVE_RIGHT,
         {
             "id": element.element_id,
-            "element_id": element.element_id,
             "element": element,
-            "obj": element,
             "slideshow": element
         }
     ))
@@ -68,9 +68,7 @@ def _post_slideshow_event(mode: str, element: "Element"):
 def _post_slider_event(old: float, new: float, element: "Element"):
     pygame.event.post(pygame.Event(SLIDER_MOVE, {
         "id": element.element_id,
-        "element_id": element.element_id,
         "element": element,
-        "obj": element,
         "slider": element,
         "old_value": old,
         "old_percent": old*100,
@@ -82,9 +80,7 @@ def _post_slider_event(old: float, new: float, element: "Element"):
 def _post_sound_player_event(type_: int, element: "Element"):
     pygame.event.post(pygame.Event(type_, {
         "id": element.element_id,
-        "element_id": element.element_id,
         "element": element,
-        "obj": element,
         "soundplayer": element,
         "playing": element.playing,
         "muted": element.muted,
@@ -98,9 +94,7 @@ def _post_sound_player_event(type_: int, element: "Element"):
 def _post_video_player_event(type_: int, element: "Element"):
     pygame.event.post(pygame.Event(type_, {
         "id": element.element_id,
-        "element_id": element.element_id,
         "element": element,
-        "obj": element,
         "videoplayer": element,
         "playing": element.playing,
         "muted": element.muted,
@@ -116,9 +110,7 @@ def _post_dropmenu_event(mode: str, element: "Element"):
         DROPMENU_SELECT if mode == "select" else DROPMENU_TOGGLE,
         {
             "id": element.element_id,
-            "element_id": element.element_id,
             "element": element,
-            "obj": element,
             "dropmenu": element,
             "selected_option": element.get_selected(),
             "selected": element.get_selected()
@@ -130,9 +122,7 @@ def _post_selectionlist_event(mode: str, element: "Element", option: str):
         SELECTIONLIST_SELECT if mode == "select" else SELECTIONLIST_DESELECT,
         {
             "id": element.element_id,
-            "element_id": element.element_id,
             "element": element,
-            "obj": element,
             "selectionlist": element,
             "selected": element.get_selected(),
             "option": option
@@ -145,5 +135,17 @@ def _post_animation_event(animation):
         {
             "animation": animation,
             "element": animation.element
+        }
+    ))
+    
+
+def _post_entry_event(mode:str, element: "Element"):
+    pygame.event.post(pygame.Event(
+        ENTRY_CHANGE if mode == "change" else ENTRY_FOCUS if mode == "focus" else ENTRY_UNFOCUS,
+        {
+            "id": element.element_id,
+            "element": element,
+            "entry": element,
+            "text": element.get_text()
         }
     ))

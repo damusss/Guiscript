@@ -35,6 +35,7 @@ class UINavigation:
         elif event.key == pygame.K_TAB:
             if self.tabbed_element is None:
                 self.tabbed_element = self.ui_manager.root.find_navigable_child()
+                self.tabbed_element.set_dirty()
             else:
                 if event.mod == pygame.KMOD_LSHIFT:
                     self.tab(False)
@@ -52,13 +53,17 @@ class UINavigation:
         if self.tabbed_element is not None:
             element = self.tabbed_element.find_navigable_child()
             if element is not None:
+                if self.tabbed_element is not None: self.tabbed_element.set_dirty()
                 self.tabbed_element = element
+                self.tabbed_element.set_dirty()
         return self
 
     def tab_outside(self) -> typing.Self:
         """Navigate the parent of the current tabbed element"""
         if self.tabbed_element is not None and self.tabbed_element.parent is not None and self.tabbed_element.parent.can_navigate():
+            self.tabbed_element.set_dirty()
             self.tabbed_element = self.tabbed_element.parent
+            self.tabbed_element.set_dirty()
         return self
 
     def tab(self, forward: bool) -> typing.Self:
@@ -75,20 +80,25 @@ class UINavigation:
             new_index = len(self.tabbed_element.parent.children)-1
         if new_index >= len(self.tabbed_element.parent.children):
             new_index = 0
+        self.tabbed_element.set_dirty()
         self.tabbed_element = self.tabbed_element.parent.children[new_index]
+        self.tabbed_element.set_dirty()
         if not self.tabbed_element.can_navigate():
             if self.tabbed_element.parent.has_navigable_child():
                 self.tab(forward)
             else:
                 self.tabbed_element = old_tabbed
+                self.tabbed_element.set_dirty()
         return self
 
     def start_navigating(self) -> typing.Self:
         """Manually start navigating"""
         self.tabbed_element = self.ui_manager.root.find_navigable_child()
+        self.tabbed_element.set_dirty()
         return self
 
     def stop_navigating(self) -> typing.Self:
         """Manually stop navigating"""
+        if self.tabbed_element is not None: self.tabbed_element.set_dirty()
         self.tabbed_element = None
         return self

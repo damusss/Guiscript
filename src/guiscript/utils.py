@@ -3,13 +3,13 @@ import typing
 import random
 import string
 
-from .elements.element import Element
 from .animation import UIAnimUpdater
 from .tooltip import Tooltips
 from .state import UIState
 from .error import UIError
 from .script import UIScript
 from . import common
+from . import strimages
 
 VERSION = "WIP"
 
@@ -87,6 +87,13 @@ class DefaultStyleID:
 
     def __exit__(self, *args):
         UIState.current_style_id = self.previous_style_id
+        
+        
+def get_builtin_image(name: str) -> pygame.Surface:
+    """Return the surface of a builtin image for UI, or raise an error if it doesnt exist."""
+    if name not in strimages.STRING_IMAGES_SURFACES.keys():
+        raise UIError(f"Builtin image '{name}' does not exist. Available are {list(strimages.STRING_IMAGES_SURFACES.keys())}")
+    return strimages.STRING_IMAGES_SURFACES[name]
 
 
 def help_element_types() -> typing.LiteralString:
@@ -136,6 +143,8 @@ def help_element_types() -> typing.LiteralString:
     InvisElement: (element, invisible_element)
     HLine: (element, line, hline)
     VLine: (element, line, vline)
+    Entry: (*HStack, entry)
+        Entry.text_element: (*Label, entry_text)
     """
 
 
@@ -300,9 +309,7 @@ def help_events() -> typing.LiteralString:
         RIGHT_CLICK
         properties:
             id: str
-            element_id: str
             element: Element
-            obj: Element
     
     Slideshow:
         SLIDESHOW_MOVE_LEFT
@@ -364,6 +371,14 @@ def help_events() -> typing.LiteralString:
             selectionlist: SelectionList
             selected: str|list[str]
             option: str
+            
+    Entry:
+        ENTRY_CHANGE
+        ENTRY_FOCUS
+        ENTRY_UNFOCUS
+        extra properties:
+            entry: Entry
+            text: str
         
     """
 

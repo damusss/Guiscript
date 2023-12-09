@@ -5,6 +5,7 @@ from ..manager import Manager
 from ..state import UIState
 from .element import Element
 from .stacks import VStack
+from .. import events
 from .. import settings as settings_
 
 class Entry(VStack):
@@ -21,7 +22,9 @@ class Entry(VStack):
         super().__init__(relative_rect, element_id, style_id, parent, ui_manager, "invisible")
         self.vscrollbar.deactivate()
         self.hscrollbar.deactivate()
-        self.add_element_type("entry").status.add_listener("on_click", self._on_self_click)
+        self.add_element_type("entry").status.add_listener("on_click", self._on_self_click)\
+            .register_callbacks("on_change", "on_focus", "on_unfocus")
+        self.buffers.update("text", "")
         
         self.settings: settings_.EntrySettings = settings
         
@@ -45,6 +48,8 @@ class Entry(VStack):
         self._remove_interaction()
         self._cursor_index = len(self.text_element.text.text)
         self._refresh_cursor_idx()
+        self.status.invoke_callback("on_focus")
+        events._post_entry_event("focus", self)
         
     def _selection_changed(self):
         self._cursor_index = self.text_element.text.cursor_index
@@ -55,6 +60,8 @@ class Entry(VStack):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 self.unfocus()
+                self.status.invoke_callback("on_unfocus")
+                events._post_entry_event("unfocus", self)
             elif event.key == pygame.K_LEFT:
                 self._on_left()
                 self._start_repeat(event.key, self._on_left)
@@ -79,9 +86,9 @@ class Entry(VStack):
                 self.unfocus()
                 
     def on_logic(self):
-        if self.text_element.text._cursor_draw_pos-self.scroll_offset.x >= self.relative_rect.w:
+        if self.text_element.text._cursor_draw_pos-self.scroll_offset.x >= self.relative_rect.w-self.text_element.style.text.cursor_width:
             self.set_scroll(self.scroll_offset.x+self.text_element.text.text_size("MM")[0], self.scroll_offset.y)
-        if self.text_element.text._cursor_draw_pos-self.scroll_offset.x <= 0:
+        if self.text_element.text._cursor_draw_pos-self.scroll_offset.x <= self.text_element.style.text.cursor_width:
             self.set_scroll(self.scroll_offset.x-self.text_element.text.text_size("MM")[0], self.scroll_offset.y)
             
         if pygame.time.get_ticks()-self._last_blink >= self.settings.blink_speed and self.is_focused():
@@ -131,6 +138,10 @@ class Entry(VStack):
         self._cursor_index -= 1
         self._refresh_cursor_idx()
         
+        self.status.invoke_callback("on_change", self.get_text())
+        events._post_entry_event("change", self)
+        self.buffers.update("text", self.get_text())
+        
     def _on_delete(self):
         if self._remove_selection():
             return
@@ -139,12 +150,20 @@ class Entry(VStack):
         left, right = self._split_on_cursor()
         self.text_element.text.set_text(left+right[1:])
         
+        self.status.invoke_callback("on_change", self.get_text())
+        events._post_entry_event("change", self)
+        self.buffers.update("text", self.get_text())
+        
     def _on_unicode(self, unicode: str):
         self._remove_selection()
         left, right = self._split_on_cursor()
         self.text_element.text.set_text(left+unicode+right)
         self._cursor_index += len(unicode)
         self._refresh_cursor_idx()
+        
+        self.status.invoke_callback("on_change", self.get_text())
+        events._post_entry_event("change", self)
+        self.buffers.update("text", self.get_text())
         
     def _remove_selection(self):
         if not self.text_element is self.ui_manager.interact.text_select_el:
@@ -158,6 +177,10 @@ class Entry(VStack):
         self.text_element.text.set_text(left+right)
         self._cursor_index = selection[0]
         self._refresh_cursor_idx()
+        
+        self.status.invoke_callback("on_change", self.get_text())
+        events._post_entry_event("change", self)
+        self.buffers.update("text", self.get_text())
         return True
     
     def _split_on_cursor(self):
@@ -175,6 +198,8 @@ class Entry(VStack):
                 
     def _on_inner_select(self):
         self.focus()
+        self.status.invoke_callback("on_focus")
+        events._post_entry_event("focus", self)
         
     def _on_inner_deselect(self):
         self.text_element.status.select()
@@ -207,12 +232,15 @@ class Entry(VStack):
     
     def get_text(self) -> str:
         """Return the text inside the entry"""
+        if self._is_placeholder:
+            return ""
         return self.text_element.text.text
     
     def set_text(self, text: str) -> typing.Self:
         """Manually set the text of the entry"""
-        self._remove_interaction()
         self.text_element.text.set_text(text.replace("\n", ""))
+        self.unfocus()
+        self.buffers.update("text", self.get_text())
         return self
     
     def add_text(self, text: str) -> typing.Self:

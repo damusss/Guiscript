@@ -4,7 +4,6 @@ THINGS
 
 ELEMENTS
 
-entry line
 window
 file dialog
 textbox
@@ -40,6 +39,8 @@ DONE THINGS
 - quick style
 - scroll hover/refactor/fix
 - renaming
+- entry events, callback, buffer
+- str images
 
 DONE ELEMENTS
 
@@ -60,3 +61,4 @@ video player
 progress bar
 drop menu
 selection list
+entry

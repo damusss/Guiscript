@@ -240,10 +240,15 @@ class Element:
 
         self.on_logic()
 
-    def _render(self, parent_mask_padding: int = 0, force_render: bool = False):
+    def _render(self, parent_mask_padding: int = 0, force_render: bool = False, fake: bool = False):
         if not self.visible or (not self.dirty and not force_render):
             return
         if not self.absolute_rect.colliderect(self.parent.absolute_rect):
+            return
+        if fake:
+            self.ui_manager.last_rendered = self
+            for child in self.children:
+                child._render(fake=True)
             return
 
         if self.dirty:
@@ -264,6 +269,10 @@ class Element:
                     comp._render()
 
             self.on_render()
+        else:
+            self.ui_manager.last_rendered = self
+            for child in self.children:
+                child._render(fake=True)
         if parent_mask_padding <= 0:
             self.parent.element_surface.blit(self.element_surface, self.relative_rect.topleft -
                                              (self.ui_manager.root.scroll_offset if self.ignore_scroll else self.parent.scroll_offset)+self.render_offset)
@@ -272,6 +281,24 @@ class Element:
                                             (pygame.Vector2(parent_mask_padding, parent_mask_padding)) -
                                             (self.ui_manager.root.scroll_offset if self.ignore_scroll else self.parent.scroll_offset)+self.render_offset)
         self.dirty = False
+        
+    def _calc_style(self) -> typing.Self:
+        style: UIStyle = None
+        if not self.active:
+            style = self.style_group.style
+        elif self.status.pressed or self.status.selected:
+            style = self.style_group.press_style
+        elif self.status.hovered:
+            style = self.style_group.hover_style
+        else:
+            style = self.style_group.style
+        if style is not self._last_style:
+            self.style = style
+            self._update_style()
+            for comp in self.components:
+                comp._build(style)
+            self._last_style = style
+        return self
 
     def _event(self, event: pygame.Event):
         if not self.visible:
@@ -306,24 +333,6 @@ class Element:
     def is_stack(self) -> bool:
         """Return whether this is a stack element. Useful since properties like scrollbars are only accessible for stacks"""
         return False
-
-    def _calc_style(self) -> typing.Self:
-        style: UIStyle = None
-        if not self.active:
-            style = self.style_group.style
-        elif self.status.pressed or self.status.selected:
-            style = self.style_group.press_style
-        elif self.status.hovered:
-            style = self.style_group.hover_style
-        else:
-            style = self.style_group.style
-        if style is not self._last_style:
-            self.style = style
-            self._update_style()
-            for comp in self.components:
-                comp._build(style)
-            self._last_style = style
-        return self
 
     # navigation
     def can_navigate(self) -> bool:

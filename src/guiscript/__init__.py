@@ -85,6 +85,7 @@ from .utils import (
     quick_style,
     set_default_style_id,
     DefaultStyleID,
+    get_builtin_image,
     help_element_types,
     help_style_script,
     help_z_index,

@@ -100,3 +100,9 @@ class UIRoot:
             if child.can_navigate():
                 count += 1
         return count
+    
+    def destroy_children(self) -> typing.Self:
+        """Destroy all children of this element if the children have the 'can_destroy' flag set to True"""
+        for child in list(self.children):
+            child.destroy()
+        return self

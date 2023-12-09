@@ -2,6 +2,7 @@ import pygame
 import typing
 import pathlib
 import os
+import warnings
 from enum import StrEnum
 
 from .style import UIStyles, UIStyleHolder
@@ -9,6 +10,7 @@ from .error import UIScriptError
 from .enums import StyleType, StyleTarget, AnimEaseFunc, StyleAnimPropertyType
 from .icon import Icons
 from . import common
+from . import strimages
 
 
 class UISTT(StrEnum):
@@ -405,11 +407,18 @@ class UIScriptParser:
         self.advance()
         value = self.parse_property_value()
         if comp_name == "image" and property_name == "image" and value is not None and isinstance(value, str):
-            try:
-                value = pygame.image.load(value).convert_alpha()
-            except:
-                raise UIScriptError(
-                    f"Could not auto-load surface from path '{value}'"+self.error_suffix())
+            if value.strip().startswith("builtin."):
+                img_name = value.replace("builtin.", "").strip()
+                if img_name in strimages.STRING_IMAGES_SURFACES:
+                    value = strimages.STRING_IMAGES_SURFACES[img_name]
+                else:
+                    warnings.warn(f"Warning: No builtin image exists with the name '{img_name}'. Available are {list(strimages.STRING_IMAGES_SURFACES.keys())}"+self.error_suffix(), UserWarning)
+            else:
+                try:
+                    value = pygame.image.load(value).convert_alpha()
+                except:
+                    raise UIScriptError(
+                        f"Could not auto-load surface from path '{value}'"+self.error_suffix())
         if comp_name == "icon" and comp_name == "name" and value is not None and not value in Icons.icons and os.path.exists(value):
             path = pathlib.Path(value)
             if path.is_file():
@@ -450,10 +459,10 @@ class UIScriptParser:
             raise UIScriptError(
                 f"Expected comma after style animation value '{value}' and the animation duration in ms after the comma, got '{self.tok.value}' instead"+self.error_suffix())
         self.advance()
-        if not self.tok.type == UISTT.number:
+        duration = self.parse_property_value()
+        if not isinstance(duration, (int, float)):
             raise UIScriptError(
-                f"Expected number representing duration in ms after comma in style animation, got '{self.tok.value}' instead"+self.error_suffix())
-        duration = self.tok.value
+                f"Expected number representing duration in ms after comma in style animation, got '{type(duration)}' instead"+self.error_suffix())
         ease_func_name = AnimEaseFunc.ease_in
         self.advance()
         if self.tok.type == UISTT.comma:
@@ -538,9 +547,13 @@ class UIScriptParser:
 
 class UIScript:
     """Manage style script execution by lexing and parsing"""
+    already_parsed: list[str] = []
+    
     @classmethod
-    def parse_script(self, filename: str, variables: dict[str]):
+    def parse_script(cls, filename: str, variables: dict[str]):
         """Load styles and animations from a GSS file using the given variables"""
+        if filename in cls.already_parsed:
+            return
         if not os.path.exists(filename):
             raise UIScriptError(
                 f"UI Script file '{filename}' doesn't exist. Is the file name/path correct?")
@@ -550,11 +563,15 @@ class UIScript:
         lexer = UIScriptLexer(source, filename).lex()
         parser = UIScriptParser(lexer.tokens, filename, variables).parse()
         UIStyles.add_styles(*parser.style_holders)
+        cls.already_parsed.append(filename)
 
     @classmethod
-    def parse_source(self, source: str, filename: str, variables: dict[str]):
+    def parse_source(cls, source: str, filename: str, variables: dict[str]):
         """Load styles and animations from a GSS source using the given variables. The filename is needed for error messages"""
+        if filename in cls.already_parsed:
+            return
         lexer = UIScriptLexer(source, filename).lex()
         if len(lexer.tokens) > 0:
             parser = UIScriptParser(lexer.tokens, filename, variables).parse()
         UIStyles.add_styles(*parser.style_holders)
+        cls.already_parsed.append(filename)
