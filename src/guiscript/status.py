@@ -99,8 +99,8 @@ class UIStatus:
     def disable_navigation(self) -> typing.Self:
         """Set the can_navigate flag to False. The element won't be able to be navigated with the keyboard"""
         self.can_navigate = False
-        if self.element is self.element.ui_manager.navigation.tabbed_element:
-            self.element.ui_manager.navigation.stop_navigating()
+        if self.element is self.element.manager.navigation.tabbed_element:
+            self.element.manager.navigation.stop_navigating()
         return self
 
     def select(self) -> typing.Self:

@@ -1,4 +1,5 @@
 import dataclasses
+import typing
 
 from .enums import SliderAxis, ProgressBarDirection, DropMenuDirection
 
@@ -78,6 +79,7 @@ class DropMenuSettings:
     menu_style_id: str = "copy"
     option_style_id: str = "copy"
     inner_buttons_style_id: str = "copy"
+    menu_parent: typing.Any|None = None
 
 
 @dataclasses.dataclass(slots=True)

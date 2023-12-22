@@ -11,7 +11,7 @@ Coordinate: typing.TypeAlias = typing.Iterable[float] | pygame.Vector2
 Color: typing.TypeAlias = typing.Iterable[int] | str | pygame.Color
 StatusCallback: typing.TypeAlias = typing.Callable[[
     "Element"], typing.Any] | None
-
+CursorLike: typing.TypeAlias = pygame.Cursor | int
 
 def style_id_or_copy(element: "Element", style_id: str) -> str:
     return element.style_id if style_id == "copy" else style_id
@@ -395,7 +395,7 @@ STYLE_ANIMATION_TYPES = {
 }
 
 DEFAULT_STYLE_GSS: str = """
-// BUILTIN ELEMENT TYPES
+/ BUILTIN ELEMENT TYPES
 label:: {
     text.enabled true;
     bg.enabled false;
@@ -477,8 +477,7 @@ entry:: {
     stack.floating_scrollbars true;
 }
 
-// SPECIFIC
-
+/ INNER ELEMENTS
 entry_text:: {
     text.do_wrap false;
     text.grow_x true;
@@ -531,7 +530,7 @@ tooltip_description:: {
     text.font_size 20;
 }
 
-// BUILTIN STYLE GROUPS
+/ BUILTIN STYLE GROUPS
 .entry_disabled_text:: {
     text.color (180, 180, 180);
 }

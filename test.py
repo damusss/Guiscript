@@ -1,5 +1,5 @@
 import pygame
-import sys
+import sys, os
 import src.guiscript as guis
 from pygame import Rect as rect
 
@@ -15,6 +15,7 @@ manager = guis.Manager(screen, True, ["tests/example.gss"], None, {
     "MENU": menu_surf,
     "MENU_HOVER": menu_surf,
     "MENU_PRESS": menu_surf,
+    
 })
     
 def on_start_hover(element: guis.Element):
@@ -35,7 +36,6 @@ with guis.VStack(guis.SizeR(1200, 800), style_id="invis_cont"):
         base = btn.relative_rect.w
         big = btn.relative_rect.w+100
         pb = guis.ProgressBar(0, rect(0,0,500,100), settings=guis.ProgressBarSettings(direction=guis.ProgressBarDirection.right_left))
-        
         
 while True:   
     for event in pygame.event.get():

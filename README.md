@@ -19,9 +19,10 @@ WIP
 WIP
 
 # Installation
-The library can be installed from PyPI or downloaded manually.
+# NOT OUT YET
+The library can be installed from PyPI or downloaded manually from github
 ```
-pip install guiscript
+pip/pip3 install guiscript
 ```
 It's recommended to shorten the name on import to code faster
 ```py

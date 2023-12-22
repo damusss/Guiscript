@@ -404,7 +404,7 @@ class UIOutlineComp(UIComponent):
         self._render_tabbed(style)
 
     def _render_tabbed(self, style: UIStyle):
-        if self.element.ui_manager.navigation.tabbed_element is self.element:
+        if self.element.manager.navigation.tabbed_element is self.element:
             pygame.draw.rect(self.element.element_surface,
                              style.outline.navigation_color,
                              self.element.static_rect,

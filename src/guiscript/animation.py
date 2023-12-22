@@ -106,6 +106,10 @@ class UIPropertyAnim(UIAnimation):
     def logic(self):
         if not self.started:
             return
+        if self.element is None:
+            self.dead = True
+            return
+        
         lerp_val = common.lerp(0, self.end_value, self.ease_func(
             self.get_elapsed_time()/self.duration_ms))
         if self.direction == 1:

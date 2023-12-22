@@ -10,11 +10,11 @@ class UIScrollbar(Element):
 
     def __init__(self, stack: Element, style_id: str, scrollbar_dir_prefix: str):
         super().__init__(pygame.Rect(0, 0, 10, 10), stack.element_id+f"_{scrollbar_dir_prefix}scrollbar", common.style_id_or_copy(stack, style_id),
-                         ("element", "scrollbar", f"{scrollbar_dir_prefix}scrollbar"), stack, stack.ui_manager)
+                         ("element", "scrollbar", f"{scrollbar_dir_prefix}scrollbar"), stack, stack.manager)
         self.set_ignore(True, True).set_can_destroy(
             False).deactivate().set_z_index(common.Z_INDEXES["scrollbar"])
         self.handle: Element = Element(pygame.Rect(
-            0, 0, 10, 10), self.element_id+"_handle", self.style_id, ("element", "handle", "scrollbar_handle", f"{scrollbar_dir_prefix}scrollbar_handle"), self, self.ui_manager)
+            0, 0, 10, 10), self.element_id+"_handle", self.style_id, ("element", "handle", "scrollbar_handle", f"{scrollbar_dir_prefix}scrollbar_handle"), self, self.manager)
 
     def _refresh(self):
         ...
@@ -62,9 +62,9 @@ class UIVScrollbar(UIScrollbar):
             self.handle.set_relative_pos(
                 (0, self.handle.relative_rect.y+UIState.mouse_rel[1]))
 
-        if UIState.mouse_wheel and not UIState.keys_pressed[pygame.K_LCTRL]:
+        if UIState.mouse_wheel.y and not UIState.keys_pressed[pygame.K_LCTRL]:
             self.handle.set_relative_pos(
-                (0, self.handle.relative_rect.y-(UIState.mouse_wheel*self.ui_manager.scroll_multiplier)))
+                (0, self.handle.relative_rect.y-(UIState.mouse_wheel.y*self.manager.scroll_multiplier)))
 
         if self.handle.relative_rect.y < 0:
             self.handle.set_relative_pos((0, 0))
@@ -123,9 +123,12 @@ class UIHScrollbar(UIScrollbar):
             self.handle.set_relative_pos(
                 (self.handle.relative_rect.x+UIState.mouse_rel[0], 0))
 
-        if UIState.mouse_wheel and (UIState.keys_pressed[pygame.K_LCTRL] or not self.parent.vscrollbar.visible):
+        if UIState.mouse_wheel.y and (UIState.keys_pressed[pygame.K_LCTRL] or not self.parent.vscrollbar.visible):
             self.handle.set_relative_pos(
-                (self.handle.relative_rect.x-UIState.mouse_wheel*self.ui_manager.scroll_multiplier, 0))
+                (self.handle.relative_rect.x-UIState.mouse_wheel.y*self.manager.scroll_multiplier, 0))
+        elif UIState.mouse_wheel.x:
+            self.handle.set_relative_pos(
+                (self.handle.relative_rect.x-UIState.mouse_wheel.x*self.manager.scroll_multiplier, 0))
 
         if self.handle.relative_rect.x < 0:
             self.handle.set_relative_pos((0, 0))

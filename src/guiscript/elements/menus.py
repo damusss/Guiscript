@@ -21,11 +21,11 @@ class DropMenu(Element):
                  element_id: str = "none",
                  style_id: str = "",
                  parent: Element | None = None,
-                 ui_manager: Manager | None = None,
+                 manager: Manager | None = None,
                  settings: settings_.DropMenuSettings = settings_.DropMenuDefaultSettings,
                  ):
         super().__init__(relative_rect, element_id, style_id,
-                         ("element", "menu", "dropmenu"), parent, ui_manager)
+                         ("element", "menu", "dropmenu"), parent, manager)
         self.deactivate().status.register_callbacks(
             "on_option_select", "on_menu_toggle")
         self.settings: settings_.DropMenuSettings = settings
@@ -36,20 +36,21 @@ class DropMenu(Element):
                                             self.element_id+"_selected_option",
                                             common.style_id_or_copy(
                                                 self, self.settings.inner_buttons_style_id),
-                                            False, self, self.ui_manager).status.add_listener("on_click", self._on_arrow_click).element\
+                                            False, self, self.manager).status.add_listener("on_click", self._on_arrow_click).element\
             .add_element_types("dropmenu_button", "dropmenu_selected_option")
         self.arrow_button: Button = Button(self.settings.down_arrow_txt if self.settings.direction == "down" else self.settings.up_arrow_txt,
                                            pygame.Rect(0, 0, 0, 0),
                                            self.element_id+"_arrow",
                                            common.style_id_or_copy(
                                                self, self.settings.inner_buttons_style_id),
-                                           False, self, self.ui_manager).status.add_listener("on_click", self._on_arrow_click).element\
+                                           False, self, self.manager).status.add_listener("on_click", self._on_arrow_click).element\
             .add_element_types("dropmenu_button", "dropmenu_arrow")
         self.menu_cont: VStack = VStack(pygame.Rect(0, 0, 0, 0),
                                         self.element_id+"_menu",
                                         common.style_id_or_copy(
                                             self, self.settings.menu_style_id),
-                                        self.parent, self.ui_manager).set_ignore(stack=True).hide().set_z_index(common.Z_INDEXES["menu"]).add_element_type("dropmenu_menu")
+                                        self.parent if settings.menu_parent is None else settings.menu_parent, self.manager)\
+                                            .set_ignore(stack=True, scroll=True).hide().set_z_index(common.Z_INDEXES["menu"]).add_element_type("dropmenu_menu")
         self.__done = True
         self.build()
         self.position_changed()
@@ -106,7 +107,7 @@ class DropMenu(Element):
         events._post_dropmenu_event("toggle", self)
 
     def build(self):
-        if not self.ui_manager.running:
+        if not self.manager._running:
             return
         if not self.__done:
             return
@@ -126,18 +127,16 @@ class DropMenu(Element):
                    self.element_id +
                    f"_option_{i}", common.style_id_or_copy(
                 self.menu_cont, self.settings.option_style_id),
-                False, self.menu_cont, self.ui_manager).status.add_listener("on_click", self._on_option_click).element.add_element_type("dropmenu_option")
+                False, self.menu_cont, self.manager).status.add_listener("on_click", self._on_option_click).element.add_element_type("dropmenu_option")
         self.menu_cont._refresh_stack()
 
-    def position_changed(self):
-        if not self.ui_manager.running:
-            return
+    def on_logic(self):
         if self.settings.direction == "down":
-            self.menu_cont.set_relative_pos(
-                (self.relative_rect.x+self.style.stack.padding, self.relative_rect.bottom+self.style.stack.spacing))
+            self.menu_cont.set_absolute_pos(
+                (self.absolute_rect.x+self.style.stack.padding, self.absolute_rect.bottom+self.style.stack.spacing+self.parent.scroll_offset.y))
         else:
-            self.menu_cont.set_relative_pos((self.relative_rect.x+self.style.stack.padding,
-                                            self.relative_rect.top-self.menu_cont.relative_rect.h-self.style.stack.spacing))
+            self.menu_cont.set_absolute_pos((self.absolute_rect.x+self.style.stack.padding,
+                                            self.absolute_rect.top-self.menu_cont.absolute_rect.h-self.style.stack.spacing+self.parent.scroll_offset.y))
 
 
 class SelectionList(VStack):
@@ -149,10 +148,10 @@ class SelectionList(VStack):
                  element_id: str = "none",
                  style_id: str = "",
                  parent: Element | None = None,
-                 ui_manager: Manager | None = None,
+                 manager: Manager | None = None,
                  settings: settings_.SelectionListSettings = settings_.SelectionListDefaultSettings,
                  ):
-        super().__init__(relative_rect, element_id, style_id, parent, ui_manager)
+        super().__init__(relative_rect, element_id, style_id, parent, manager)
         self.settings: settings_.SelectionListSettings = settings
         self.set_options(options)
         self.add_element_types("menu", "selectionlist").deactivate(
@@ -207,7 +206,7 @@ class SelectionList(VStack):
         events._post_selectionlist_event("deselect", self, btn.text.text)
 
     def build(self):
-        if not self.ui_manager.running:
+        if not self.manager._running:
             return
         self.destroy_children()
         for i, option in enumerate(self.options):
@@ -215,7 +214,7 @@ class SelectionList(VStack):
                          self.element_id +
                          f"_option_{i}", common.style_id_or_copy(
                              self, self.settings.option_style_id),
-                         True, self, self.ui_manager).add_element_types("selectionlist_option").\
+                         True, self, self.manager).add_element_types("selectionlist_option").\
                 status.add_multi_listeners(
                     on_select=self._on_option_select, on_deselect=self._on_option_deselect).element
             self.option_buttons.append(btn)

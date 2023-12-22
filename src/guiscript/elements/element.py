@@ -26,7 +26,7 @@ class Element:
     style_id -> custom style group id to set the style\n
     element_types -> tuple of types the element is used for styles\n
     parent -> the element parent or optionally None if you are in a context manager\n
-    ui_manager -> the manager the element is bound to or optionally None if there is a current manager\n
+    manager -> the manager the element is bound to or optionally None if there is a current manager\n
     """
 
     def __init__(self,
@@ -35,24 +35,25 @@ class Element:
                  style_id: str = "",
                  element_types: str = ("element",),
                  parent: "Element" = None,
-                 ui_manager: "Manager" = None,
+                 manager: "Manager" = None,
                  ):
 
         # parameters
         self.relative_rect: pygame.Rect = relative_rect
-        self.ui_manager: "Manager" = ui_manager or UIState.current_manager
+        self.manager: "Manager" = manager or UIState.current_manager
 
         # None checking
-        if self.ui_manager is None:
+        if self.manager is None:
             raise UIError(
-                f"Element ui manager can't be None. Make sure to give a valid ui_manager parameter or set the correct current manager")
+                f"Element ui manager can't be None. Make sure to give a valid manager parameter or set the correct current manager")
 
-        self.parent: Element | "UIRoot" = parent or UIState.current_parent or self.ui_manager.root
-        self.ui_manager.all_elements.append(self)
+        self.parent: Element | "UIRoot" = parent or UIState.current_parent or self.manager.root
+        self.manager._all_elements.append(self)
 
         if self.relative_rect is None:
             raise UIError(
                 f"Element relative rect can't be None. Make sure to give a valid relative_rect parameter")
+        self.relative_rect = relative_rect.copy()
 
         if self.parent is None:
             raise UIError(
@@ -175,8 +176,8 @@ class Element:
         for child in list(self.children):
             child.destroy(True)
         self.children.clear()
-        if self in self.ui_manager.all_elements:
-            self.ui_manager.all_elements.remove(self)
+        if self in self.manager._all_elements:
+            self.manager._all_elements.remove(self)
         del self
 
     def destroy_children(self) -> typing.Self:
@@ -184,6 +185,16 @@ class Element:
         for child in list(self.children):
             child.destroy()
         self.set_dirty()
+        return self
+    
+    def move_in_parent(self, places: int) -> typing.Self:
+        """Move this element between the parent's children"""
+        if len(self.parent.children) <= 1:
+            return self
+        new_idx = pygame.math.clamp(self.parent.children.index(self)+places, 0, len(self.parent.children)-1)
+        self.parent.children.remove(self)
+        self.parent.children.insert(new_idx, self)
+        self.parent._refresh_stack()
         return self
 
     # flags
@@ -208,8 +219,8 @@ class Element:
     def hide(self) -> typing.Self:
         """Set the visible flag to False, refresh the stack"""
         self.visible = False
-        if self is self.ui_manager.navigation.tabbed_element:
-            self.ui_manager.navigation.stop_navigating()
+        if self is self.manager.navigation.tabbed_element:
+            self.manager.navigation.stop_navigating()
         if not self.ignore_stack:
             self.parent._refresh_stack()
         self.set_dirty()
@@ -246,14 +257,14 @@ class Element:
         if not self.absolute_rect.colliderect(self.parent.absolute_rect):
             return
         if fake:
-            self.ui_manager.last_rendered = self
+            self.manager._last_rendered = self
             for child in self.children:
                 child._render(fake=True)
             return
 
         if self.dirty:
             mask_padding = self.style.stack.mask_padding
-            self.ui_manager.last_rendered = self
+            self.manager._last_rendered = self
             self.element_surface.fill(0)
             if mask_padding > 0:
                 self.masked_surface.fill(0)
@@ -270,16 +281,16 @@ class Element:
 
             self.on_render()
         else:
-            self.ui_manager.last_rendered = self
+            self.manager._last_rendered = self
             for child in self.children:
                 child._render(fake=True)
         if parent_mask_padding <= 0:
             self.parent.element_surface.blit(self.element_surface, self.relative_rect.topleft -
-                                             (self.ui_manager.root.scroll_offset if self.ignore_scroll else self.parent.scroll_offset)+self.render_offset)
+                                             (self.manager.root.scroll_offset if self.ignore_scroll else self.parent.scroll_offset)+self.render_offset)
         else:
             self.parent.masked_surface.blit(self.element_surface, self.relative_rect.topleft -
                                             (pygame.Vector2(parent_mask_padding, parent_mask_padding)) -
-                                            (self.ui_manager.root.scroll_offset if self.ignore_scroll else self.parent.scroll_offset)+self.render_offset)
+                                            (self.manager.root.scroll_offset if self.ignore_scroll else self.parent.scroll_offset)+self.render_offset)
         self.dirty = False
         
     def _calc_style(self) -> typing.Self:
@@ -320,7 +331,7 @@ class Element:
     # get
     def get_absolute_topleft(self) -> pygame.Vector2:
         """Return the topleft position from the origin of the window"""
-        return pygame.Vector2(self.parent.get_absolute_topleft()+self.relative_rect.topleft)-(self.ui_manager.root.scroll_offset if self.ignore_scroll else self.parent.scroll_offset)
+        return pygame.Vector2(self.parent.get_absolute_topleft()+self.relative_rect.topleft)-(self.manager.root.scroll_offset if self.ignore_scroll else self.parent.scroll_offset)
 
     def get_attr(self, name: str):
         """Retrive a custom element attribute or None if it doesn't exist"""
@@ -329,6 +340,10 @@ class Element:
     def has_attr(self, name: str) -> bool:
         """Check if a custom element attribute exists"""
         return name in self.attrs
+    
+    def get_index_in_parent(self) -> int:
+        """Return the current index in the parent's children"""
+        return self.parent.children.index(self)
 
     def is_stack(self) -> bool:
         """Return whether this is a stack element. Useful since properties like scrollbars are only accessible for stacks"""
@@ -368,6 +383,13 @@ class Element:
         return count
 
     # set
+    def set_index_in_parent(self, index: int) -> typing.Self:
+        """Set the current index in the parent's children"""
+        self.parent.children.remove(self)
+        self.parent.children.insert(pygame.math.clamp(index, 0, len(self.parent.children)), self)
+        self.parent._refresh_stack()
+        return self
+    
     def set_ignore(self, stack: bool | None = None, scroll: bool | None = None, raycast: bool | None = None) -> typing.Self:
         """Set the 'ignore_stack' and 'ignore_scroll' flags"""
         self.ignore_stack = stack if stack is not None else self.ignore_stack
@@ -503,20 +525,20 @@ class Element:
                                self.element_id+"tooltip_container",
                                common.style_id_or_copy(self, style_id),
                                ("element", "tooltip", "tooltip_container"),
-                               self.ui_manager.root, self.ui_manager).set_z_index(common.Z_INDEXES["tooltip"])
+                               self.manager.root, self.manager).set_z_index(common.Z_INDEXES["tooltip"])
         if title:
             Element(pygame.Rect(0, 0, width, title_h),
                     self.element_id+"tooltip_title",
                     common.style_id_or_copy(tooltip_cont, title_style_id),
                     ("element", "tooltip", "label",
                      "tooltip_label", "tooltip_title"),
-                    tooltip_cont, self.ui_manager).text.set_text(title).element
+                    tooltip_cont, self.manager).text.set_text(title).element
         Element(pygame.Rect(0, title_h if title else 0, width, height-title_h if title else height),
                 self.element_id+"tooltip_description",
                 common.style_id_or_copy(tooltip_cont, descr_style_id),
                 ("element", "tooltip", "label",
                  "tooltip_label", "tooltip_description"),
-                tooltip_cont, self.ui_manager).text.set_text(description).element
+                tooltip_cont, self.manager).text.set_text(description).element
         tooltip_cont.hide()
         Tooltips.register(tooltip_cont, self)
         return tooltip_cont
@@ -536,7 +558,7 @@ class Element:
             self.ghost_element = None
         self.set_ignore(stack=True)
         self.ghost_element = Element(relative_rect, self.element_id+"_ghost", "invisible",
-                                     ("element", "ghost"), self.parent, self.ui_manager).set_z_index(common.Z_INDEXES["ghost"])
+                                     ("element", "ghost"), self.parent, self.manager).set_z_index(common.Z_INDEXES["ghost"])
         return self
 
     def set_render_offset(self, render_offset: pygame.Vector2) -> typing.Self:

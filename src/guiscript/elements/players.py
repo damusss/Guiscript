@@ -27,12 +27,12 @@ class SoundPlayer(HStack):
                  element_id: str = "none",
                  style_id: str = "",
                  parent: Element | None = None,
-                 ui_manager: Manager | None = None,
+                 manager: Manager | None = None,
                  settings: settings_.SoundPlayerSettings = settings_.SoundPlayerDefaultSettings
                  ):
         self.__done = False
         super().__init__(relative_rect, element_id, style_id,
-                         StackAnchor.max_spacing, parent, ui_manager)
+                         StackAnchor.max_spacing, parent, manager)
         self.add_element_types("player", "soundplayer")
         self.settings = settings
         if self.settings.sliders_settings is None:
@@ -53,13 +53,13 @@ class SoundPlayer(HStack):
                         self.relative_rect.h-style.stack.padding*2),
             self.element_id+"_play_button",
             common.style_id_or_copy(self, self.settings.buttons_style_id),
-            False, self, self.ui_manager
+            False, self, self.manager
         )
         self.track_slider = Slider(
             pygame.Rect(0, 0, 100, 100),
             self.element_id+"_track_slider",
             common.style_id_or_copy(self, self.settings.sliders_style_id),
-            self, self.ui_manager, ElementAlign.middle,
+            self, self.manager, ElementAlign.middle,
             self.settings.sliders_settings
         )
         self.volume_button = Button(
@@ -68,13 +68,13 @@ class SoundPlayer(HStack):
                         self.relative_rect.h-style.stack.padding*2),
             self.element_id+"_volume_button",
             common.style_id_or_copy(self, self.settings.buttons_style_id),
-            False, self, self.ui_manager
+            False, self, self.manager
         )
         self.volume_slider = Slider(
             pygame.Rect(0, 0, 100, 100),
             self.element_id+"_track_slider",
             common.style_id_or_copy(self, self.settings.sliders_style_id),
-            self, self.ui_manager, ElementAlign.middle,
+            self, self.manager, ElementAlign.middle,
             self.settings.sliders_settings
         )
         self.__done = True
@@ -239,7 +239,7 @@ class SoundPlayer(HStack):
                 self.track_slider.set_value(0)
 
     def build(self):
-        if not self.ui_manager.running:
+        if not self.manager._running:
             return
         if not self.__done:
             return
@@ -263,14 +263,14 @@ class VideoPlayer(Element):
                  element_id: str = "none",
                  style_id: str = "",
                  parent: Element | None = None,
-                 ui_manager: Manager | None = None,
+                 manager: Manager | None = None,
                  settings: settings_.VideoPlayerSettings = settings_.VideoPlayerDefaultSettings
                  ):
         self.settings = settings
         if self.settings.sliders_settings is None:
             self.settings.sliders_settings = settings_.SliderDefaultSettings
         super().__init__(relative_rect, element_id, style_id,
-                         ("element", "player", "videoplayer"), parent, ui_manager)
+                         ("element", "player", "videoplayer"), parent, manager)
         self.filename = filename
         self.media_player = MediaPlayer(filename, ff_opts={
                                         "fast": True, "framedrop": True, "paused": True, "sync": "video"})
@@ -300,12 +300,12 @@ class VideoPlayer(Element):
                                  self.element_id+"_video_image",
                                  common.style_id_or_copy(
                                      self, self.settings.video_style_id),
-                                 self, self.ui_manager)
+                                 self, self.manager)
         self.control_stack = HStack(
             pygame.Rect(0, 0, 200, 50),
             self.element_id+"_control_stack",
             common.style_id_or_copy(self, self.settings.control_style_id),
-            StackAnchor.max_spacing, self, self.ui_manager
+            StackAnchor.max_spacing, self, self.manager
         )
 
         self.play_button = Button(
@@ -314,13 +314,13 @@ class VideoPlayer(Element):
                         self.relative_rect.h-style.stack.padding*2),
             self.element_id+"_play_button",
             common.style_id_or_copy(self, self.settings.buttons_style_id),
-            False, self.control_stack, self.ui_manager
+            False, self.control_stack, self.manager
         )
         self.track_slider = Slider(
             pygame.Rect(0, 0, 100, 100),
             self.element_id+"_track_slider",
             common.style_id_or_copy(self, self.settings.sliders_style_id),
-            self.control_stack, self.ui_manager, ElementAlign.middle,
+            self.control_stack, self.manager, ElementAlign.middle,
             self.settings.sliders_settings
         )
         self.volume_button = Button(
@@ -329,13 +329,13 @@ class VideoPlayer(Element):
                         self.relative_rect.h-style.stack.padding*2),
             self.element_id+"_volume_button",
             common.style_id_or_copy(self, self.settings.buttons_style_id),
-            False, self.control_stack, self.ui_manager
+            False, self.control_stack, self.manager
         )
         self.volume_slider = Slider(
             pygame.Rect(0, 0, 100, 100),
             self.element_id+"_track_slider",
             common.style_id_or_copy(self, self.settings.sliders_style_id),
-            self.control_stack, self.ui_manager, ElementAlign.middle,
+            self.control_stack, self.manager, ElementAlign.middle,
             self.settings.sliders_settings
         )
         self.__done = True
@@ -535,7 +535,7 @@ class VideoPlayer(Element):
                 self.track_slider.set_value(0)
 
     def build(self):
-        if not self.ui_manager.running:
+        if not self.manager._running:
             return
         if not self.__done:
             return

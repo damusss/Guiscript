@@ -20,11 +20,11 @@ class ProgressBar(Element):
                  element_id: str = "none",
                  style_id: str = "",
                  parent: Element | None = None,
-                 ui_manager: Manager | None = None,
+                 manager: Manager | None = None,
                  settings: settings_.ProgressBarSettings = settings_.ProgressBarDefaultSettings,
                  ):
         super().__init__(relative_rect, element_id, style_id,
-                         ("element", "progressbar"), parent, ui_manager)
+                         ("element", "progressbar"), parent, manager)
         self.deactivate()
         self.settings: settings_.ProgressBarSettings = settings
         self.set_value(value)
@@ -83,11 +83,11 @@ class Slider(Element):
                  element_id: str = "none",
                  style_id: str = "",
                  parent: Element | None = None,
-                 ui_manager: Manager | None = None,
+                 manager: Manager | None = None,
                  settings: settings_.SliderSettings = settings_.SliderDefaultSettings,
                  ):
         super().__init__(relative_rect, element_id, style_id,
-                         ("element", "slider"), parent, ui_manager)
+                         ("element", "slider"), parent, manager)
         self.settings: settings_.SliderSettings = settings
         if not self.settings.axis in ["horizontal", "vertical"]:
             warnings.warn(
@@ -101,7 +101,7 @@ class Slider(Element):
              "copy" else self.settings.bar_style_id),
             ("element", "slider_bar"),
             self,
-            self.ui_manager
+            self.manager
         )
         self.handle = Element(
             pygame.Rect(0, 0, self.settings.handle_size,
@@ -111,7 +111,7 @@ class Slider(Element):
              "copy" else self.settings.handle_style_id),
             ("element", "handle", "slider_handle"),
             self,
-            self.ui_manager
+            self.manager
         )
         self.deactivate()
         self.bar.deactivate()
@@ -175,7 +175,7 @@ class Slider(Element):
                 self.buffers.update("value", val)
 
     def build(self):
-        if not self.ui_manager.running:
+        if not self.manager._running:
             return
         cur_value = self.get_value()
         self.handle.set_size(
@@ -201,10 +201,10 @@ class GIF(Element):
                  element_id: str = "none",
                  style_id: str = "",
                  parent: Element | None = None,
-                 ui_manager: Manager | None = None,
+                 manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id, style_id, ("element", "image", "gif"), parent,
-                         ui_manager)
+                         manager)
         self.set_frames(frames, frame_speed).play()
         self.build()
 
@@ -262,11 +262,11 @@ class Slideshow(Element):
                  element_id: str = "none",
                  style_id: str = "",
                  parent: Element | None = None,
-                 ui_manager: Manager | None = None,
+                 manager: Manager | None = None,
                  settings: settings_.SlideshowSettings = settings_.SlideshowDefaultSettings
                  ):
         super().__init__(relative_rect, element_id, style_id,
-                         ("element", "image", "slideshow"), parent, ui_manager)
+                         ("element", "image", "slideshow"), parent, manager)
         self.settings: settings_.SlideshowSettings = settings
         self.left_arrow = Button(self.settings.left_arrow_txt,
                                  pygame.Rect(0, 0, 100, 100),
@@ -275,7 +275,7 @@ class Slideshow(Element):
                                   "copy" else self.style_id),
                                  False,
                                  self,
-                                 self.ui_manager,
+                                 self.manager,
                                  )
         self.right_arrow = Button(self.settings.right_arrow_txt,
                                   pygame.Rect(0, 0, 100, 100),
@@ -284,7 +284,7 @@ class Slideshow(Element):
                                    "copy" else self.style_id),
                                   False,
                                   self,
-                                  self.ui_manager,
+                                  self.manager,
                                   )
         self.left_arrow.status.add_listener(
             "on_stop_press", self._on_left_click)
@@ -346,7 +346,7 @@ class Slideshow(Element):
         self.status.invoke_callback("on_move", "left")
 
     def build(self):
-        if not self.ui_manager.running:
+        if not self.manager._running:
             return
         size = (self.settings.arrows_w, self.relative_rect.h *
                 self.settings.arrows_rel_h)
@@ -367,10 +367,10 @@ class Label(Element):
                  element_id: str = "none",
                  style_id: str = "",
                  parent: Element | None = None,
-                 ui_manager: Manager | None = None,
+                 manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id,
-                         style_id, ("element", "label"), parent, ui_manager)
+                         style_id, ("element", "label"), parent, manager)
         self.text.set_text(text)
         self.deactivate()
 
@@ -389,10 +389,10 @@ class Icon(Element):
                  element_id: str = "none",
                  style_id: str = "",
                  parent: Element | None = None,
-                 ui_manager: Manager | None = None,
+                 manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id,
-                         style_id, ("element", "icon"), parent, ui_manager)
+                         style_id, ("element", "icon"), parent, manager)
         self.icon.set_icon(name)
         self.deactivate()
 
@@ -411,10 +411,10 @@ class Image(Element):
                  element_id: str = "none",
                  style_id: str = "",
                  parent: Element | None = None,
-                 ui_manager: Manager | None = None,
+                 manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id,
-                         style_id, ("element", "image"), parent, ui_manager)
+                         style_id, ("element", "image"), parent, manager)
         self.image.set_surface(surface)
         self.deactivate()
 
@@ -434,10 +434,10 @@ class Button(Element):
                  style_id: str = "",
                  selectable: bool = False,
                  parent: Element | None = None,
-                 ui_manager: Manager | None = None,
+                 manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id, style_id, ("element", "label", "button"), parent,
-                         ui_manager)
+                         manager)
         self.text.set_text(text)
         self.status.can_select = selectable
 
@@ -457,10 +457,10 @@ class ImageButton(Element):
                  style_id: str = "",
                  selectable: bool = False,
                  parent: Element | None = None,
-                 ui_manager: Manager | None = None,
+                 manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id,
-                         style_id, ("element", "image", "button", "imagebutton"), parent, ui_manager)
+                         style_id, ("element", "image", "button", "imagebutton"), parent, manager)
         self.image.set_surface(surface)
         self.status.can_select = selectable
 
@@ -480,10 +480,10 @@ class IconButton(Element):
                  style_id: str = "",
                  selectable: bool = False,
                  parent: Element | None = None,
-                 ui_manager: Manager | None = None,
+                 manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id,
-                         style_id, ("element", "icon", "button", "iconbutton"), parent, ui_manager)
+                         style_id, ("element", "icon", "button", "iconbutton"), parent, manager)
         self.icon.set_icon(name)
         if selectable:
             self.status.can_select = True
@@ -503,10 +503,10 @@ class Checkbox(Element):
                  element_id: str = "none",
                  style_id: str = "",
                  parent: Element | None = None,
-                 ui_manager: Manager | None = None,
+                 manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id, style_id, ("element", "button", "checkbox"), parent,
-                         ui_manager)
+                         manager)
         self.status.can_select = True
         self.status.selected = start_selected
 
@@ -541,10 +541,10 @@ class InvisElement(Element):
                  element_id: str = "none",
                  style_id: str = "invisible",
                  parent: Element | None = None,
-                 ui_manager: Manager | None = None,
+                 manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id, style_id,
-                         ("element", "invisible_element"), parent, ui_manager)
+                         ("element", "invisible_element"), parent, manager)
         self.deactivate()
 
 
@@ -556,10 +556,10 @@ class HLine(Element):
                  element_id: str = "none",
                  style_id: str = "fill_x",
                  parent: Element | None = None,
-                 ui_manager: Manager | None = None,
+                 manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id, style_id,
-                         ("element", "line", "hline"), parent, ui_manager)
+                         ("element", "line", "hline"), parent, manager)
         self.deactivate()
 
 
@@ -571,8 +571,8 @@ class VLine(Element):
                  element_id: str = "none",
                  style_id: str = "fill_y",
                  parent: Element | None = None,
-                 ui_manager: Manager | None = None,
+                 manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id, style_id,
-                         ("element", "line", "vline"), parent, ui_manager)
+                         ("element", "line", "vline"), parent, manager)
         self.deactivate()

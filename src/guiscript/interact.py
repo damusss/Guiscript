@@ -13,9 +13,9 @@ from . import events
 class UIInteract:
     """Update the status of the elements bound to a Manager"""
 
-    def __init__(self, ui_manager: "Manager"):
+    def __init__(self, manager: "Manager"):
         pygame.scrap.init()
-        self.ui_manager: "Manager" = ui_manager
+        self.manager: "Manager" = manager
 
         self.hovered_el: Element = None
         self.pressed_el: Element = None
@@ -27,7 +27,7 @@ class UIInteract:
         self.text_select_el: Element = None
 
     def _logic(self):
-        if self.ui_manager.last_rendered is None:
+        if self.manager._last_rendered is None:
             return
 
         # text selection
@@ -40,18 +40,24 @@ class UIInteract:
                 if end_idxs_info is not None:
                     char_i, line_i, tot_i, raw_text = end_idxs_info
                     self.last_idxs = [char_i, line_i, tot_i]
-                    self.text_select_el.text._selection_end_idxs = self.last_idxs
-                    self.text_select_el.status.invoke_callback("on_text_selection_change")
+                    if self.text_select_el.text._selection_end_idxs != self.last_idxs:
+                        self.text_select_el.text._selection_end_idxs = self.last_idxs
+                        self.text_select_el.status.invoke_callback("on_text_selection_change")
 
             if self.last_idxs is not None:
                 select_rects = common.text_select_rects(self.start_idxs[1], self.start_idxs[0], self.last_idxs[1], self.last_idxs[0],
                                                         lines, self.text_select_el.style.text.font, self.text_select_el.text.text_rect, UIState.mouse_rel.length() != 0)
-                self.text_select_el.text.set_cursor_index(self.last_idxs[-1])
+                if UIState.mouse_pressed[0]:
+                    if self.last_idxs[-1] > self.start_idxs[-1]:
+                        self.text_select_el.text.set_cursor_index(self.last_idxs[-1]+1)
+                    else:
+                        self.text_select_el.text.set_cursor_index(self.last_idxs[-1])
                 if select_rects:
                     if select_rects != self.text_select_el.text.selection_rects:
                         self.text_select_el.text.selection_rects = select_rects
                         self.text_select_el.set_dirty()
                         self.text_select_el.status.invoke_callback("on_text_selection_change")
+                        
         # we are pressing something
         if self.pressed_el is not None:
             # fire when_pressed
@@ -61,7 +67,7 @@ class UIInteract:
             self.pressed_el.status.hovered = self.pressed_el.absolute_rect.collidepoint(
                 UIState.mouse_pos)
             # we are not pressing no more
-            if (not UIState.mouse_pressed[0] and not self.pressed_el is self.ui_manager.navigation.tabbed_element) or (self.pressed_el is self.ui_manager.navigation.tabbed_element and not UIState.space_pressed):
+            if (not UIState.mouse_pressed[0] and not self.pressed_el is self.manager.navigation.tabbed_element) or (self.pressed_el is self.manager.navigation.tabbed_element and not UIState.space_pressed):
                 # set pressed
                 self.pressed_el.status.pressed = False
                 # fire on_stop_press
@@ -110,7 +116,7 @@ class UIInteract:
                 self.right_pressed_el = None
         else:
             # we aint pressing anything
-            last_rendered = self.ui_manager.last_rendered
+            last_rendered = self.manager._last_rendered
             # we have something already hovered
             if self.hovered_el is not None:
                 # remove hover status, and raycast again
@@ -146,7 +152,7 @@ class UIInteract:
                 self.hovered_el.status.invoke_callback("when_hovered")
                 events._post_base_event(events.HOVERED, self.hovered_el)
                 # we start pressing left
-                if UIState.mouse_pressed[0] or (UIState.space_pressed and self.ui_manager.navigation.tabbed_element is self.hovered_el):
+                if UIState.mouse_pressed[0] or (UIState.space_pressed and self.manager.navigation.tabbed_element is self.hovered_el):
                     if not self.hovered_el.status.pressed:
                         # fire on_start_press
                         self.hovered_el.status.pressed = True
@@ -170,11 +176,17 @@ class UIInteract:
                             events.START_RIGHT_PRESS, self.hovered_el)
                         # set right pressed and set right pressed el
                         self.right_pressed_el = self.hovered_el
+        
+        if self.manager.cursors.do_override_cursor:
+            if self.hovered_el is not None and self.hovered_el.active:
+                pygame.mouse.set_cursor(self.manager.cursors.hover_cursor)
+            else:
+                pygame.mouse.set_cursor(self.manager.cursors.default_cursor)
 
     def raycast(self, position: common.Coordinate, start_parent: Element, can_recurse_above=False) -> Element | None:
         """Find the hovered element at a certain position. Extra arguments are used for recursion. Keyboard navigated elements have priority"""
-        if self.ui_manager.navigation.tabbed_element is not None:
-            return self.ui_manager.navigation.tabbed_element
+        if self.manager.navigation.tabbed_element is not None:
+            return self.manager.navigation.tabbed_element
         if start_parent is None or not start_parent.visible:
             return
         if (not start_parent.absolute_rect.collidepoint(position) or start_parent.ignore_raycast) and can_recurse_above:

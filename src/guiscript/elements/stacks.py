@@ -14,13 +14,13 @@ class UIStack(Element):
                  element_id: str = "none",
                  style_id: str = "",
                  parent: Element | None = None,
-                 ui_manager: Manager | None = None,
+                 manager: Manager | None = None,
                  scrollbars_style_id: str = "copy",
                  stack_dir_prefix: str = "v"
                  ):
         self._done = False
         super().__init__(relative_rect, element_id, style_id, ("element", "stack", f"{stack_dir_prefix}stack"), parent,
-                         ui_manager)
+                         manager)
         self.content_x: int = 0
         self.content_y: int = 0
         self.total_x: int = 0
@@ -61,14 +61,14 @@ class VStack(UIStack):
                  element_id: str = "none",
                  style_id: str = "",
                  parent: Element | None = None,
-                 ui_manager: Manager | None = None,
+                 manager: Manager | None = None,
                  scrollbars_style_id: str = "copy"
                  ):
         super().__init__(relative_rect, element_id, style_id, parent,
-                         ui_manager, scrollbars_style_id, "v")
+                         manager, scrollbars_style_id, "v")
 
     def _refresh_stack(self):
-        if not self.ui_manager.running or not self._done:
+        if not self.manager._running or not self._done:
             return
         style = self.style
         total_x = 0
@@ -190,14 +190,14 @@ class HStack(UIStack):
                  element_id: str = "none",
                  style_id: str = "",
                  parent: Element | None = None,
-                 ui_manager: Manager | None = None,
+                 manager: Manager | None = None,
                  scrollbars_style_id: str = "copy"
                  ):
         super().__init__(relative_rect, element_id, style_id, parent,
-                         ui_manager, scrollbars_style_id, "h")
+                         manager, scrollbars_style_id, "h")
 
     def _refresh_stack(self):
-        if not self.ui_manager.running or not self._done:
+        if not self.manager._running or not self._done:
             return
         style = self.style
         total_x = style.stack.padding

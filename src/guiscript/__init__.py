@@ -104,6 +104,7 @@ from .types import (
     RootType,
     InteractType,
     NavigationType,
+    CursorsType,
     CompType,
     BGCompType,
     ImageCompType,

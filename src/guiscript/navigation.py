@@ -9,8 +9,8 @@ from .elements.element import Element
 class UINavigation:
     """Keyboard navigation manager bound to a Manager"""
 
-    def __init__(self, ui_manager: "Manager"):
-        self.ui_manager: "Manager" = ui_manager
+    def __init__(self, manager: "Manager"):
+        self.manager: "Manager" = manager
 
         self.enabled: bool = True
         self.tabbed_element: Element | None = None
@@ -34,7 +34,7 @@ class UINavigation:
 
         elif event.key == pygame.K_TAB:
             if self.tabbed_element is None:
-                self.tabbed_element = self.ui_manager.root.find_navigable_child()
+                self.tabbed_element = self.manager.root.find_navigable_child()
                 self.tabbed_element.set_dirty()
             else:
                 if event.mod == pygame.KMOD_LSHIFT:
@@ -93,7 +93,7 @@ class UINavigation:
 
     def start_navigating(self) -> typing.Self:
         """Manually start navigating"""
-        self.tabbed_element = self.ui_manager.root.find_navigable_child()
+        self.tabbed_element = self.manager.root.find_navigable_child()
         self.tabbed_element.set_dirty()
         return self
 

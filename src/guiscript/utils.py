@@ -42,13 +42,13 @@ def static_logic(delta_time: float = 1):
     Tooltips._logic()
 
 
-def quick_style(style_source: str, gs_variables: dict = None) -> str:
+def quick_style(style_source: str, gss_variables: dict = None) -> str:
     """Parse a style source replacing 'ID' with a new random id and return it to assign to an element. If no variables are provided the current manager ones will be used"""
-    if gs_variables is None:
+    if gss_variables is None:
         if UIState.current_manager is not None:
-            gs_variables = UIState.current_manager.gs_variables
+            gss_variables = UIState.current_manager.gss_variables
         else:
-            gs_variables = {}
+            gss_variables = {}
     ID: str = ""
     for i in range(30):
         ID += random.choice(string.ascii_lowercase+string.ascii_uppercase+"_")
@@ -56,7 +56,7 @@ def quick_style(style_source: str, gs_variables: dict = None) -> str:
         raise UIError(
             f"Source of quick style should include 'ID' for the style name, that will be later replaced with the actual id (in this case '{ID}')")
     style_source = style_source.replace("ID", ID)
-    UIScript.parse_source(style_source, f"quickstyle.ID:{ID}.gss", gs_variables)
+    UIScript.parse_source(style_source, f"quickstyle.ID:{ID}.gss", gss_variables)
     return ID
 
 
@@ -198,6 +198,7 @@ def help_style_script() -> typing.LiteralString:
         a list: a collection of other values sorrounded by parenthesis ('ciao', 12)
         a python expression: any valid python expression sorrounded by ||, you can use variables. Example: |3*VAR_NAME|
     Properties that expect surfaces or fonts will try to load them if a string is provided
+    A special font with icons is available with font name 'googleicons'
     
     AVAILABLE COMPONENTS AND PROPERTIES
     

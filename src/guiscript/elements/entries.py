@@ -16,10 +16,10 @@ class Entry(VStack):
                  element_id: str = "none",
                  style_id: str = "",
                  parent: Element | None = None,
-                 ui_manager: Manager | None = None,
+                 manager: Manager | None = None,
                  settings: settings_.EntrySettings = settings_.EntryDefaultSettings,
                  ):
-        super().__init__(relative_rect, element_id, style_id, parent, ui_manager, "invisible")
+        super().__init__(relative_rect, element_id, style_id, parent, manager, "invisible")
         self.vscrollbar.deactivate()
         self.hscrollbar.deactivate()
         self.add_element_type("entry").status.add_listener("on_click", self._on_self_click)\
@@ -39,7 +39,7 @@ class Entry(VStack):
         
         self.text_element: Element = Element(pygame.Rect(0,0,0,0), 
                                              self.element_id+"_text", settings.inner_style_id+";"+settings.disabled_text_style_id, 
-                                             ("element", "label", "entry_text"), self, self.ui_manager)\
+                                             ("element", "label", "entry_text"), self, self.manager)\
                                     .deactivate().text.set_text(self.settings.placeholder).element.status.enable_selection()\
                                     .add_multi_listeners(on_select=self._on_inner_select, on_deselect=self._on_inner_deselect, on_text_selection_change=self._selection_changed).element
                                     
@@ -53,7 +53,8 @@ class Entry(VStack):
         
     def _selection_changed(self):
         self._cursor_index = self.text_element.text.cursor_index
-                                    
+        self._last_blink = pygame.time.get_ticks()
+        
     def _event(self, event):
         if not self.is_focused(): return
         
@@ -166,14 +167,14 @@ class Entry(VStack):
         self.buffers.update("text", self.get_text())
         
     def _remove_selection(self):
-        if not self.text_element is self.ui_manager.interact.text_select_el:
+        if not self.text_element is self.manager.interact.text_select_el:
             return False
         selection = self.text_element.text._get_selection()
         if selection is None:
             self._remove_interaction()
             return False
         self._remove_interaction()
-        left, right = self.text_element.text.text[0:selection[0]], self.text_element.text.text[selection[1]:]
+        left, right = self.text_element.text.text[0:selection[0]], self.text_element.text.text[selection[1]+1:]
         self.text_element.text.set_text(left+right)
         self._cursor_index = selection[0]
         self._refresh_cursor_idx()
@@ -191,8 +192,8 @@ class Entry(VStack):
         self._last_blink = pygame.time.get_ticks()
         
     def _remove_interaction(self):
-        if self.ui_manager.interact.text_select_el is self.text_element:
-            self.ui_manager.interact.text_select_el = None
+        if self.manager.interact.text_select_el is self.text_element:
+            self.manager.interact.text_select_el = None
         self.text_element.text.selection_rects = []
         self.text_element.set_dirty()
                 
@@ -238,6 +239,7 @@ class Entry(VStack):
     
     def set_text(self, text: str) -> typing.Self:
         """Manually set the text of the entry"""
+        self.focus()
         self.text_element.text.set_text(text.replace("\n", ""))
         self.unfocus()
         self.buffers.update("text", self.get_text())
@@ -245,6 +247,7 @@ class Entry(VStack):
     
     def add_text(self, text: str) -> typing.Self:
         """Manually add text on the cursor position, replacing the selection if necessary"""
+        self.focus()
         self._on_unicode(text.replace("\n", ""))
         return self
     
