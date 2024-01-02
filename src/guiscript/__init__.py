@@ -31,7 +31,9 @@ from .enums import (
     AnimPropertyType,
     AnimRepeatMode,
     AnimEaseFunc,
-    StyleAnimPropertyType
+    StyleAnimPropertyType,
+    Resizer,
+    Anchor
 )
 
 from .elements.factories import (
@@ -54,7 +56,7 @@ from .elements.factories import (
 from .elements.stacks import (VStack, HStack)
 from .elements.players import (SoundPlayer, VideoPlayer)
 from .elements.menus import (DropMenu, SelectionList)
-# from .elements.windows import (Window, FileDialog)
+from .elements.windows import (Window, ) # FileDialog
 from .elements.entries import (Entry)#, TextBox)
 
 from .settings import (
@@ -73,11 +75,15 @@ from .settings import (
     SelectionListSettings,
     SelectionListDefaultSettings,
     EntrySettings,
-    EntryDefaultSettings
+    EntryDefaultSettings,
+    WindowSettings,
+    WindowDefaultSettings
 )
 
 from .utils import (
     VERSION,
+    ALL_RESIZERS,
+    ANCHOR_PARENT,
     static_logic,
     ZeroRect,
     SizeRect,

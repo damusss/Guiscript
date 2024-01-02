@@ -16,6 +16,7 @@ SELECT = pygame.event.custom_type()
 DESELECT = pygame.event.custom_type()
 CLICK = pygame.event.custom_type()
 RIGHT_CLICK = pygame.event.custom_type()
+RESIZE = pygame.event.custom_type()
 
 SLIDESHOW_MOVE_LEFT = pygame.event.custom_type()
 SLIDESHOW_MOVE_RIGHT = pygame.event.custom_type()
@@ -45,6 +46,9 @@ ANIMATION_END = pygame.event.custom_type()
 ENTRY_CHANGE = pygame.event.custom_type()
 ENTRY_FOCUS = pygame.event.custom_type()
 ENTRY_UNFOCUS = pygame.event.custom_type()
+
+WINDOW_CLOSE = pygame.event.custom_type()
+WINDOW_DRAG = pygame.event.custom_type()
 
 
 def _post_base_event(type_: int, element: "Element"):
@@ -147,5 +151,15 @@ def _post_entry_event(mode:str, element: "Element"):
             "element": element,
             "entry": element,
             "text": element.get_text()
+        }
+    ))
+    
+def _post_window_event(mode: str, element: "Element"):
+    pygame.event.post(pygame.Event(
+        WINDOW_CLOSE if mode == "close" else WINDOW_DRAG,
+        {
+            "id": element.element_id,
+            "element": element,
+            "window": element,
         }
     ))

@@ -128,3 +128,33 @@ class StyleAnimPropertyType(StrEnum):
     """Types supported by style animations"""
     number = "number"
     color = "color"
+    
+
+class Resizer(StrEnum):
+    """Names of the resizers an element can have"""
+    top = "top"
+    bottom = "bottom"
+    left = "left"
+    right = "right"
+    topleft = "topleft"
+    bottomleft = "bottomleft"
+    topright = "topright"
+    bottomright = "bottomright"
+    
+    
+class Anchor(StrEnum):
+    """Dynamic element anchor names"""
+    none = "none"
+    middle = "center"
+    topleft = "topleft"
+    topright = "topright"
+    bottomleft = "bottomleft"
+    bottomright = "bottomright"
+    midleft = "midleft"
+    midright = "midright"
+    midtop = "midtop"
+    midbottom = "midbottom"
+    left = "left"
+    right = "right"
+    top = "top"
+    bottom = "bottom"

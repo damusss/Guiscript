@@ -152,7 +152,7 @@ class VStack(UIStack):
                     case "center":
                         current_y = (self.relative_rect.h -
                                      scroll_y)//2-total_y//2
-                    case "bottom":
+                    case "bottom"|"right":
                         current_y = (self.relative_rect.h-scroll_y)-total_y
         elif total_y > self.relative_rect.h and style.stack.grow_y:
             self.set_size((self.relative_rect.w, total_y))
@@ -172,7 +172,7 @@ class VStack(UIStack):
                         case "center":
                             child_x = (self.relative_rect.w-scroll_x)//2 - \
                                 child.relative_rect.w//2
-                        case "right":
+                        case "right"|"bottom":
                             child_x = (self.relative_rect.w-scroll_x) - \
                                 child.relative_rect.w-style.stack.padding
             else:
@@ -280,7 +280,7 @@ class HStack(UIStack):
                     case "center":
                         current_x = (self.relative_rect.w -
                                      scroll_x)//2-total_x//2
-                    case "right":
+                    case "right"|"bottom":
                         current_x = (self.relative_rect.w-scroll_x)-total_x
         elif total_x > self.relative_rect.w and style.stack.grow_x:
             self.set_size((total_x, self.relative_rect.h))
@@ -299,7 +299,7 @@ class HStack(UIStack):
                         case "center":
                             child_y = (self.relative_rect.h-scroll_y)//2 - \
                                 child.relative_rect.h//2
-                        case "bottom":
+                        case "bottom"|"right":
                             child_y = (self.relative_rect.h-scroll_y) - \
                                 child.relative_rect.h-style.stack.padding
             else:

@@ -2,6 +2,7 @@ import dataclasses
 import typing
 
 from .enums import SliderAxis, ProgressBarDirection, DropMenuDirection
+from . import common
 
 
 @dataclasses.dataclass(slots=True)
@@ -98,6 +99,24 @@ class EntrySettings:
     repeat_speed: int = 40
     repeat_start_cooldown: int = 370
     disabled_text_style_id: str = "entry_disabled_text"
+    
+    
+@dataclasses.dataclass(slots=True)
+class WindowSettings:
+    close_button_txt: str = "X"
+    title_bar_height: int = 30
+    resizers_size: int = 5
+    max_size: common.Coordinate|None = None
+    min_size: common.Coordinate|None = (100,100)
+    can_drag: bool = True
+    can_resize: bool = True
+    destroy_on_close: bool = True
+    hide_on_close: bool = False
+    resizers_style_id: str = "copy"
+    close_button_style_id: str = "copy"
+    title_style_id: str = "copy"
+    content_style_id: str = "copy"
+    scrollbars_style_id: str = "copy"
 
 
 SlideshowDefaultSettings = SlideshowSettings()
@@ -110,3 +129,4 @@ ProgressBarDefaultSettings = ProgressBarSettings()
 DropMenuDefaultSettings = DropMenuSettings()
 SelectionListDefaultSettings = SelectionListSettings()
 EntryDefaultSettings = EntrySettings()
+WindowDefaultSettings = WindowSettings()

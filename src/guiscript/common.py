@@ -336,16 +336,24 @@ DEFAULT_CALLBACKS: list[str] = [
     "on_move",
     "on_first_frame",
     "on_animation_end",
+    "on_position_change",
+    "on_size_change",
+    "on_style_change",
+    "on_build",
+    "on_resize",
     "on_text_selection_change"
 ]
 
 
 Z_INDEXES = {
-    "ghost": -100,
+    "ghost": -99,
     "element": 0,
-    "scrollbar": 100,
-    "menu": 150,
-    "tooltip": 200,
+    "scrollbar": 999,
+    "menu": 1999,
+    "window-start":2000,
+    "window-end": 9998,
+    "resizer": 9999,
+    "tooltip": 10000,
 }
 
 
@@ -423,7 +431,7 @@ image:: {
     image.outline_width 1;
 }
 
-stack, scrollbar, slideshow, slider_bar, player::{
+stack, scrollbar, slideshow, slider_bar, player, window::{
     bg.color $DARK_COLOR;
 }
 
@@ -477,6 +485,10 @@ entry:: {
     stack.floating_scrollbars true;
 }
 
+window:: {
+    stack.padding 3;
+}
+
 / INNER ELEMENTS
 entry_text:: {
     text.do_wrap false;
@@ -528,6 +540,26 @@ tooltip_title:: {
 
 tooltip_description:: {
     text.font_size 20;
+}
+
+resizer:press: {
+    bg.enabled false;
+    outline.enabled false;
+    text.enabled false;
+    image.enabled false;
+    icon.enabled false;
+    shape.enabled false;
+}
+
+resizer:hover {
+    bg.enabled true;
+}
+
+window_title:: {
+    stack.fill_x true;
+    stack.fill_y true;
+    text.align left;
+    text.font_align left;
 }
 
 / BUILTIN STYLE GROUPS

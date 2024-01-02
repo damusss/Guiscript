@@ -179,7 +179,11 @@ class UIInteract:
         
         if self.manager.cursors.do_override_cursor:
             if self.hovered_el is not None and self.hovered_el.active:
-                pygame.mouse.set_cursor(self.manager.cursors.hover_cursor)
+                if (rn:=self.hovered_el.get_attr("resizer_name")) is not None:
+                    if rn in self.manager.cursors.resize_cursors:
+                        pygame.mouse.set_cursor(self.manager.cursors.resize_cursors[rn])
+                else:
+                    pygame.mouse.set_cursor(self.manager.cursors.hover_cursor)
             else:
                 pygame.mouse.set_cursor(self.manager.cursors.default_cursor)
 

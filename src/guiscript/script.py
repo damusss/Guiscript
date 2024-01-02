@@ -419,12 +419,19 @@ class UIScriptParser:
                 except:
                     raise UIScriptError(
                         f"Could not auto-load surface from path '{value}'"+self.error_suffix())
-        if comp_name == "icon" and comp_name == "name" and value is not None and not value in Icons.icons and os.path.exists(value):
+        if comp_name == "icon" and property_name == "name" and value is not None and not value in Icons.icons and os.path.exists(value):
             path = pathlib.Path(value)
             if path.is_file():
                 Icons.add(path.name, pygame.image.load(
                     value).convert_alpha())
             value = path.name
+        if comp_name == "text" and property_name == "font_align":
+            if value == "center":
+                value = 1
+            elif value == "left":
+                value = 0
+            elif value == "right":
+                value = 2
         return (False, comp_name, property_name, value)
 
     def parse_style_animation(self):

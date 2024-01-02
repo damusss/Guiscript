@@ -27,16 +27,24 @@ def on_stop_hover(element: guis.Element):
 surfaces = [test_surf, menu_surf, test_surf]
 
 v = 0
-
 with guis.VStack(guis.SizeR(1200, 800), style_id="invis_cont"):
-    with guis.VStack(guis.SizeR(600,700), style_id="no_scroll"):
-        el = guis.Entry(guis.SizeR(500,80))
+    with guis.VStack(guis.SizeR(600,700), style_id="no_scroll").set_resizers(guis.ALL_RESIZERS):
+        el = guis.Entry(guis.SizeR(500,80)).set_resizers(guis.ALL_RESIZERS)
         btn = guis.Button("TEST BUTTON", guis.SizeR(100,100), style_id="turn_red").set_ghost(guis.SizeR(200,200))\
-            .status.add_listener("on_start_hover", on_start_hover).add_listener("on_stop_hover", on_stop_hover).element
+            .status.add_listener("on_start_hover", on_start_hover).add_listener("on_stop_hover", on_stop_hover).element.set_resizers(guis.ALL_RESIZERS)
         base = btn.relative_rect.w
         big = btn.relative_rect.w+100
-        pb = guis.ProgressBar(0, rect(0,0,500,100), settings=guis.ProgressBarSettings(direction=guis.ProgressBarDirection.right_left))
+        pb = guis.ProgressBar(0, rect(50,50,500,100), settings=guis.ProgressBarSettings(direction=guis.ProgressBarDirection.left_right))
+        pb.set_anchor(btn, guis.Anchor.topleft, guis.Anchor.bottomleft, (0, 4))
+        pb.set_resizers(guis.ALL_RESIZERS).set_ignore(stack=True)
         
+        with guis.Window(pygame.Rect(50,50,400,400), settings=guis.WindowSettings(resizers_style_id="invisible")).enter():
+            guis.Button("TEST", guis.SizeR(100,100))
+        with guis.Window(pygame.Rect(100,100,400,400)).enter():
+            guis.Button("TEST", guis.SizeR(100,100))
+    with guis.Window(pygame.Rect(150,150,400,400)).enter():
+        guis.Button("TEST", guis.SizeR(100,100))
+                
 while True:   
     for event in pygame.event.get():
         if event.type == pygame.QUIT:

@@ -4,9 +4,8 @@ THINGS
 
 ELEMENTS
 
-window
-file dialog
-textbox
+- file dialog
+- textbox
 
 DONE THINGS
 
@@ -41,24 +40,28 @@ DONE THINGS
 - renaming
 - entry events, callback, buffer
 - str images
+- anchors
+- resizing
 
 DONE ELEMENTS
 
-label
-image
-button +selectable
-image button +selectable
-checkbox
-vstack, hstack
-progress bar
-slideshow
-gif
-slider
-icon
-icon button
-audio player
-video player
-progress bar
-drop menu
-selection list
-entry
+- label
+- image
+- button 
+- image button
+- checkbox
+- vstack, hstack
+- progress bar
+- slideshow
+- gif
+- slider
+- icon
+- icon button
+- lines, invis element
+- audio player
+- video player
+- progress bar
+- drop menu
+- selection list
+- entry
+- window

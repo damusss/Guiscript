@@ -15,14 +15,14 @@ def _download_add(name: str, url: str, is_async: bool = False):
     response = requests.request("get", url)
     if not response.ok:
         warnings.warn(
-            f"Request for icon '{name}' at url '{url}' failed with status code", category=UserWarning)
+            f"Request for icon '{name}' at url '{url}' failed with status code '{response.status_code}'", category=UserWarning)
     image = pygame.image.load(io.BytesIO(response.content)).convert_alpha()
     Icons.icons[name] = image
     if is_async:
         if name in Icons.adding_async:
             Icons.adding_async.remove(name)
         for icon_comp in Icons.rebuild_async:
-            icon_comp.build(icon_comp.get_style())
+            icon_comp._build()
 
 
 class Icons:

@@ -10,8 +10,18 @@ from .error import UIError
 from .script import UIScript
 from . import common
 from . import strimages
+from . import enums
 
-VERSION = "WIP"
+VERSION: str = "WIP"
+ALL_RESIZERS: tuple[enums.Resizer] = (enums.Resizer.top,
+                enums.Resizer.bottom,
+                enums.Resizer.left,
+                enums.Resizer.right,
+                enums.Resizer.topleft,
+                enums.Resizer.topright,
+                enums.Resizer.bottomleft,
+                enums.Resizer.bottomright)
+ANCHOR_PARENT: str = "parent"
 
 
 def ZeroRect() -> pygame.Rect:
@@ -145,6 +155,11 @@ def help_element_types() -> typing.LiteralString:
     VLine: (element, line, vline)
     Entry: (*HStack, entry)
         Entry.text_element: (*Label, entry_text)
+    Window: (element, window)
+        Window.title_bar: (*HStack, window_title_bar)
+            Window.title: (*Button, window_title)
+            Window.close_btn: (*Button, window_close_button)
+        Window.content: (*VStack, window_content)
     """
 
 
@@ -282,6 +297,15 @@ def help_style_script() -> typing.LiteralString:
         border_radius: number
         navigation_color: Color Outline color when the element is keyboard-navigated
 
+    There is also a few built in style ids:
+        entry_disabled_text: used by the entry to change style for the placeholder
+        active_cont: make a default-disabled-style element active again in terms of style
+        invis_cont/invisible_container: simple way to make stacks invisible and without padding
+        invisible: extends invis_cont to make any style invisible
+        icons_font: set the font name to the special 'googleicons' and font size to 30
+        no_scroll: quick way to set both scroll_x and scroll_y to false
+        no padding: set all the component paddings to 0
+        fill, fill_x, fill_y: shortcuts for space filling elements as they are used a lot
     
     Have fun styling your elements!
     """
@@ -380,6 +404,12 @@ def help_events() -> typing.LiteralString:
         extra properties:
             entry: Entry
             text: str
+            
+    Window:
+        WINDOW_CLOSE
+        WINDOW_DRAG
+        extra properties:
+            window: Window
         
     """
 
@@ -405,6 +435,11 @@ def help_callbacks() -> typing.LiteralString:
         on_animation_end (property animation)
         on_move (used by few)
         on_text_selection_change
+        on_position_change
+        on_style_change
+        on_size_change
+        on_build
+        on_resize
         args:
             [Optional] element: Element
             
@@ -425,6 +460,17 @@ def help_callbacks() -> typing.LiteralString:
         on_option_deselect
         extra args:
             option: str
+            
+    Entry:
+        on_change
+        on_focus
+        on_unfocus
+        extra args:
+            text: str
+            
+    Window:
+        on_close
+        on_drag
     """
 
 
@@ -433,6 +479,7 @@ def help_buffers() -> typing.LiteralString:
     return """
     Element: selected (sync with Element.status.selected)
     Slider: value (sync with Slider.get_value())
+    Entry: text (sync with Entry.get_text())
     """
     
 def help_navigation() -> typing.LiteralString:
