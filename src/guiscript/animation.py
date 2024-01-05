@@ -109,8 +109,8 @@ class UIPropertyAnim(UIAnimation):
         if self.element is None:
             self.dead = True
             return
-        
-        lerp_val = common.lerp(0, self.end_value, self.ease_func(
+
+        lerp_val = pygame.math.lerp(0, self.end_value, self.ease_func(
             self.get_elapsed_time()/self.duration_ms))
         if self.direction == 1:
             self.current_value = lerp_val
@@ -210,7 +210,7 @@ class UIStyleAnim(UIAnimation):
             return
 
         if self.property_type == StyleAnimPropertyType.number:
-            lerp_val = common.lerp(self.start_value, self.end_value, self.ease_func(
+            lerp_val = pygame.math.lerp(self.start_value, self.end_value, self.ease_func(
                 self.get_elapsed_time()/self.duration_ms))
 
             self.current_value = lerp_val

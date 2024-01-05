@@ -37,7 +37,8 @@ class Manager:
                 UIScript.parse_script(gss_path, self.gss_variables)
         if gss_sources is not None:
             for i, gss_source in enumerate(gss_sources):
-                UIScript.parse_source(gss_source, f"gss.source.idx:{UIState.num_managers},{i}", self.gss_variables)
+                UIScript.parse_source(gss_source, f"gss.source.idx:{
+                                      UIState.num_managers},{i}", self.gss_variables)
 
         self._running: bool = False
         self._all_elements: list[Element] = []
@@ -56,7 +57,7 @@ class Manager:
         """Set the running flag to False. Useful when recreating the UI elements tree, to avoid errors"""
         self._running = False
         return self
-    
+
     def destroy(self) -> typing.Self:
         """Destroy all elements except the root and restart the manager"""
         self.root.destroy_children()
@@ -113,7 +114,7 @@ class Manager:
         """Execute a style script from a file"""
         UIScript.parse_script(filepath, self.gss_variables)
         return self
-        
+
     def load_gss_source(self, source: str, debug_filename: str) -> typing.Self:
         """Execute a style script from a string"""
         UIScript.parse_source(source, debug_filename, self.gss_variables)
@@ -136,7 +137,7 @@ class Manager:
         for el in self._all_elements:
             if element_type in el.element_types:
                 yield el
-                
+
     def get_all_elements(self) -> list[Element]:
         """Return all the elements as a list. Modifying it won't affect the manager's elements"""
         return list(self._all_elements)

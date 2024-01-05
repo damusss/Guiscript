@@ -49,6 +49,7 @@ ENTRY_UNFOCUS = pygame.event.custom_type()
 
 WINDOW_CLOSE = pygame.event.custom_type()
 WINDOW_DRAG = pygame.event.custom_type()
+WINDOW_COLLAPSE = pygame.event.custom_type()
 
 
 def _post_base_event(type_: int, element: "Element"):
@@ -154,12 +155,14 @@ def _post_entry_event(mode:str, element: "Element"):
         }
     ))
     
+    
 def _post_window_event(mode: str, element: "Element"):
     pygame.event.post(pygame.Event(
-        WINDOW_CLOSE if mode == "close" else WINDOW_DRAG,
+        WINDOW_CLOSE if mode == "close" else WINDOW_DRAG if mode == "drag" else WINDOW_COLLAPSE,
         {
             "id": element.element_id,
             "element": element,
             "window": element,
+            "collapsed": element.collapsed
         }
     ))

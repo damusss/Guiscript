@@ -19,6 +19,7 @@ class UIScrollbar(Element):
     def _refresh(self):
         ...
 
+
 class UIVScrollbar(UIScrollbar):
     """[Internal] Element used for scrolling vertically in a stack"""
 

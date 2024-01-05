@@ -114,7 +114,7 @@ class UIStatus:
         self.selected = False
         self.element.buffers.update("selected", False)
         return self
-    
+
     def toggle(self) -> typing.Self:
         """Manually toggle the selection of the element based on the current status and update the 'selected' buffer"""
         self.selected = True if not self.selected else False

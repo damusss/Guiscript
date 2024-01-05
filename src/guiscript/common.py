@@ -13,6 +13,15 @@ StatusCallback: typing.TypeAlias = typing.Callable[[
     "Element"], typing.Any] | None
 CursorLike: typing.TypeAlias = pygame.Cursor | int
 
+
+class UIAnchorData:
+    def __init__(self, target: "Element", self_anchor: str, target_anchor: str, offset: Coordinate):
+        self.target: "Element" = target
+        self.self_anchor: str = self_anchor
+        self.target_anchor: str = target_anchor
+        self.offset: float = offset
+
+
 def style_id_or_copy(element: "Element", style_id: str) -> str:
     return element.style_id if style_id == "copy" else style_id
 
@@ -231,10 +240,6 @@ def generate_menu_surface(original_image: pygame.Surface, width: int, height: in
     return big_surf
 
 
-def lerp(a: float, b: float, t: float) -> float:
-    return a + t*(b-a)
-
-
 def linear(t: float) -> float:
     return t
 
@@ -350,7 +355,7 @@ Z_INDEXES = {
     "element": 0,
     "scrollbar": 999,
     "menu": 1999,
-    "window-start":2000,
+    "window-start": 2000,
     "window-end": 9998,
     "resizer": 9999,
     "tooltip": 10000,
@@ -560,6 +565,11 @@ window_title:: {
     stack.fill_y true;
     text.align left;
     text.font_align left;
+    text.do_wrap false;
+}
+
+window_collapse_button:: {
+    text.font_name googleicons;
 }
 
 / BUILTIN STYLE GROUPS

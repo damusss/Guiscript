@@ -56,6 +56,7 @@ class UIComponent:
         self.force_visibility = False
         return self
 
+
 class UIBackgroundComp(UIComponent):
     """Element component that renders a background"""
 
@@ -247,7 +248,7 @@ class UITextComp(UIComponent):
         self.element.element_surface.blit(self.text_surf, self.text_rect)
         if self.cursor_index > -1 and style.cursor_enabled:
             x = 0
-            for i,c in enumerate(self.text):
+            for i, c in enumerate(self.text):
                 if i >= self.cursor_index:
                     break
                 x += style.font.size(c)[0]
@@ -294,7 +295,7 @@ class UITextComp(UIComponent):
                                  style.color,
                                  style.bg_color,
                                  (self.element.relative_rect.w if style.do_wrap else 0) if not max_w else max_w).get_height()+style.y_padding*2
-        
+
     def text_size(self, text: str) -> tuple[float, float]:
         """Return the size some text would be if rendered"""
         style = self.element.style.text
@@ -309,7 +310,7 @@ class UITextComp(UIComponent):
         self.text: str = text
         self._build(self.element.style)
         return self
-    
+
     def set_cursor_index(self, index: int) -> typing.Self:
         """Set the cursor index. A bar will be drawn at the said index. -1 or lower means no cursor (default)"""
         if self.cursor_index != index:
@@ -328,13 +329,14 @@ class UITextComp(UIComponent):
         self.selection_rects = []
         self.element.set_dirty()
         return self
-    
+
     def _get_selection(self) -> tuple[int]:
         if self._selection_end_idxs is None or self._selection_start_idxs is None:
             return None
         if len(self._selection_start_idxs) < 3 or len(self._selection_end_idxs) < 3:
             return None
-        selection = (min(self._selection_start_idxs[-1], self._selection_end_idxs[-1]), max(self._selection_start_idxs[-1], self._selection_end_idxs[-1]))
+        selection = (min(self._selection_start_idxs[-1], self._selection_end_idxs[-1]), max(
+            self._selection_start_idxs[-1], self._selection_end_idxs[-1]))
         if selection[1]-selection[0] == 0:
             return None
         return selection
@@ -377,7 +379,7 @@ class UIIconComp(UIComponent):
                                                         style.icon.padding,
                                                         style.icon.align)
         self.element.set_dirty()
-        
+
     def _size_changed(self):
         self._build(self.element.style)
 

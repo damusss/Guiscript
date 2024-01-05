@@ -14,7 +14,7 @@ class UIInteract:
     """Update the status of the elements bound to a Manager"""
 
     def __init__(self, manager: "Manager"):
-        pygame.scrap.init()
+        # pygame.scrap.init()
         self.manager: "Manager" = manager
 
         self.hovered_el: Element = None
@@ -42,22 +42,26 @@ class UIInteract:
                     self.last_idxs = [char_i, line_i, tot_i]
                     if self.text_select_el.text._selection_end_idxs != self.last_idxs:
                         self.text_select_el.text._selection_end_idxs = self.last_idxs
-                        self.text_select_el.status.invoke_callback("on_text_selection_change")
+                        self.text_select_el.status.invoke_callback(
+                            "on_text_selection_change")
 
             if self.last_idxs is not None:
                 select_rects = common.text_select_rects(self.start_idxs[1], self.start_idxs[0], self.last_idxs[1], self.last_idxs[0],
                                                         lines, self.text_select_el.style.text.font, self.text_select_el.text.text_rect, UIState.mouse_rel.length() != 0)
                 if UIState.mouse_pressed[0]:
                     if self.last_idxs[-1] > self.start_idxs[-1]:
-                        self.text_select_el.text.set_cursor_index(self.last_idxs[-1]+1)
+                        self.text_select_el.text.set_cursor_index(
+                            self.last_idxs[-1]+1)
                     else:
-                        self.text_select_el.text.set_cursor_index(self.last_idxs[-1])
+                        self.text_select_el.text.set_cursor_index(
+                            self.last_idxs[-1])
                 if select_rects:
                     if select_rects != self.text_select_el.text.selection_rects:
                         self.text_select_el.text.selection_rects = select_rects
                         self.text_select_el.set_dirty()
-                        self.text_select_el.status.invoke_callback("on_text_selection_change")
-                        
+                        self.text_select_el.status.invoke_callback(
+                            "on_text_selection_change")
+
         # we are pressing something
         if self.pressed_el is not None:
             # fire when_pressed
@@ -176,12 +180,13 @@ class UIInteract:
                             events.START_RIGHT_PRESS, self.hovered_el)
                         # set right pressed and set right pressed el
                         self.right_pressed_el = self.hovered_el
-        
+
         if self.manager.cursors.do_override_cursor:
             if self.hovered_el is not None and self.hovered_el.active:
-                if (rn:=self.hovered_el.get_attr("resizer_name")) is not None:
+                if (rn := self.hovered_el.get_attr("resizer_name")) is not None:
                     if rn in self.manager.cursors.resize_cursors:
-                        pygame.mouse.set_cursor(self.manager.cursors.resize_cursors[rn])
+                        pygame.mouse.set_cursor(
+                            self.manager.cursors.resize_cursors[rn])
                 else:
                     pygame.mouse.set_cursor(self.manager.cursors.hover_cursor)
             else:
@@ -228,12 +233,12 @@ class UIInteract:
     def _text_select_start_press(self, element: Element):
         if not element.text.can_select:
             return
-        if not (txt := element.text.get_active_text()):
-            return
         if self.text_select_el is not None:
             self.text_select_el.text.selection_rects = []
             self.text_select_el.set_dirty()
         self.text_select_el = None
+        if not (txt := element.text.get_active_text()):
+            return
         lines = common.text_wrap_str(
             txt, element.relative_rect.w, element.style.text.font)
         idxs_info = common.text_click_idx(lines, element.style.text.font, UIState.mouse_pos, element.text.text_rect,

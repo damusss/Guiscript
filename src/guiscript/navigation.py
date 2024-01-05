@@ -53,7 +53,8 @@ class UINavigation:
         if self.tabbed_element is not None:
             element = self.tabbed_element.find_navigable_child()
             if element is not None:
-                if self.tabbed_element is not None: self.tabbed_element.set_dirty()
+                if self.tabbed_element is not None:
+                    self.tabbed_element.set_dirty()
                 self.tabbed_element = element
                 self.tabbed_element.set_dirty()
         return self
@@ -99,6 +100,7 @@ class UINavigation:
 
     def stop_navigating(self) -> typing.Self:
         """Manually stop navigating"""
-        if self.tabbed_element is not None: self.tabbed_element.set_dirty()
+        if self.tabbed_element is not None:
+            self.tabbed_element.set_dirty()
         self.tabbed_element = None
         return self

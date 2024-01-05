@@ -50,7 +50,7 @@ class DropMenu(Element):
                                         common.style_id_or_copy(
                                             self, self.settings.menu_style_id),
                                         self.parent if settings.menu_parent is None else settings.menu_parent, self.manager)\
-                                            .set_ignore(stack=True, scroll=True).hide().set_z_index(common.Z_INDEXES["menu"]).add_element_type("dropmenu_menu")
+            .set_ignore(stack=True, scroll=True).hide().set_z_index(common.Z_INDEXES["menu"]).add_element_type("dropmenu_menu")
         self.__done = True
         self.build()
         self.position_changed()

@@ -80,7 +80,7 @@ class DropMenuSettings:
     menu_style_id: str = "copy"
     option_style_id: str = "copy"
     inner_buttons_style_id: str = "copy"
-    menu_parent: typing.Any|None = None
+    menu_parent: typing.Any | None = None
 
 
 @dataclasses.dataclass(slots=True)
@@ -89,7 +89,7 @@ class SelectionListSettings:
     option_height: float = 30
     multi_select: bool = False
     option_style_id: str = "copy"
-    
+
 
 @dataclasses.dataclass(slots=True)
 class EntrySettings:
@@ -99,24 +99,29 @@ class EntrySettings:
     repeat_speed: int = 40
     repeat_start_cooldown: int = 370
     disabled_text_style_id: str = "entry_disabled_text"
-    
-    
+
+
 @dataclasses.dataclass(slots=True)
 class WindowSettings:
     close_button_txt: str = "X"
     title_bar_height: int = 30
     resizers_size: int = 5
-    max_size: common.Coordinate|None = None
-    min_size: common.Coordinate|None = (100,100)
+    max_size: common.Coordinate | None = None
+    min_size: common.Coordinate | None = (120, 60)
     can_drag: bool = True
     can_resize: bool = True
     destroy_on_close: bool = True
     hide_on_close: bool = False
+    have_close_button: bool = True
+    have_collapse_button: bool = False
     resizers_style_id: str = "copy"
     close_button_style_id: str = "copy"
+    collapse_button_style_id: str = "copy"
     title_style_id: str = "copy"
     content_style_id: str = "copy"
     scrollbars_style_id: str = "copy"
+    collapse_down_txt: str = "arrow_drop_down"
+    collapse_up_txt: str = "arrow_drop_up"
 
 
 SlideshowDefaultSettings = SlideshowSettings()
@@ -130,3 +135,5 @@ DropMenuDefaultSettings = DropMenuSettings()
 SelectionListDefaultSettings = SelectionListSettings()
 EntryDefaultSettings = EntrySettings()
 WindowDefaultSettings = WindowSettings()
+CollapsingWindowDefaultSettigns = WindowSettings(
+    have_collapse_button=True, have_close_button=False)

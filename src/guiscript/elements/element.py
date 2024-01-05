@@ -86,11 +86,11 @@ class Element:
         self.attrs: dict[str] = {}
         self.resizers_size: int = 5
         self.resizers: tuple[str] = ()
-        self.resize_min: common.Coordinate|None = (20,20)
-        self.resize_max: common.Coordinate|None = None
+        self.resize_min: common.Coordinate | None = (20, 20)
+        self.resize_max: common.Coordinate | None = None
         self._resizers_elements: dict[str, "Element"] = {}
         self._anchor_observers: list["Element"] = []
-        self._anchor_data: dict[str] = None
+        self._anchors: dict[str, common.UIAnchorData | None] = dict.fromkeys(("left", "right", "top", "bottom", "centerx", "centery"), None)
         self._update_absolute_rect_pos()
 
         # obj attrs
@@ -135,7 +135,7 @@ class Element:
     def on_render(self):
         """Called on 'render', overridable"""
         ...
-        
+
     def on_destroy(self):
         """Called when the element is being destroyed, overridable"""
         ...
@@ -201,12 +201,13 @@ class Element:
             child.destroy()
         self.set_dirty()
         return self
-    
+
     def move_in_parent(self, places: int) -> typing.Self:
         """Move this element between the parent's children"""
         if len(self.parent.children) <= 1:
             return self
-        new_idx = pygame.math.clamp(self.parent.children.index(self)+places, 0, len(self.parent.children)-1)
+        new_idx = pygame.math.clamp(self.parent.children.index(
+            self)+places, 0, len(self.parent.children)-1)
         self.parent.children.remove(self)
         self.parent.children.insert(new_idx, self)
         self.parent._refresh_stack()
@@ -252,7 +253,7 @@ class Element:
         if not self.visible:
             return
         if self.ghost_element is not None:
-            self.set_relative_pos((self.ghost_element.relative_rect.centerx-self.relative_rect.w //2+self.ghost_offset.x, 
+            self.set_relative_pos((self.ghost_element.relative_rect.centerx-self.relative_rect.w // 2+self.ghost_offset.x,
                                    self.ghost_element.relative_rect.centery-self.relative_rect.h//2+self.ghost_offset.y))
         for child in sorted(self.children, key=lambda el: el.z_index):
             child._logic()
@@ -273,19 +274,25 @@ class Element:
                     elif "right" in name:
                         xi = UIState.mouse_rel.x
                     if "top" in name:
-                        yi = -UIState.mouse_rel.y 
+                        yi = -UIState.mouse_rel.y
                         pyi = UIState.mouse_rel.y
                     elif "bottom" in name:
                         yi = UIState.mouse_rel.y
                     rmn, rmx = self.resize_min, self.resize_max
                     if rmn is None:
-                        rmn = (0,0)
+                        rmn = (0, 0)
                     if rmx is None:
                         rmx = (float("inf"), float("inf"))
-                    self.set_size((pygame.math.clamp(self.relative_rect.w+xi, rmn[0], rmx[0]), 
+                    old_x, old_y = self.relative_rect.size
+                    self.set_size((pygame.math.clamp(self.relative_rect.w+xi, rmn[0], rmx[0]),
                                    pygame.math.clamp(self.relative_rect.h+yi, rmn[1], rmx[1])), True)
+                    if old_x == self.relative_rect.w:
+                        pxi = 0
+                    if old_y == self.relative_rect.h:
+                        pyi = 0
                     if pxi != 0 or pyi != 0:
-                        self.set_relative_pos((self.relative_rect.x+pxi, self.relative_rect.y+pyi))
+                        self.set_relative_pos(
+                            (self.relative_rect.x+pxi, self.relative_rect.y+pyi))
                     self.status.invoke_callback("on_resize")
                     events._post_base_event(events.RESIZE, self)
 
@@ -332,7 +339,7 @@ class Element:
                                             (pygame.Vector2(parent_mask_padding, parent_mask_padding)) -
                                             (self.manager.root.scroll_offset if self.ignore_scroll else self.parent.scroll_offset)+self.render_offset)
         self.dirty = False
-        
+
     def _calc_style(self) -> typing.Self:
         style: UIStyle = None
         if not self.active:
@@ -357,13 +364,53 @@ class Element:
         for child in self.children:
             child._event(event)
         self.on_event(event)
-        
-    def _apply_anchor(self):
-        if self._anchor_data is not None:
-            tg, anchor_f, anchor_t, offset, _ = self._anchor_data.values()
-            dummy_rect = self.absolute_rect.copy()
-            setattr(dummy_rect, anchor_f, pygame.Vector2(getattr(tg.absolute_rect, anchor_t))+offset)
-            self.set_absolute_pos(dummy_rect.topleft)
+
+    def _apply_anchors(self):
+        temp_r = self.absolute_rect.copy()
+        if (cxad := self._anchors["centerx"]) is not None:
+            temp_r.centerx = getattr(
+                cxad.target.absolute_rect, cxad.target_anchor)+cxad.offset
+        else:
+            left, right = None, None
+            if (lad := self._anchors["left"]) is not None:
+                left = getattr(lad.target.absolute_rect,
+                               lad.target_anchor)+lad.offset
+            if (rad := self._anchors["right"]) is not None:
+                right = getattr(rad.target.absolute_rect,
+                                rad.target_anchor)+rad.offset
+            if right is None and left is not None:
+                right = left+self.absolute_rect.w
+            elif left is None and right is not None:
+                left = right-self.absolute_rect.w
+            elif left is None and right is None:
+                left, right = self.absolute_rect.left, self.absolute_rect.right
+            if right <= left:
+                right = left+1
+            temp_r.left = left
+            temp_r.width = right-left
+        if (cyad := self._anchors["centery"]) is not None:
+            temp_r.centery = getattr(
+                cyad.target.absolute_rect, cyad.target_anchor)+cyad.offset
+        else:
+            top, bottom = None, None
+            if (tad := self._anchors["top"]) is not None:
+                top = getattr(tad.target.absolute_rect,
+                              tad.target_anchor)+tad.offset
+            if (bad := self._anchors["bottom"]) is not None:
+                bottom = getattr(bad.target.absolute_rect,
+                                 bad.target_anchor)+bad.offset
+            if bottom is None and top is not None:
+                bottom = top+self.absolute_rect.h
+            elif top is None and bottom is not None:
+                top = bottom-self.absolute_rect.h
+            elif top is None and bottom is None:
+                top, bottom = self.absolute_rect.top, self.absolute_rect.bottom
+            if bottom <= top:
+                bottom = top+1
+            temp_r.top = top
+            temp_r.height = bottom-top
+        self.set_size(temp_r.size, apply_anchors=False)
+        self.set_absolute_pos(temp_r.topleft)
 
     # dunder
     def __enter__(self) -> typing.Self:
@@ -387,7 +434,7 @@ class Element:
     def has_attr(self, name: str) -> bool:
         """Check if a custom element attribute exists"""
         return name in self.attrs
-    
+
     def get_index_in_parent(self) -> int:
         """Return the current index in the parent's children"""
         return self.parent.children.index(self)
@@ -429,8 +476,57 @@ class Element:
                 count += 1
         return count
 
+    # add
+    def add_element_type(self, element_type: str) -> typing.Self:
+        """Add one element type to the tuple and build a new style group"""
+        self.element_types = (*self.element_types, element_type)
+        self.set_style_group(UIStyles.get_style_group(self))
+        return self
+
+    def add_element_types(self, *element_types: str) -> typing.Self:
+        """Add multiple element types to the tuple and build a new style group"""
+        for et in element_types:
+            self.add_element_type(et)
+        return self
+
+    def set_anchor(self, target: typing.Union[typing.Literal["parent"], None, "Element"], self_anchor: enums.Anchor = "none", target_anchor: enums.Anchor = "none", offset: float = 0) -> typing.Self:
+        """
+        Sets an anchor of the element. The side/position 'self_anchor' of this element will follow the side/position of 'target_anchor' of target. 
+        If both are set to left, the left of this element will follow the left of the target. 
+        NOTE: centerx and centery are not compatible with left, right and top, bottom respectively
+        """
+        self.set_ignore(stack=True)
+        if self_anchor not in ["left", "right", "top", "bottom", "centerx", "centery"] or target_anchor not in ["left", "right", "top", "bottom", "centerx", "centery"]:
+            raise UIError(
+                f"Invalid anchor. Valid anchors are left, right, top, bottom, centerx, centery")
+        if target is None:
+            if self._anchors[self_anchor] is not None:
+                self._anchors[self_anchor].target._anchor_observers.remove(
+                    self)
+            self._anchors[self_anchor] = None
+            return self
+        else:
+            if self_anchor == "none" or target_anchor == "none":
+                raise UIError(
+                    f"If target is not None self and target anchors must not be 'none'")
+        if target == "parent":
+            target = self.parent
+        data = common.UIAnchorData(target, self_anchor, target_anchor, offset)
+        if self._anchors[self_anchor] is not None:
+            self._anchors[self_anchor].target._anchor_observers.remove(self)
+        self._anchors[self_anchor] = data
+        target._anchor_observers.append(self)
+        if (self._anchors["left"] is not None or self._anchors["right"] is not None) and self._anchors["centerx"] is not None:
+            raise UIError(
+                f"If the centerx anchor is set left and right anchors cannot be set too")
+        if (self._anchors["top"] is not None or self._anchors["bottom"] is not None) and self._anchors["centery"] is not None:
+            raise UIError(
+                f"If the centery anchor is set top and bottom anchors cannot be set too")
+        self._apply_anchors()
+        return self
+
     # set
-    def set_resizers(self, resizers: tuple[enums.Resizer|str], size: int = 5, min_size:common.Coordinate|None = (20,20), max_size:common.Coordinate|None = None, style_id: str="copy") -> typing.Self:
+    def set_resizers(self, resizers: tuple[enums.Resizer | str], size: int = 5, min_size: common.Coordinate | None = (20, 20), max_size: common.Coordinate | None = None, style_id: str = "copy") -> typing.Self:
         old_resizers = self.resizers
         self.resizers_size = size
         self.resizers = resizers
@@ -442,55 +538,33 @@ class Element:
                 rel.destroy(True)
         for name in self.resizers:
             if name not in old_resizers:
-                resizer = Element(pygame.Rect(0,0,1,1), self.element_id+"_resizer", 
-                            common.style_id_or_copy(self, style_id), ("element", "resizer"), self, self.manager)\
-                    .set_anchor("parent", name, name).set_z_index(common.Z_INDEXES["resizer"])
+                resizer = Element(pygame.Rect(0, 0, 1, 1), self.element_id+"_resizer",
+                                  common.style_id_or_copy(self, style_id), ("element", "resizer"), self, self.manager).set_z_index(common.Z_INDEXES["resizer"])
+                if name in ["left", "right"]:
+                    resizer.set_anchor("parent", name, name).set_anchor(
+                        "parent", "centery", "centery")
+                elif name in ["top", "bottom"]:
+                    resizer.set_anchor("parent", name, name).set_anchor(
+                        "parent", "centerx", "centerx")
+                elif name.startswith("top"):
+                    resizer.set_anchor("parent", "top", "top").set_anchor(
+                        "parent", name.replace("top", ""), name.replace("top", ""))
+                elif name.startswith("bottom"):
+                    resizer.set_anchor("parent", "bottom", "bottom").set_anchor(
+                        "parent", name.replace("bottom", ""), name.replace("bottom", ""))
                 resizer.set_attr("resizer_name", name)
                 self._resizers_elements[name] = resizer
         self._update_resizers_size()
         return self
-        
-    def set_anchor(self, target: typing.Union[str, None, "Element"], self_anchor: enums.Anchor|str="none", target_anchor: enums.Anchor|str="none", offset: common.Coordinate = (0,0)) -> typing.Self:
-        """When the target moves or resizes this element will adjust the position to follow the target based on the anchor values and offset"""
-        if target is None:
-            if self._anchor_data is not None:
-                tg: Element = self._anchor_data["target"]
-                if self in tg._anchor_observers:
-                    tg._anchor_observers.remove(self)
-                self.set_ignore(stack=self._anchor_data["ignorestack"])
-            return
-        self.set_ignore(stack=True)
-        if self_anchor == "none" or target_anchor == "none":
-            raise UIError("If anchor target is not None anchor self and target must not be none")
-        if target == "parent":
-            target = self.parent
-        if self._anchor_data is not None:
-            if target is not self._anchor_data["target"]:
-                tg: Element = self._anchor_data["target"]
-                if self in tg._anchor_observers:
-                    tg._anchor_observers.remove(self)
-        target._anchor_observers.append(self)
-        if self_anchor in ["top", "left", "right", "bottom"]:
-            self_anchor = f"mid{self_anchor}"
-        if target_anchor in ["top", "left", "right", "bottom"]:
-            target_anchor = f"mid{target_anchor}"
-        self._anchor_data = {
-            "target": target,
-            "from": self_anchor,
-            "to": target_anchor,
-            "offset": pygame.Vector2(offset),
-            "ignorestack":self.ignore_stack
-        }
-        self._apply_anchor()
-        return self
-    
+
     def set_index_in_parent(self, index: int) -> typing.Self:
         """Set the current index in the parent's children"""
         self.parent.children.remove(self)
-        self.parent.children.insert(pygame.math.clamp(index, 0, len(self.parent.children)), self)
+        self.parent.children.insert(pygame.math.clamp(
+            index, 0, len(self.parent.children)), self)
         self.parent._refresh_stack()
         return self
-    
+
     def set_ignore(self, stack: bool | None = None, scroll: bool | None = None, raycast: bool | None = None) -> typing.Self:
         """Set the 'ignore_stack' and 'ignore_scroll' flags"""
         self.ignore_stack = stack if stack is not None else self.ignore_stack
@@ -541,7 +615,7 @@ class Element:
         self.position_changed()
         self.status.invoke_callbacks("on_position_change")
         for obs in self._anchor_observers:
-            obs._apply_anchor()
+            obs._apply_anchors()
         return self
 
     def set_relative_pos(self, position: common.Coordinate) -> typing.Self:
@@ -556,10 +630,10 @@ class Element:
         self.position_changed()
         self.status.invoke_callbacks("on_position_change")
         for obs in self._anchor_observers:
-            obs._apply_anchor()
+            obs._apply_anchors()
         return self
 
-    def set_size(self, size: common.Coordinate, propagate_up: bool = False) -> typing.Self:
+    def set_size(self, size: common.Coordinate, propagate_up: bool = False, apply_anchors: bool = True) -> typing.Self:
         """Set the element's size"""
         if self.relative_rect.size == size:
             return self
@@ -573,9 +647,10 @@ class Element:
         self.build()
         self.status.invoke_callbacks("on_size_change", "on_build")
         self._update_resizers_size()
-        self._apply_anchor()
+        if apply_anchors:
+            self._apply_anchors()
         for obs in self._anchor_observers:
-            obs._apply_anchor()
+            obs._apply_anchors()
         self._refresh_stack()
         return self
 
@@ -664,7 +739,7 @@ class Element:
         Tooltips.register(tooltip, self)
         return self
 
-    def set_ghost(self, relative_rect: pygame.Rect, offset: common.Coordinate=(0,0)) -> typing.Self:
+    def set_ghost(self, relative_rect: pygame.Rect, offset: common.Coordinate = (0, 0)) -> typing.Self:
         """Create an element that will be invisible that this element will follow while also setting the 'ignore_stack' flag to True"""
         if self.ghost_element is not None:
             self.ghost_element.destroy()
@@ -679,19 +754,6 @@ class Element:
         """Set the offset where to render element onto the parent"""
         self.render_offset = render_offset
         self.set_dirty()
-        return self
-
-    # add
-    def add_element_type(self, element_type: str) -> typing.Self:
-        """Add one element type to the tuple and build a new style group"""
-        self.element_types = (*self.element_types, element_type)
-        self.set_style_group(UIStyles.get_style_group(self))
-        return self
-
-    def add_element_types(self, *element_types: str) -> typing.Self:
-        """Add multiple element types to the tuple and build a new style group"""
-        for et in element_types:
-            self.add_element_type(et)
         return self
 
     # animation
@@ -854,17 +916,20 @@ class Element:
         for comp in self.components:
             comp._build(self.style)
         self.style._enter()
-        self.status.invoke_callbacks("on_size_change", "on_style_change", "on_build")
+        self.status.invoke_callbacks(
+            "on_size_change", "on_style_change", "on_build")
         self._update_resizers_size()
-        self._apply_anchor()
+        self._apply_anchors()
         for obs in self._anchor_observers:
-            obs._apply_anchor()
-            
+            obs._apply_anchors()
+
     def _update_resizers_size(self):
         for name, rel in self._resizers_elements.items():
             if name == "top" or name == "bottom":
-                rel.set_size((self.relative_rect.w-self.resizers_size*2, self.resizers_size))
+                rel.set_size(
+                    (self.relative_rect.w-self.resizers_size*2, self.resizers_size))
             elif name == "left" or name == "right":
-                rel.set_size((self.resizers_size, self.relative_rect.h-self.resizers_size*2))
+                rel.set_size(
+                    (self.resizers_size, self.relative_rect.h-self.resizers_size*2))
             else:
                 rel.set_size((self.resizers_size*2, self.resizers_size*2))

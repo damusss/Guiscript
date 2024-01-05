@@ -14,13 +14,13 @@ from . import enums
 
 VERSION: str = "WIP"
 ALL_RESIZERS: tuple[enums.Resizer] = (enums.Resizer.top,
-                enums.Resizer.bottom,
-                enums.Resizer.left,
-                enums.Resizer.right,
-                enums.Resizer.topleft,
-                enums.Resizer.topright,
-                enums.Resizer.bottomleft,
-                enums.Resizer.bottomright)
+                                      enums.Resizer.bottom,
+                                      enums.Resizer.left,
+                                      enums.Resizer.right,
+                                      enums.Resizer.topleft,
+                                      enums.Resizer.topright,
+                                      enums.Resizer.bottomleft,
+                                      enums.Resizer.bottomright)
 ANCHOR_PARENT: str = "parent"
 
 
@@ -66,7 +66,8 @@ def quick_style(style_source: str, gss_variables: dict = None) -> str:
         raise UIError(
             f"Source of quick style should include 'ID' for the style name, that will be later replaced with the actual id (in this case '{ID}')")
     style_source = style_source.replace("ID", ID)
-    UIScript.parse_source(style_source, f"quickstyle.ID:{ID}.gss", gss_variables)
+    UIScript.parse_source(style_source, f"quickstyle.ID:{
+                          ID}.gss", gss_variables)
     return ID
 
 
@@ -97,12 +98,13 @@ class DefaultStyleID:
 
     def __exit__(self, *args):
         UIState.current_style_id = self.previous_style_id
-        
-        
+
+
 def get_builtin_image(name: str) -> pygame.Surface:
     """Return the surface of a builtin image for UI, or raise an error if it doesnt exist."""
     if name not in strimages.STRING_IMAGES_SURFACES.keys():
-        raise UIError(f"Builtin image '{name}' does not exist. Available are {list(strimages.STRING_IMAGES_SURFACES.keys())}")
+        raise UIError(f"Builtin image '{name}' does not exist. Available are {
+                      list(strimages.STRING_IMAGES_SURFACES.keys())}")
     return strimages.STRING_IMAGES_SURFACES[name]
 
 
@@ -158,7 +160,8 @@ def help_element_types() -> typing.LiteralString:
     Window: (element, window)
         Window.title_bar: (*HStack, window_title_bar)
             Window.title: (*Button, window_title)
-            Window.close_btn: (*Button, window_close_button)
+            ?Window.close_btn: (*Button, window_close_button)
+            ?Window.collapse_btn: (*Button, window_collapse_button)
         Window.content: (*VStack, window_content)
     """
 
@@ -408,8 +411,10 @@ def help_events() -> typing.LiteralString:
     Window:
         WINDOW_CLOSE
         WINDOW_DRAG
+        WINDOW_COLLAPSE
         extra properties:
             window: Window
+            collapsed: bool
         
     """
 
@@ -471,6 +476,7 @@ def help_callbacks() -> typing.LiteralString:
     Window:
         on_close
         on_drag
+        on_collapse
     """
 
 
@@ -481,7 +487,8 @@ def help_buffers() -> typing.LiteralString:
     Slider: value (sync with Slider.get_value())
     Entry: text (sync with Entry.get_text())
     """
-    
+
+
 def help_navigation() -> typing.LiteralString:
     """Return keyboard navigation keybinds as a string"""
     return """
