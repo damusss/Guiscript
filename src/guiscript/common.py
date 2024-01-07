@@ -1,6 +1,7 @@
 import math
 import pygame
 import typing
+import warnings
 if typing.TYPE_CHECKING:
     from .elements.element import Element
 
@@ -20,6 +21,10 @@ class UIAnchorData:
         self.self_anchor: str = self_anchor
         self.target_anchor: str = target_anchor
         self.offset: float = offset
+        
+
+def warn(message: str):
+    warnings.warn(message, UserWarning)
 
 
 def style_id_or_copy(element: "Element", style_id: str) -> str:
@@ -346,6 +351,7 @@ DEFAULT_CALLBACKS: list[str] = [
     "on_style_change",
     "on_build",
     "on_resize",
+    "on_drag",
     "on_text_selection_change"
 ]
 
@@ -573,6 +579,10 @@ window_collapse_button:: {
 }
 
 / BUILTIN STYLE GROUPS
+.inactive:: {
+    bg.color $DARK_COLOR;
+}
+
 .entry_disabled_text:: {
     text.color (180, 180, 180);
 }

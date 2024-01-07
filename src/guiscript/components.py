@@ -7,6 +7,7 @@ from .style import UIStyleGroup, UIStyle
 from .error import UIError
 from .icon import Icons
 from . import common
+from . import richtext
 
 
 class UIComponent:
@@ -224,7 +225,6 @@ class UIShapeComp(UIComponent):
                 raise UIError(
                     f"Unsupported shape type '{style.shape.type}'. Supported are rect, circle, ellipse, polygon")
 
-
 class UITextComp(UIComponent):
     """Element component that renders text"""
 
@@ -267,12 +267,33 @@ class UITextComp(UIComponent):
 
     def _build(self, style):
         text = style.text.text if style.text.text else self.text
-        style.text.apply_mods()
-        self.text_surf: pygame.Surface = style.text.font.render(text,
-                                                                style.text.antialas,
-                                                                style.text.color,
-                                                                style.text.bg_color,
-                                                                self.element.relative_rect.w if style.text.do_wrap else 0)
+        if not style.text.rich:
+            style.text.apply_mods()
+            self.text_surf: pygame.Surface = style.text.font.render(text,
+                                                                    style.text.antialas,
+                                                                    style.text.color,
+                                                                    style.text.bg_color,
+                                                                    self.element.relative_rect.w if style.text.do_wrap else 0)
+        else:
+            default_modifiers = {
+                richtext.ModifierName.font_name: style.text.font_name if style.text.font_name != "googleicons" else None,
+                richtext.ModifierName.font_size: style.text.font_size,
+                richtext.ModifierName.fg_color: style.text.color,
+                richtext.ModifierName.bg_color: style.text.bg_color,
+                richtext.ModifierName.antialiasing: style.text.antialas,
+                richtext.ModifierName.bold: style.text.bold,
+                richtext.ModifierName.underline: style.text.underline,
+                richtext.ModifierName.italic: style.text.italic,
+                richtext.ModifierName.strikethrough: style.text.strikethrough,
+            }
+            output_text, modifiers = richtext.global_rich_text_parser.parse_text(text)
+            self.text_surf: pygame.Surface = richtext.render(output_text,
+                                                             modifiers,
+                                                             default_modifiers,
+                                                             richtext.global_font_cache,
+                                                             "left" if style.text.font_align == 0 else "right" if style.text.font_align == 2 else "middle",
+                                                             -1 if not style.text.do_wrap else self.element.relative_rect.w,
+                                                             0, -1, None, False)
         self.text_rect: pygame.Rect = common.align_text(self.text_surf.get_rect(),
                                                         self.element.static_rect,
                                                         style.text.padding,

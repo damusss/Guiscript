@@ -84,6 +84,8 @@ from .utils import (
     VERSION,
     ALL_RESIZERS,
     ANCHOR_PARENT,
+    static_dock,
+    dragging_mouse,
     static_logic,
     ZeroRect,
     SizeRect,

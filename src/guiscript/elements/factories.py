@@ -43,7 +43,7 @@ class ProgressBar(Element):
             value, 0, self.settings.max_value)
         if "left" in self.settings.direction and "right" in self.settings.direction:
             y = self.style.shape.padding
-            height = max(self.relative_rect.h-self.style.stack.padding*2, 1)
+            height = max(self.relative_rect.h-self.style.shape.padding*2, 1)
             width = max((self.relative_rect.w-self.style.shape.padding*2)
                         * (self.value/self.settings.max_value), 1)
             if self.settings.direction == "left_right":
@@ -52,7 +52,7 @@ class ProgressBar(Element):
                 x = self.relative_rect.w-self.style.shape.padding-width
         elif "top" in self.settings.direction and "bottom" in self.settings.direction:
             x = self.style.shape.padding
-            width = max(self.relative_rect.w-self.style.stack.padding*2, 1)
+            width = max(self.relative_rect.w-self.style.shape.padding*2, 1)
             height = max((self.relative_rect.h-self.style.shape.padding*2)
                          * (self.value/self.settings.max_value), 1)
             if self.settings.direction == "top_bottom":

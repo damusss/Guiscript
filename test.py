@@ -7,7 +7,7 @@ W, H = 1200, 800
 pygame.init()
 screen = pygame.display.set_mode((W, H))
 clock = pygame.Clock()
-import buildconfig
+
 test_surf = pygame.image.load("tests/test.jpg").convert()
 menu_surf = pygame.transform.scale_by(pygame.image.load("tests/menu.png").convert_alpha(), 3)
 
@@ -35,15 +35,12 @@ with guis.VStack(guis.SizeR(1200, 800), style_id="invis_cont"):
         base = btn.relative_rect.w
         big = btn.relative_rect.w+100
         pb = guis.ProgressBar(0, rect(50,50,500,100), settings=guis.ProgressBarSettings(direction=guis.ProgressBarDirection.left_right))
-        pb.set_anchor(btn, guis.Anchor.topleft, guis.Anchor.bottomleft, (0, 4))
-        pb.set_resizers(guis.ALL_RESIZERS).set_ignore(stack=True)
-        
-    with guis.Window(pygame.Rect(50,50,400,400), "", settings=guis.WindowSettings(resizers_style_id="invisible", have_close_button=False, title_bar_height=20)).enter():
-        guis.Button("TEST", guis.SizeR(100,100))
-    with guis.Window(pygame.Rect(100,100,400,400)).enter():
-        guis.Button("TEST", guis.SizeR(100,100))
-    with guis.Window(pygame.Rect(150,150,400,400)).enter():
-        guis.Button("TEST", guis.SizeR(100,100))
+        guis.Label(
+"""<i>this</i>
+is
+<c fg="green">a</c>
+<f name="times new roman" size='50'>test</f>""", guis.SizeR(600,300), style_id="richtext")
+    
                 
 while True:   
     for event in pygame.event.get():

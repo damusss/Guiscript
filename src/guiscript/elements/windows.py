@@ -29,16 +29,16 @@ class Window(Element):
         super().__init__(relative_rect, element_id, style_id,
                          ("element", "window",), parent, manager)
         self.set_ignore(True, True).set_z_index(common.Z_INDEXES["window-start"]+len(
-            Window.window_stack)).status.register_callbacks("on_close", "on_drag", "on_collapse")
+            Window.window_stack)).status.register_callbacks("on_close", "on_collapse").set_drag(True)
         if settings.can_resize:
-            self.set_resizers(utils.ALL_RESIZERS, settings.resizers_size, settings.min_size,
+            self.set_resizers(settings.resizers, settings.resizers_size, settings.min_size,
                               settings.max_size, style_id=settings.resizers_style_id).deactivate()
         self.settings: settings_.WindowSettings = settings
         self.title_bar: HStack = HStack(pygame.Rect(0, 0, 1, 1), self.element_id+"_title_bar",
                                         "invis_cont", self, self.manager).add_element_type("window_title_bar")\
-            .set_anchor("parent", "left", "left", self.style.stack.padding)\
-            .set_anchor("parent", "right", "right", -self.style.stack.padding)\
-            .set_anchor("parent", "top", "top", self.style.stack.padding)
+            .set_anchor("parent", "left", "left")\
+            .set_anchor("parent", "right", "right")\
+            .set_anchor("parent", "top", "top")
         self.title: Button = Button(title, pygame.Rect(0, 0, 0, 0), self.element_id+"_title",
                                     common.style_id_or_copy(self, settings.title_style_id), False, self.title_bar, self.manager)\
             .add_element_type("window_title").status.add_multi_listeners(when_pressed=self._on_title_drag, on_stop_press=self._on_title_stop_drag)\
@@ -62,12 +62,11 @@ class Window(Element):
         self._before_collapse_h: int = self.relative_rect.h
         self.content: VStack = VStack(pygame.Rect(0, 0, 1, 1), self.element_id+"_content", common.style_id_or_copy(self, settings.content_style_id),
                                       self, self.manager, settings.scrollbars_style_id).add_element_type("window_content")\
-            .set_anchor("parent", "left", "left", self.style.stack.padding)\
-            .set_anchor("parent", "right", "right", -self.style.stack.padding)\
-            .set_anchor(self.title_bar, "top", "bottom", self.style.stack.padding)\
-            .set_anchor("parent", "bottom", "bottom", -self.style.stack.padding)
+            .set_anchor("parent", "left", "left")\
+            .set_anchor("parent", "right", "right")\
+            .set_anchor(self.title_bar, "top", "bottom")\
+            .set_anchor("parent", "bottom", "bottom")
         Window.window_stack.append(self)
-        self.dragging: bool = False
         self.collapsed: bool = False
         self.move_on_top()
         self.build()
@@ -81,13 +80,13 @@ class Window(Element):
             self.destroy()
 
     def _on_title_drag(self):
-        if not self.settings.can_drag:
-            self.dragging = False
+        if not self.status.can_drag:
+            self.status.dragging = False
             return
         self.move_on_top()
+        self.status.dragging = True
         if UIState.mouse_rel.length() <= 0:
             return
-        self.dragging = True
         self.set_relative_pos(
             (self.relative_rect.x+UIState.mouse_rel.x, self.relative_rect.y+UIState.mouse_rel.y))
         self.status.invoke_callback("on_drag")
@@ -99,7 +98,7 @@ class Window(Element):
         events._post_window_event("collapse", self)
 
     def _on_title_stop_drag(self):
-        self.dragging = False
+        self.status.dragging = False
 
     def collapse(self) -> typing.Self:
         """Toggle the collapse status of the window"""
@@ -152,3 +151,6 @@ class Window(Element):
     def build(self):
         self.title_bar.set_size(
             (self.relative_rect.w-self.style.stack.padding*2, self.settings.title_bar_height))
+        self.title_bar.anchors_padding(self.style.stack.padding)
+        self.content.anchors_padding(self.style.stack.padding, "top")
+        self.content._anchors["top"].offset = self.style.stack.spacing

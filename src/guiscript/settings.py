@@ -1,8 +1,9 @@
 import dataclasses
 import typing
 
-from .enums import SliderAxis, ProgressBarDirection, DropMenuDirection
+from .enums import SliderAxis, ProgressBarDirection, DropMenuDirection, Resizer
 from . import common
+from . import utils
 
 
 @dataclasses.dataclass(slots=True)
@@ -108,12 +109,12 @@ class WindowSettings:
     resizers_size: int = 5
     max_size: common.Coordinate | None = None
     min_size: common.Coordinate | None = (120, 60)
-    can_drag: bool = True
     can_resize: bool = True
     destroy_on_close: bool = True
     hide_on_close: bool = False
     have_close_button: bool = True
     have_collapse_button: bool = False
+    resizers: tuple[Resizer] = utils.ALL_RESIZERS
     resizers_style_id: str = "copy"
     close_button_style_id: str = "copy"
     collapse_button_style_id: str = "copy"

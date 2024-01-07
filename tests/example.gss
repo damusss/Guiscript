@@ -13,3 +13,7 @@
 .turn_red:hover {
     % bg.color red, 300;
 }
+
+.richtext:: {
+    text.rich true;
+}

@@ -37,8 +37,7 @@ class Manager:
                 UIScript.parse_script(gss_path, self.gss_variables)
         if gss_sources is not None:
             for i, gss_source in enumerate(gss_sources):
-                UIScript.parse_source(gss_source, f"gss.source.idx:{
-                                      UIState.num_managers},{i}", self.gss_variables)
+                UIScript.parse_source(gss_source, f"gss.source.idx:{UIState.num_managers},{i}", self.gss_variables)
 
         self._running: bool = False
         self._all_elements: list[Element] = []
@@ -72,7 +71,7 @@ class Manager:
     def _running_check(self):
         if not self._running:
             self._running = True
-            for el in self._all_elements:
+            for el in list(self._all_elements):
                 el._first_frame()
 
     def event(self, event: pygame.Event) -> typing.Self:

@@ -27,8 +27,8 @@ class UIStackStyle:
     """Style class for stacks-like elements"""
 
     def __init__(self):
-        self.spacing: int = 5
-        self.padding: int = 7
+        self.spacing: int = 4
+        self.padding: int = 5
         self.scroll_x: bool = True
         self.scroll_y: bool = True
         self.grow_x: bool = False
@@ -119,6 +119,7 @@ class UITextStyle(UICompStyle):
         self.cursor_width: int = 2
         self.cursor_rel_h: float = 1.0
         self.cursor_enabled: bool = False
+        self.rich: bool = False
 
     def build_font(self) -> typing.Self:
         """Build the font object after changes in the font properties"""

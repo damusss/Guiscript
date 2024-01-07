@@ -2,6 +2,9 @@ import pygame
 import typing
 import random
 import string
+import warnings
+if typing.TYPE_CHECKING:
+    from .elements.element import Element
 
 from .animation import UIAnimUpdater
 from .tooltip import Tooltips
@@ -22,6 +25,68 @@ ALL_RESIZERS: tuple[enums.Resizer] = (enums.Resizer.top,
                                       enums.Resizer.bottomleft,
                                       enums.Resizer.bottomright)
 ANCHOR_PARENT: str = "parent"
+
+def static_dock(root: "Element", ids_elements: list[tuple[int, "Element"]], ids_root_anchors: list[tuple[int, enums.DockAnchor]], ids_connection_ids: list[tuple[int, enums.DockConn, int]]):
+    """
+    Automatically sets up anchors for static docking.\n
+    root is the background panel element of the docking\n
+    ids_elements should look like this: [(1, element_1), (2, element_2), (3, element_3)...] when you use '1' or '2'.. the corrisponding object will be used\n
+    ids_root_anchors tells how the elements are anchored to the root for example [(1, "topleft"), (3, "bottomright")...] (you don't need to specify for all) use the DockAnchor enum for the available anchors\n
+    ids_connection_ids tells how the elements are connected between each other. it should looks like this [(1, connection, 2), (2, connection, 3)...] (you don't need to specify for all)\n
+    The possible connections are the following (available with the DockConn enum):\n
+    - <x> (DockConn.l_x_r) element 1 is anchored to element 2 and element 2 is anchored to element 1, where element 1 is on the left and element 2 on the right\n
+    - <y> (DockConn.t_y_b) element 1 is anchored to element 2 and element 2 is anchored to element 1, where element 1 is on the top and element 2 on the bottom\n
+    - x> (DockConn.x_r) only element 1 is anchored to element 2 where element 1 is on the left and element 2 on the right\n
+    - <x (DockConn.l_x) only element 2 is anchored to element 1 where element 1 is on the left and element 2 on the right\n
+    - y> (DockConn.y_b) only element 1 is anchored to element 2 where element 1 is on the top and element 2 on the bottom\n
+    - <y (DockConn.t_y) only element 2 is anchored to element 1 where element 1 is on the top and element 2 on the bottom\n
+    """
+    id_els = {id_:el for id_, el in ids_elements}
+    for id_, an in ids_root_anchors:
+        if id_ not in id_els:
+            raise UIError(f"Docking failed. Element with id '{id_}' was not registered in the elements '{ids_elements}'")
+        element = id_els[id_]
+        if an in ["left", "right"]:
+            element.set_anchor(root, an, an)
+        elif an in ["top", "bottom"]:
+            element.set_anchor(root, an, an)
+        elif an.startswith("top"):
+            element.set_anchors((root, "top", "top"), (root, an.replace("top", ""), an.replace("top", "")))
+        elif an.startswith("bottom"):
+            element.set_anchors((root, "bottom", "bottom"), (root, an.replace("bottom", ""), an.replace("bottom", "")))
+        elif an.startswith("left"):
+            element.set_anchors((root, "left", "left"), (root, an.replace("left", ""), an.replace("left", "")))
+        elif an.startswith("right"):
+            element.set_anchors((root, "right", "right"), (root, an.replace("right", ""), an.replace("right", "")))
+        else:
+            common.warn(f"Skipping invalid dock anchor '{an}'")
+    for id1, conn, id2 in ids_connection_ids:
+        if id1 not in id_els:
+            raise UIError(f"Docking failed. Element with id '{id_}' was not registered in the elements '{ids_elements}'")
+        if id2 not in id_els:
+            raise UIError(f"Docking failed. Element with id '{id_}' was not registered in the elements '{ids_elements}'")
+        e1 = id_els[id1]
+        e2 = id_els[id2]
+        if conn == "<x>":
+            e1.set_anchor(e2, "right", "left")
+            e2.set_anchor(e1, "left", "right")
+        elif conn == "<y>":
+            e1.set_anchor(e2, "bottom", "top")
+            e2.set_anchor(e1, "top", "bottom")
+        elif conn == "x>":
+            e1.set_anchor(e2, "right", "left")
+        elif conn == "<x":
+            e2.set_anchor(e1, "left", "right")
+        elif conn == "y>":
+            e1.set_anchor(e2, "bottom", "top")
+        elif conn == "<y":
+            e2.set_anchor(e1, "top","bottom")
+        else:
+            common.warn(f"Skipping invalid dock connection '{conn}'")
+
+def dragging_mouse() -> bool:
+    """Return whether the mouse is being dragged"""
+    return UIState.mouse_rel.length() > 0
 
 
 def ZeroRect() -> pygame.Rect:
@@ -66,8 +131,7 @@ def quick_style(style_source: str, gss_variables: dict = None) -> str:
         raise UIError(
             f"Source of quick style should include 'ID' for the style name, that will be later replaced with the actual id (in this case '{ID}')")
     style_source = style_source.replace("ID", ID)
-    UIScript.parse_source(style_source, f"quickstyle.ID:{
-                          ID}.gss", gss_variables)
+    UIScript.parse_source(style_source, f"quickstyle.ID:{ID}.gss", gss_variables)
     return ID
 
 
@@ -103,8 +167,7 @@ class DefaultStyleID:
 def get_builtin_image(name: str) -> pygame.Surface:
     """Return the surface of a builtin image for UI, or raise an error if it doesnt exist."""
     if name not in strimages.STRING_IMAGES_SURFACES.keys():
-        raise UIError(f"Builtin image '{name}' does not exist. Available are {
-                      list(strimages.STRING_IMAGES_SURFACES.keys())}")
+        raise UIError(f"Builtin image '{name}' does not exist. Available are {list(strimages.STRING_IMAGES_SURFACES.keys())}")
     return strimages.STRING_IMAGES_SURFACES[name]
 
 
@@ -309,6 +372,7 @@ def help_style_script() -> typing.LiteralString:
         no_scroll: quick way to set both scroll_x and scroll_y to false
         no padding: set all the component paddings to 0
         fill, fill_x, fill_y: shortcuts for space filling elements as they are used a lot
+        inactive: default dark bg color
     
     Have fun styling your elements!
     """
@@ -335,6 +399,8 @@ def help_events() -> typing.LiteralString:
         DESELECT
         CLICK
         RIGHT_CLICK
+        DRAG
+        RESIZE
         properties:
             id: str
             element: Element
@@ -445,6 +511,7 @@ def help_callbacks() -> typing.LiteralString:
         on_size_change
         on_build
         on_resize
+        on_drag
         args:
             [Optional] element: Element
             
@@ -475,7 +542,6 @@ def help_callbacks() -> typing.LiteralString:
             
     Window:
         on_close
-        on_drag
         on_collapse
     """
 
@@ -499,4 +565,19 @@ def help_navigation() -> typing.LiteralString:
     First Child: ENTER
     Parent: UP
     Interact: SPACE
+    """
+    
+def help_rich_text() -> typing.LiteralString:
+    """Return rich text tags as a string"""
+    return """
+    Rich text (html-like string) tags: (case unsensitive, shorter alias)
+    - <b / bold> -> bold
+    - <i / italic> -> italic
+    - <u / underline> -> underline
+    - <s / strike / striketrough> -> striketrough
+    - <a / antialas / antialiasing> -> antialiasing
+    - <f / font size=FontSize> -> font size, where FontSize is a number
+    - <f / font name=FontName> -> font name, where FontName is a string
+    - <c / color fg=ColorValue> -> fg color, where ColorValue is a value supported by pygame
+    - <c / color bg=ColorValue> -> bg color, where ColorValue is a value supported by pygame
     """

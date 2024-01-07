@@ -10,6 +10,7 @@ class UIStatus:
 
     def __init__(self, element: "Element"):
         self.element: "Element" = element
+        self.dragging: bool = False
 
         self.hovered: bool = False
         self.pressed: bool = False
@@ -20,6 +21,7 @@ class UIStatus:
 
         self.can_select: bool = False
         self.can_navigate: bool = True
+        self.can_drag: bool = False
 
         self.hover_start_time: float = 0
         self.press_start_time: float = 0
@@ -27,6 +29,11 @@ class UIStatus:
 
         self.callbacks: dict[str, list[common.StatusCallback]] = {}
         self.register_callbacks(*common.DEFAULT_CALLBACKS)
+        
+    def set_drag(self, can_drag: bool) -> typing.Self:
+        """Set the can_drag flag. If True when the element is pressed it will automatically drag"""
+        self.can_drag = can_drag
+        return self
 
     def register_callback(self, name: str, start_listeners: list[common.StatusCallback] = None) -> typing.Self:
         """Create a new callback type and add given listeners to it"""

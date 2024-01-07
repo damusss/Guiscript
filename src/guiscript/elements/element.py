@@ -185,6 +185,9 @@ class Element:
         if not self.can_destroy and not force:
             return
         self.on_destroy()
+        for obs in self._anchor_observers:
+            obs._remove_dead_anchor(self)
+        self.remove_anchors()
         if self.ghost_element is not None:
             self.ghost_element.destroy(True)
         self.parent.remove_child(self)
@@ -284,17 +287,26 @@ class Element:
                     if rmx is None:
                         rmx = (float("inf"), float("inf"))
                     old_x, old_y = self.relative_rect.size
-                    self.set_size((pygame.math.clamp(self.relative_rect.w+xi, rmn[0], rmx[0]),
-                                   pygame.math.clamp(self.relative_rect.h+yi, rmn[1], rmx[1])), True)
-                    if old_x == self.relative_rect.w:
+                    new_size = (pygame.math.clamp(self.relative_rect.w+xi, rmn[0], rmx[0]),
+                                   pygame.math.clamp(self.relative_rect.h+yi, rmn[1], rmx[1]))
+                    if old_x == new_size[0]:
                         pxi = 0
-                    if old_y == self.relative_rect.h:
+                    if old_y == new_size[1]:
                         pyi = 0
                     if pxi != 0 or pyi != 0:
                         self.set_relative_pos(
                             (self.relative_rect.x+pxi, self.relative_rect.y+pyi))
+                    self.set_size(new_size, True)
                     self.status.invoke_callback("on_resize")
                     events._post_base_event(events.RESIZE, self)
+        if self.status.can_drag and self.status.pressed:
+            self.status.dragging = True
+            if UIState.mouse_rel.length() > 0:
+                self.set_relative_pos((self.relative_rect.x+UIState.mouse_rel.x, self.relative_rect.y+UIState.mouse_rel.y))
+                self.status.invoke_callback("on_drag")
+                events._post_base_event(events.DRAG, self)
+        else:
+            self.status.dragging = False
 
         self.on_logic()
 
@@ -434,6 +446,9 @@ class Element:
     def has_attr(self, name: str) -> bool:
         """Check if a custom element attribute exists"""
         return name in self.attrs
+    
+    def has_anchor(self, self_anchor: str):
+        return self_anchor in self._anchors and self._anchors[self_anchor] is not None
 
     def get_index_in_parent(self) -> int:
         """Return the current index in the parent's children"""
@@ -488,7 +503,50 @@ class Element:
         for et in element_types:
             self.add_element_type(et)
         return self
+    
+    def anchors_padding(self, padding: float, *skip_anchors: str) -> typing.Self:
+        """Automatically set the offset of some anchors with the provided padding, inverting it for right and bottom. The specified anchors will be skipped"""
+        for na, ad in self._anchors.items():
+            if ad is None or na in skip_anchors:
+                continue
+            if na in ["top", "left"]:
+                ad.offset = padding
+            elif na in ["right", "bottom"]:
+                ad.offset = -padding
+        self._apply_anchors()
+        return self
+    
+    # remove
+    def remove_anchors(self, *skip_anchors: str) -> typing.Self:
+        """Remove all anchors from the element except for anchors in skip"""
+        for na, ad in list(self._anchors.items()):
+            if ad is None or na in skip_anchors:
+                continue
+            ad.target._anchor_observers.remove(self)
+            self._anchors[na] = None
+        return self
+    
+    def remove_resizers(self, *resizers: str) -> typing.Self:
+        """Remove the specified resizers"""
+        old_resizers = self.resize_max
+        resizers_list = list(self.resizers)
+        for r in resizers:
+            if r in resizers_list:
+                resizers_list.remove(r)
+        self.resizers = tuple(resizers_list)
+        for name, rel in list(self._resizers_elements.items()):
+            if name in old_resizers and name not in self.resizers:
+                del self._resizers_elements[name]
+                rel.destroy()
+        return self
 
+    # set
+    def set_anchors(self, *target_selfanchor_targetanchor_offset: tuple[typing.Union[typing.Literal["parent"], None, "Element"], enums.Anchor, enums.Anchor, float]) -> typing.Self:
+        """Sets multiple anchors. This element's set_anchor function will be called for each of the provided tuples which items should correspond to the arguments"""
+        for tuple_data in target_selfanchor_targetanchor_offset:
+            self.set_anchor(*tuple_data)
+        return self
+    
     def set_anchor(self, target: typing.Union[typing.Literal["parent"], None, "Element"], self_anchor: enums.Anchor = "none", target_anchor: enums.Anchor = "none", offset: float = 0) -> typing.Self:
         """
         Sets an anchor of the element. The side/position 'self_anchor' of this element will follow the side/position of 'target_anchor' of target. 
@@ -525,8 +583,8 @@ class Element:
         self._apply_anchors()
         return self
 
-    # set
-    def set_resizers(self, resizers: tuple[enums.Resizer | str], size: int = 5, min_size: common.Coordinate | None = (20, 20), max_size: common.Coordinate | None = None, style_id: str = "copy") -> typing.Self:
+    def set_resizers(self, resizers: tuple[enums.Resizer], size: int = 5, min_size: common.Coordinate | None = (20, 20), max_size: common.Coordinate | None = None, style_id: str = "copy") -> typing.Self:
+        """Set the specified resizers. The user will be able to resize the element on those points"""
         old_resizers = self.resizers
         self.resizers_size = size
         self.resizers = resizers
@@ -552,6 +610,8 @@ class Element:
                 elif name.startswith("bottom"):
                     resizer.set_anchor("parent", "bottom", "bottom").set_anchor(
                         "parent", name.replace("bottom", ""), name.replace("bottom", ""))
+                else:
+                    common.warn(f"Could not properly anchor resizer with name '{name}'")
                 resizer.set_attr("resizer_name", name)
                 self._resizers_elements[name] = resizer
         self._update_resizers_size()
@@ -616,6 +676,7 @@ class Element:
         self.status.invoke_callbacks("on_position_change")
         for obs in self._anchor_observers:
             obs._apply_anchors()
+        self._apply_anchors()
         return self
 
     def set_relative_pos(self, position: common.Coordinate) -> typing.Self:
@@ -631,6 +692,7 @@ class Element:
         self.status.invoke_callbacks("on_position_change")
         for obs in self._anchor_observers:
             obs._apply_anchors()
+        self._apply_anchors()
         return self
 
     def set_size(self, size: common.Coordinate, propagate_up: bool = False, apply_anchors: bool = True) -> typing.Self:
@@ -647,10 +709,11 @@ class Element:
         self.build()
         self.status.invoke_callbacks("on_size_change", "on_build")
         self._update_resizers_size()
-        if apply_anchors:
-            self._apply_anchors()
+        
         for obs in self._anchor_observers:
             obs._apply_anchors()
+        if apply_anchors:
+            self._apply_anchors()
         self._refresh_stack()
         return self
 
@@ -919,9 +982,10 @@ class Element:
         self.status.invoke_callbacks(
             "on_size_change", "on_style_change", "on_build")
         self._update_resizers_size()
-        self._apply_anchors()
+        
         for obs in self._anchor_observers:
             obs._apply_anchors()
+        self._apply_anchors()
 
     def _update_resizers_size(self):
         for name, rel in self._resizers_elements.items():
@@ -933,3 +997,9 @@ class Element:
                     (self.resizers_size, self.relative_rect.h-self.resizers_size*2))
             else:
                 rel.set_size((self.resizers_size*2, self.resizers_size*2))
+                
+    def _remove_dead_anchor(self, dead_element: "Element"):
+        for an, ad in list(self._anchors.items()):
+            if ad is not None and ad.target is dead_element:
+                self._anchors[an] = None
+                break

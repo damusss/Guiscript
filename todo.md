@@ -42,6 +42,8 @@ DONE THINGS
 - str images
 - anchors
 - resizing
+- static docking
+- rich text
 
 DONE ELEMENTS
 

@@ -151,3 +151,28 @@ class Anchor(StrEnum):
     right = "right"
     top = "top"
     bottom = "bottom"
+    
+    
+class DockAnchor(StrEnum):
+    """Anchors for static docking"""
+    left = "left"
+    right = "right"
+    top = "top"
+    bottom = "bottom"
+    topleft = "topleft"
+    bottomleft = "bottomleft"
+    topright = "topright"
+    bottomright = "bottomright"
+    bottomtop = "bottomtop"
+    leftright = "leftright"
+    
+
+class DockConn(StrEnum):
+    """Available connections for static docking"""
+    l_x_r = "<x>"
+    t_y_b = "<y>"
+    x_r = "x>"
+    l_x = "<x"
+    y_b = "y>"
+    t_y = "<y"
+    

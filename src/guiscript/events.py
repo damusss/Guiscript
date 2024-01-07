@@ -17,6 +17,7 @@ DESELECT = pygame.event.custom_type()
 CLICK = pygame.event.custom_type()
 RIGHT_CLICK = pygame.event.custom_type()
 RESIZE = pygame.event.custom_type()
+DRAG = pygame.event.custom_type()
 
 SLIDESHOW_MOVE_LEFT = pygame.event.custom_type()
 SLIDESHOW_MOVE_RIGHT = pygame.event.custom_type()

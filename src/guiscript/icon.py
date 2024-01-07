@@ -22,7 +22,7 @@ def _download_add(name: str, url: str, is_async: bool = False):
         if name in Icons.adding_async:
             Icons.adding_async.remove(name)
         for icon_comp in Icons.rebuild_async:
-            icon_comp._build()
+            icon_comp._build(icon_comp.element.style)
 
 
 class Icons:
