@@ -94,6 +94,7 @@ class SelectionListSettings:
 
 @dataclasses.dataclass(slots=True)
 class EntrySettings:
+    """Initialization settings for the entry element"""
     placeholder: str = "Start typing..."
     inner_style_id: str = ""
     blink_speed: int = 400
@@ -104,17 +105,18 @@ class EntrySettings:
 
 @dataclasses.dataclass(slots=True)
 class WindowSettings:
+    """Initialization settings for the window element"""
     close_button_txt: str = "X"
     title_bar_height: int = 30
-    resizers_size: int = 5
-    max_size: common.Coordinate | None = None
-    min_size: common.Coordinate | None = (120, 60)
     can_resize: bool = True
     destroy_on_close: bool = True
     hide_on_close: bool = False
     have_close_button: bool = True
     have_collapse_button: bool = False
     resizers: tuple[Resizer] = utils.ALL_RESIZERS
+    resizers_size: int = 5
+    max_size: common.Coordinate | None = None
+    min_size: common.Coordinate | None = (120, 60)
     resizers_style_id: str = "copy"
     close_button_style_id: str = "copy"
     collapse_button_style_id: str = "copy"
@@ -136,5 +138,5 @@ DropMenuDefaultSettings = DropMenuSettings()
 SelectionListDefaultSettings = SelectionListSettings()
 EntryDefaultSettings = EntrySettings()
 WindowDefaultSettings = WindowSettings()
-CollapsingWindowDefaultSettigns = WindowSettings(
+CollapsingWindowDefaultSettings = WindowSettings(
     have_collapse_button=True, have_close_button=False)

@@ -11,9 +11,11 @@ from .. import settings as settings_
 
 class Entry(VStack):
     """An element where you can input text"""
+    need_event = True
 
     def __init__(self,
                  relative_rect: pygame.Rect,
+                 start_text: str = "",
                  element_id: str = "none",
                  style_id: str = "",
                  parent: Element | None = None,
@@ -44,11 +46,12 @@ class Entry(VStack):
                                              ("element", "label", "entry_text"), self, self.manager)\
             .deactivate().text.set_text(self.settings.placeholder).element.status.enable_selection()\
             .add_multi_listeners(on_select=self._on_inner_select, on_deselect=self._on_inner_deselect, on_text_selection_change=self._selection_changed).element
-
+        self.set_text(start_text)
+        
     def _on_self_click(self):
         self.focus()
         self._remove_interaction()
-        self._cursor_index = len(self.text_element.text.text)
+        self._cursor_index = len(self.text_element.text.real_text)
         self._refresh_cursor_idx()
         self.status.invoke_callback("on_focus")
         events._post_entry_event("focus", self)
@@ -57,7 +60,7 @@ class Entry(VStack):
         self._cursor_index = self.text_element.text.cursor_index
         self._last_blink = pygame.time.get_ticks()
 
-    def _event(self, event):
+    def on_event(self, event):
         if not self.is_focused():
             return
 
@@ -131,7 +134,7 @@ class Entry(VStack):
 
     def _on_right(self):
         self._remove_interaction()
-        if self._cursor_index < len(self.text_element.text.text):
+        if self._cursor_index < len(self.text_element.text.real_text):
             self._cursor_index += 1
         self._refresh_cursor_idx()
 
@@ -152,7 +155,7 @@ class Entry(VStack):
     def _on_delete(self):
         if self._remove_selection():
             return
-        if self._cursor_index >= len(self.text_element.text.text):
+        if self._cursor_index >= len(self.text_element.text.real_text):
             return
         left, right = self._split_on_cursor()
         self.text_element.text.set_text(left+right[1:])
@@ -180,8 +183,8 @@ class Entry(VStack):
             self._remove_interaction()
             return False
         self._remove_interaction()
-        left, right = self.text_element.text.text[0:selection[0]
-                                                  ], self.text_element.text.text[selection[1]+1:]
+        left, right = self.text_element.text.real_text[0:selection[0]
+                                                  ], self.text_element.text.real_text[selection[1]+1:]
         self.text_element.text.set_text(left+right)
         self._cursor_index = selection[0]
         self._refresh_cursor_idx()
@@ -192,7 +195,7 @@ class Entry(VStack):
         return True
 
     def _split_on_cursor(self):
-        return self.text_element.text.text[0:self._cursor_index], self.text_element.text.text[self._cursor_index:]
+        return self.text_element.text.real_text[0:self._cursor_index], self.text_element.text.real_text[self._cursor_index:]
 
     def _refresh_cursor_idx(self):
         self.text_element.text.set_cursor_index(self._cursor_index)
@@ -217,7 +220,7 @@ class Entry(VStack):
         self.text_element.status.deselect()
         self.text_element.text.set_cursor_index(-1)
         self._remove_interaction()
-        if not self.text_element.text.text:
+        if not self.text_element.text.real_text:
             self._is_placeholder = True
             self.text_element.text.set_text(self.settings.placeholder)
             self.text_element.set_style_id(
@@ -244,7 +247,7 @@ class Entry(VStack):
         """Return the text inside the entry"""
         if self._is_placeholder:
             return ""
-        return self.text_element.text.text
+        return self.text_element.text.real_text
 
     def set_text(self, text: str) -> typing.Self:
         """Manually set the text of the entry"""
@@ -263,7 +266,7 @@ class Entry(VStack):
     def set_cursor_index(self, index: int) -> typing.Self:
         """Manually set the cursor index of the entry"""
         self._cursor_index = pygame.math.clamp(
-            index, 0, len(self.text_element.text.text))
+            index, 0, len(self.text_element.text.real_text))
         self._refresh_cursor_idx()
         return self
 

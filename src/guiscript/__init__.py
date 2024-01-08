@@ -77,7 +77,8 @@ from .settings import (
     EntrySettings,
     EntryDefaultSettings,
     WindowSettings,
-    WindowDefaultSettings
+    WindowDefaultSettings,
+    CollapsingWindowDefaultSettings
 )
 
 from .utils import (
@@ -98,6 +99,10 @@ from .utils import (
     help_style_script,
     help_z_index,
     help_navigation,
+    help_buffers,
+    help_rich_text,
+    help_events,
+    help_callbacks,
     ZeroRect as ZeroR,
     SizeRect as SizeR,
     PosRect as PosR

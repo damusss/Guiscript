@@ -32,8 +32,7 @@ class UIInteract:
 
         # text selection
         if self.text_select_el is not None and self.start_idxs is not None:
-            lines = common.text_wrap_str(self.text_select_el.text.get_active_text(
-            ), self.text_select_el.relative_rect.w, self.text_select_el.style.text.font)
+            lines = common.text_wrap_str(self.text_select_el.text.real_text, self.text_select_el.relative_rect.w, self.text_select_el.style.text.font)
             if UIState.mouse_pressed[0]:
                 end_idxs_info = common.text_click_idx(lines, self.text_select_el.style.text.font, UIState.mouse_pos, self.text_select_el.text.text_rect,
                                                       pygame.Vector2(self.text_select_el.absolute_rect.topleft))
@@ -182,7 +181,7 @@ class UIInteract:
                         self.right_pressed_el = self.hovered_el
 
         if self.manager.cursors.do_override_cursor:
-            if self.hovered_el is not None and self.hovered_el.active:
+            if self.hovered_el is not None and self.hovered_el.status.active:
                 if (rn := self.hovered_el.get_attr("resizer_name")) is not None:
                     if rn in self.manager.cursors.resize_cursors:
                         pygame.mouse.set_cursor(
@@ -196,17 +195,17 @@ class UIInteract:
         """Find the hovered element at a certain position. Extra arguments are used for recursion. Keyboard navigated elements have priority"""
         if self.manager.navigation.tabbed_element is not None:
             return self.manager.navigation.tabbed_element
-        if start_parent is None or not start_parent.visible:
+        if start_parent is None or not start_parent.status.visible:
             return
         if (not start_parent.absolute_rect.collidepoint(position) or start_parent.ignore_raycast) and can_recurse_above:
             return self.raycast(position, start_parent.parent, True)
 
         for rev_child in reversed(sorted(start_parent.children, key=lambda el: el.z_index)):
-            if not rev_child.absolute_rect.collidepoint(position) or not rev_child.visible or rev_child.ignore_raycast:
+            if not rev_child.absolute_rect.collidepoint(position) or not rev_child.status.visible or rev_child.ignore_raycast:
                 continue
             if len(rev_child.children) > 0:
                 res = self.raycast(position, rev_child)
-                if res and res.visible:
+                if res and res.status.visible:
                     return res
             return rev_child
 
@@ -217,13 +216,13 @@ class UIInteract:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_c and event.mod & pygame.KMOD_CTRL:
                 if self.text_select_el is not None and self.start_idxs is not None and self.last_idxs is not None:
-                    lines = common.text_wrap_str(self.text_select_el.text.get_active_text(),
+                    lines = common.text_wrap_str(self.text_select_el.text.real_text,
                                                  self.text_select_el.relative_rect.w, self.text_select_el.style.text.font)
                     common.text_select_copy(
                         self.start_idxs[1], self.start_idxs[0], self.last_idxs[1], self.last_idxs[0], lines)
 
     def _find_scroll_hovered(self, element: Element):
-        if element.is_stack() and (element.vscrollbar.visible or element.hscrollbar.visible):
+        if element.is_stack() and (element.vscrollbar.status.visible or element.hscrollbar.status.visible):
             element.status.scroll_hovered = True
             self.last_scroll_hovered = element
             return
@@ -237,7 +236,7 @@ class UIInteract:
             self.text_select_el.text.selection_rects = []
             self.text_select_el.set_dirty()
         self.text_select_el = None
-        if not (txt := element.text.get_active_text()):
+        if not (txt := element.text.real_text):
             return
         lines = common.text_wrap_str(
             txt, element.relative_rect.w, element.style.text.font)

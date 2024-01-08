@@ -64,7 +64,7 @@ class DropMenu(Element):
 
     def get_selected(self) -> str:
         """Return the selected option as a string"""
-        return self.option_button.text.get_active_text()
+        return self.option_button.text.real_text
 
     def select(self, option: str) -> typing.Self:
         """Manually set the selected option"""
@@ -87,7 +87,7 @@ class DropMenu(Element):
 
     def toggle_menu(self) -> typing.Self:
         """Manually toggle the options menu open or close depending on the current state"""
-        if self.menu_cont.visible:
+        if self.menu_cont.status.visible:
             self.close_menu()
         else:
             self.open_menu()
@@ -95,9 +95,9 @@ class DropMenu(Element):
 
     def _on_option_click(self, btn: Button):
         self.close_menu()
-        self.select(btn.text.get_active_text())
+        self.select(btn.text.real_text)
         self.status.invoke_callback(
-            "on_option_select", btn.text.get_active_text())
+            "on_option_select", btn.text.real_text)
         events._post_dropmenu_event("select", self)
         events._post_dropmenu_event("toggle", self)
 
@@ -181,9 +181,9 @@ class SelectionList(VStack):
         for btn in self.option_buttons:
             if btn.status.selected:
                 if self.settings.multi_select:
-                    selected.append(btn.text.get_active_text())
+                    selected.append(btn.text.real_text)
                 else:
-                    return btn.text.get_active_text()
+                    return btn.text.real_text
         return selected if self.settings.multi_select else None
 
     def set_options(self, options: list[str]) -> typing.Self:

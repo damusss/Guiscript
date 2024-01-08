@@ -30,6 +30,7 @@ class Element:
     parent -> the element parent or optionally None if you are in a context manager\n
     manager -> the manager the element is bound to or optionally None if there is a current manager\n
     """
+    need_event: bool = False
 
     def __init__(self,
                  relative_rect: pygame.Rect,
@@ -79,7 +80,7 @@ class Element:
         self.ignore_scroll: bool = False
         self.ignore_raycast: bool = False
         self.can_destroy: bool = True
-        self.dirty: bool = True
+        
         self.z_index: int = common.Z_INDEXES["element"]
         self.scroll_offset: pygame.Vector2 = pygame.Vector2()
         self.render_offset: pygame.Vector2 = pygame.Vector2()
@@ -91,13 +92,10 @@ class Element:
         self._resizers_elements: dict[str, "Element"] = {}
         self._anchor_observers: list["Element"] = []
         self._anchors: dict[str, common.UIAnchorData | None] = dict.fromkeys(("left", "right", "top", "bottom", "centerx", "centery"), None)
-        self._update_absolute_rect_pos()
 
         # obj attrs
         self.status: UIStatus = UIStatus(self)
         self.buffers: Buffers = Buffers(self)
-        self.visible: bool = True
-        self.active: bool = True
         self._last_style: UIStyle = None
         self.style_group: UIStyleGroup = UIStyles.get_style_group(self)
         self.style: UIStyle = self.style_group.style
@@ -120,6 +118,9 @@ class Element:
         )
 
         # setup
+        if self.need_event:
+            self.manager._event_callbacks.append(self)
+        self._update_absolute_rect_pos()
         self.parent._add_child(self)
         self.init()
 
@@ -141,7 +142,7 @@ class Element:
         ...
 
     def on_event(self, event: pygame.Event):
-        """Called on 'event', overridable"""
+        """Called for every event if the need_event flag on the class is set to True, overridable"""
         ...
 
     def _refresh_stack(self):
@@ -196,6 +197,8 @@ class Element:
         self.children.clear()
         if self in self.manager._all_elements:
             self.manager._all_elements.remove(self)
+        if self in self.manager._event_callbacks:
+            self.manager._event_callbacks.remove(self)
         del self
 
     def destroy_children(self) -> typing.Self:
@@ -219,210 +222,31 @@ class Element:
     # flags
     def activate(self) -> typing.Self:
         """Activate the element (style will change on hover/press)"""
-        self.active = True
+        self.status.active = True
         return self
 
     def deactivate(self) -> typing.Self:
         """Deactivate the element (style won't change on hover/press)"""
-        self.active = False
+        self.status.active = False
         return self
 
     def show(self) -> typing.Self:
-        """Set the visible flag to True, refresh the stack"""
-        self.visible = True
+        """Set the status.visible flag to True, refresh the stack"""
+        self.status.visible = True
         if not self.ignore_stack:
             self.parent._refresh_stack()
         self.set_dirty()
         return self
 
     def hide(self) -> typing.Self:
-        """Set the visible flag to False, refresh the stack"""
-        self.visible = False
+        """Set the status.visible flag to False, refresh the stack"""
+        self.status.visible = False
         if self is self.manager.navigation.tabbed_element:
             self.manager.navigation.stop_navigating()
         if not self.ignore_stack:
             self.parent._refresh_stack()
         self.set_dirty()
         return self
-
-    # runtime
-    def _first_frame(self):
-        self._refresh_stack()
-        self.build()
-        self.position_changed()
-        self.status.invoke_callback("on_first_frame", "on_position_change")
-
-    def _logic(self):
-        if not self.visible:
-            return
-        if self.ghost_element is not None:
-            self.set_relative_pos((self.ghost_element.relative_rect.centerx-self.relative_rect.w // 2+self.ghost_offset.x,
-                                   self.ghost_element.relative_rect.centery-self.relative_rect.h//2+self.ghost_offset.y))
-        for child in sorted(self.children, key=lambda el: el.z_index):
-            child._logic()
-        self._calc_style()
-        self.style._logic()
-        if self.style.dirty:
-            for comp in self.components:
-                comp._build(self.style)
-            self.style.dirty = False
-            self.set_dirty()
-        if len(self._resizers_elements) > 0 and UIState.mouse_rel.length() > 0:
-            for name, rel in self._resizers_elements.items():
-                if rel.status.pressed:
-                    xi = yi = pxi = pyi = 0
-                    if "left" in name:
-                        xi = -UIState.mouse_rel.x
-                        pxi = UIState.mouse_rel.x
-                    elif "right" in name:
-                        xi = UIState.mouse_rel.x
-                    if "top" in name:
-                        yi = -UIState.mouse_rel.y
-                        pyi = UIState.mouse_rel.y
-                    elif "bottom" in name:
-                        yi = UIState.mouse_rel.y
-                    rmn, rmx = self.resize_min, self.resize_max
-                    if rmn is None:
-                        rmn = (0, 0)
-                    if rmx is None:
-                        rmx = (float("inf"), float("inf"))
-                    old_x, old_y = self.relative_rect.size
-                    new_size = (pygame.math.clamp(self.relative_rect.w+xi, rmn[0], rmx[0]),
-                                   pygame.math.clamp(self.relative_rect.h+yi, rmn[1], rmx[1]))
-                    if old_x == new_size[0]:
-                        pxi = 0
-                    if old_y == new_size[1]:
-                        pyi = 0
-                    if pxi != 0 or pyi != 0:
-                        self.set_relative_pos(
-                            (self.relative_rect.x+pxi, self.relative_rect.y+pyi))
-                    self.set_size(new_size, True)
-                    self.status.invoke_callback("on_resize")
-                    events._post_base_event(events.RESIZE, self)
-        if self.status.can_drag and self.status.pressed:
-            self.status.dragging = True
-            if UIState.mouse_rel.length() > 0:
-                self.set_relative_pos((self.relative_rect.x+UIState.mouse_rel.x, self.relative_rect.y+UIState.mouse_rel.y))
-                self.status.invoke_callback("on_drag")
-                events._post_base_event(events.DRAG, self)
-        else:
-            self.status.dragging = False
-
-        self.on_logic()
-
-    def _render(self, parent_mask_padding: int = 0, force_render: bool = False, fake: bool = False):
-        if not self.visible or (not self.dirty and not force_render):
-            return
-        if not self.absolute_rect.colliderect(self.parent.absolute_rect):
-            return
-        if fake:
-            self.manager._last_rendered = self
-            for child in self.children:
-                child._render(fake=True)
-            return
-
-        if self.dirty:
-            mask_padding = self.style.stack.mask_padding
-            self.manager._last_rendered = self
-            self.element_surface.fill(0)
-            if mask_padding > 0:
-                self.masked_surface.fill(0)
-
-            for i, comp in enumerate(self.components):
-                if i == len(self.components)-1:
-                    for child in sorted(self.children, key=lambda el: el.z_index):
-                        child._render(mask_padding, True)
-                    if mask_padding > 0:
-                        self.element_surface.blit(
-                            self.masked_surface, (mask_padding, mask_padding))
-                if comp.enabled:
-                    comp._render()
-
-            self.on_render()
-        else:
-            self.manager._last_rendered = self
-            for child in self.children:
-                child._render(fake=True)
-        if parent_mask_padding <= 0:
-            self.parent.element_surface.blit(self.element_surface, self.relative_rect.topleft -
-                                             (self.manager.root.scroll_offset if self.ignore_scroll else self.parent.scroll_offset)+self.render_offset)
-        else:
-            self.parent.masked_surface.blit(self.element_surface, self.relative_rect.topleft -
-                                            (pygame.Vector2(parent_mask_padding, parent_mask_padding)) -
-                                            (self.manager.root.scroll_offset if self.ignore_scroll else self.parent.scroll_offset)+self.render_offset)
-        self.dirty = False
-
-    def _calc_style(self) -> typing.Self:
-        style: UIStyle = None
-        if not self.active:
-            style = self.style_group.style
-        elif self.status.pressed or self.status.selected:
-            style = self.style_group.press_style
-        elif self.status.hovered:
-            style = self.style_group.hover_style
-        else:
-            style = self.style_group.style
-        if style is not self._last_style:
-            self.style = style
-            self._update_style()
-            for comp in self.components:
-                comp._build(style)
-            self._last_style = style
-        return self
-
-    def _event(self, event: pygame.Event):
-        if not self.visible:
-            return
-        for child in self.children:
-            child._event(event)
-        self.on_event(event)
-
-    def _apply_anchors(self):
-        temp_r = self.absolute_rect.copy()
-        if (cxad := self._anchors["centerx"]) is not None:
-            temp_r.centerx = getattr(
-                cxad.target.absolute_rect, cxad.target_anchor)+cxad.offset
-        else:
-            left, right = None, None
-            if (lad := self._anchors["left"]) is not None:
-                left = getattr(lad.target.absolute_rect,
-                               lad.target_anchor)+lad.offset
-            if (rad := self._anchors["right"]) is not None:
-                right = getattr(rad.target.absolute_rect,
-                                rad.target_anchor)+rad.offset
-            if right is None and left is not None:
-                right = left+self.absolute_rect.w
-            elif left is None and right is not None:
-                left = right-self.absolute_rect.w
-            elif left is None and right is None:
-                left, right = self.absolute_rect.left, self.absolute_rect.right
-            if right <= left:
-                right = left+1
-            temp_r.left = left
-            temp_r.width = right-left
-        if (cyad := self._anchors["centery"]) is not None:
-            temp_r.centery = getattr(
-                cyad.target.absolute_rect, cyad.target_anchor)+cyad.offset
-        else:
-            top, bottom = None, None
-            if (tad := self._anchors["top"]) is not None:
-                top = getattr(tad.target.absolute_rect,
-                              tad.target_anchor)+tad.offset
-            if (bad := self._anchors["bottom"]) is not None:
-                bottom = getattr(bad.target.absolute_rect,
-                                 bad.target_anchor)+bad.offset
-            if bottom is None and top is not None:
-                bottom = top+self.absolute_rect.h
-            elif top is None and bottom is not None:
-                top = bottom-self.absolute_rect.h
-            elif top is None and bottom is None:
-                top, bottom = self.absolute_rect.top, self.absolute_rect.bottom
-            if bottom <= top:
-                bottom = top+1
-            temp_r.top = top
-            temp_r.height = bottom-top
-        self.set_size(temp_r.size, apply_anchors=False)
-        self.set_absolute_pos(temp_r.topleft)
 
     # dunder
     def __enter__(self) -> typing.Self:
@@ -435,6 +259,10 @@ class Element:
         self._refresh_stack()
 
     # get
+    def can_render(self) -> bool:
+        """Return wheather the element can be rendered. If the element is not visible or outside of the parent's bounds False is returned. Can be useful not to waste performance on some operations"""
+        return self.status.visible and self.absolute_rect.colliderect(self.parent.absolute_rect)
+    
     def get_absolute_topleft(self) -> pygame.Vector2:
         """Return the topleft position from the origin of the window"""
         return pygame.Vector2(self.parent.get_absolute_topleft()+self.relative_rect.topleft)-(self.manager.root.scroll_offset if self.ignore_scroll else self.parent.scroll_offset)
@@ -461,7 +289,7 @@ class Element:
     # navigation
     def can_navigate(self) -> bool:
         """Return whether the element can be navigated"""
-        return self.status.can_navigate and self.visible
+        return self.status.can_navigate and self.status.visible
 
     def find_navigable_child(self) -> "Element":
         """Find a child that can be navigated between the element's children and their children"""
@@ -634,9 +462,9 @@ class Element:
 
     def set_dirty(self, dirty: bool = True) -> typing.Self:
         """Change the dirty flag, usually to True. This will cause the element to re-render"""
-        if dirty == self.dirty:
+        if dirty == self.status.dirty:
             return self
-        self.dirty = dirty
+        self.status.dirty = dirty
         self.parent.set_dirty()
         return self
 
@@ -971,7 +799,6 @@ class Element:
     def _update_style(self):
         self.set_dirty()
         self._refresh_stack()
-        self.size_changed()
         self.style_changed()
         self.build()
         if not self.ignore_stack:
@@ -980,11 +807,8 @@ class Element:
             comp._build(self.style)
         self.style._enter()
         self.status.invoke_callbacks(
-            "on_size_change", "on_style_change", "on_build")
+            "on_style_change", "on_build")
         self._update_resizers_size()
-        
-        for obs in self._anchor_observers:
-            obs._apply_anchors()
         self._apply_anchors()
 
     def _update_resizers_size(self):
@@ -1003,3 +827,175 @@ class Element:
             if ad is not None and ad.target is dead_element:
                 self._anchors[an] = None
                 break
+            
+    def _first_frame(self):
+        self._refresh_stack()
+        self.build()
+        self.position_changed()
+        self.status.invoke_callback("on_first_frame", "on_position_change")
+        
+    def _apply_anchors(self):
+        temp_r = self.absolute_rect.copy()
+        if (cxad := self._anchors["centerx"]) is not None:
+            temp_r.centerx = getattr(
+                cxad.target.absolute_rect, cxad.target_anchor)+cxad.offset
+        else:
+            left, right = None, None
+            if (lad := self._anchors["left"]) is not None:
+                left = getattr(lad.target.absolute_rect,
+                               lad.target_anchor)+lad.offset
+            if (rad := self._anchors["right"]) is not None:
+                right = getattr(rad.target.absolute_rect,
+                                rad.target_anchor)+rad.offset
+            if right is None and left is not None:
+                right = left+self.absolute_rect.w
+            elif left is None and right is not None:
+                left = right-self.absolute_rect.w
+            elif left is None and right is None:
+                left, right = self.absolute_rect.left, self.absolute_rect.right
+            if right <= left:
+                right = left+1
+            temp_r.left = left
+            temp_r.width = right-left
+        if (cyad := self._anchors["centery"]) is not None:
+            temp_r.centery = getattr(
+                cyad.target.absolute_rect, cyad.target_anchor)+cyad.offset
+        else:
+            top, bottom = None, None
+            if (tad := self._anchors["top"]) is not None:
+                top = getattr(tad.target.absolute_rect,
+                              tad.target_anchor)+tad.offset
+            if (bad := self._anchors["bottom"]) is not None:
+                bottom = getattr(bad.target.absolute_rect,
+                                 bad.target_anchor)+bad.offset
+            if bottom is None and top is not None:
+                bottom = top+self.absolute_rect.h
+            elif top is None and bottom is not None:
+                top = bottom-self.absolute_rect.h
+            elif top is None and bottom is None:
+                top, bottom = self.absolute_rect.top, self.absolute_rect.bottom
+            if bottom <= top:
+                bottom = top+1
+            temp_r.top = top
+            temp_r.height = bottom-top
+        self.set_size(temp_r.size, apply_anchors=False)
+        self.set_absolute_pos(temp_r.topleft)
+        
+    # runtime
+    def _logic(self):
+        if not self.status.visible:
+            return
+        if self.ghost_element is not None:
+            self.set_relative_pos((self.ghost_element.relative_rect.centerx-self.relative_rect.w // 2+self.ghost_offset.x,
+                                   self.ghost_element.relative_rect.centery-self.relative_rect.h//2+self.ghost_offset.y))
+        for child in sorted(self.children, key=lambda el: el.z_index):
+            child._logic()
+            
+        style: UIStyle = None
+        if not self.status.active:
+            style = self.style_group.style
+        elif self.status.pressed or self.status.selected:
+            style = self.style_group.press_style
+        elif self.status.hovered:
+            style = self.style_group.hover_style
+        else:
+            style = self.style_group.style
+        if style is not self._last_style:
+            self.style = style
+            self._update_style()
+            self._last_style = style
+        
+        self.style._logic()
+        if self.style.dirty:
+            for comp in self.components:
+                comp._build(self.style)
+            self.style.dirty = False
+            self.set_dirty()
+            self.style_changed()
+            self.build()
+            self.status.invoke_callbacks("on_style_change", "on_build")
+            
+        if len(self._resizers_elements) > 0 and UIState.mouse_rel.length() > 0:
+            for name, rel in self._resizers_elements.items():
+                if rel.status.pressed:
+                    xi = yi = pxi = pyi = 0
+                    if "left" in name:
+                        xi = -UIState.mouse_rel.x
+                        pxi = UIState.mouse_rel.x
+                    elif "right" in name:
+                        xi = UIState.mouse_rel.x
+                    if "top" in name:
+                        yi = -UIState.mouse_rel.y
+                        pyi = UIState.mouse_rel.y
+                    elif "bottom" in name:
+                        yi = UIState.mouse_rel.y
+                    rmn, rmx = self.resize_min, self.resize_max
+                    if rmn is None:
+                        rmn = (0, 0)
+                    if rmx is None:
+                        rmx = (float("inf"), float("inf"))
+                    old_x, old_y = self.relative_rect.size
+                    new_size = (pygame.math.clamp(self.relative_rect.w+xi, rmn[0], rmx[0]),
+                                   pygame.math.clamp(self.relative_rect.h+yi, rmn[1], rmx[1]))
+                    if old_x == new_size[0]:
+                        pxi = 0
+                    if old_y == new_size[1]:
+                        pyi = 0
+                    if pxi != 0 or pyi != 0:
+                        self.set_relative_pos(
+                            (self.relative_rect.x+pxi, self.relative_rect.y+pyi))
+                    self.set_size(new_size, True)
+                    self.status.invoke_callback("on_resize")
+                    events._post_base_event(events.RESIZE, self)
+        if self.status.can_drag and self.status.pressed:
+            self.status.dragging = True
+            if UIState.mouse_rel.length() > 0:
+                self.set_relative_pos((self.relative_rect.x+UIState.mouse_rel.x, self.relative_rect.y+UIState.mouse_rel.y))
+                self.status.invoke_callback("on_drag")
+                events._post_base_event(events.DRAG, self)
+        else:
+            self.status.dragging = False
+
+        self.on_logic()
+
+    def _render(self, parent_mask_padding: int = 0, force_render: bool = False, fake: bool = False):
+        if not self.status.visible or (not self.status.dirty and not force_render):
+            return
+        if not self.absolute_rect.colliderect(self.parent.absolute_rect):
+            return
+        if fake:
+            self.manager._last_rendered = self
+            for child in self.children:
+                child._render(fake=True)
+            return
+
+        if self.status.dirty:
+            mask_padding = self.style.stack.mask_padding
+            self.manager._last_rendered = self
+            self.element_surface.fill(0)
+            if mask_padding > 0:
+                self.masked_surface.fill(0)
+
+            for i, comp in enumerate(self.components):
+                if i == len(self.components)-1:
+                    for child in sorted(self.children, key=lambda el: el.z_index):
+                        child._render(mask_padding, True)
+                    if mask_padding > 0:
+                        self.element_surface.blit(
+                            self.masked_surface, (mask_padding, mask_padding))
+                if comp.enabled:
+                    comp._render()
+
+            self.on_render()
+        else:
+            self.manager._last_rendered = self
+            for child in self.children:
+                child._render(fake=True)
+        if parent_mask_padding <= 0:
+            self.parent.element_surface.blit(self.element_surface, self.relative_rect.topleft -
+                                             (self.manager.root.scroll_offset if self.ignore_scroll else self.parent.scroll_offset)+self.render_offset)
+        else:
+            self.parent.masked_surface.blit(self.element_surface, self.relative_rect.topleft -
+                                            (pygame.Vector2(parent_mask_padding, parent_mask_padding)) -
+                                            (self.manager.root.scroll_offset if self.ignore_scroll else self.parent.scroll_offset)+self.render_offset)
+        self.status.dirty = False

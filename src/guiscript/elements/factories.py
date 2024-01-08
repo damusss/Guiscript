@@ -149,7 +149,7 @@ class Slider(Element):
         return self.set_value(value_percent/100)
 
     def on_logic(self):
-        if not self.handle.status.pressed or not self.handle.active:
+        if not self.handle.status.pressed or not self.handle.status.active:
             return
         if self.settings.axis == "horizontal" and UIState.mouse_rel[0] != 0:
             prev = self.get_value()
@@ -418,9 +418,9 @@ class Image(Element):
         self.image.set_surface(surface)
         self.deactivate()
 
-    def set_surface(self, surface: pygame.Surface) -> typing.Self:
+    def set_surface(self, surface: pygame.Surface, force_update: bool = False) -> typing.Self:
         """Shortcut for 'element.image.set_surface'"""
-        self.image.set_surface(surface)
+        self.image.set_surface(surface, force_update)
         return self
 
 

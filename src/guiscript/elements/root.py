@@ -8,12 +8,16 @@ from .element import Element
 class UIRoot:
     """The root element for elements bound to a Manager. It's a simplified version of Element. Automatically created by Manager"""
 
+    class UIRootStatus:
+        def __init__(self):
+            self.visible: bool = True
+            self.active: bool = True
+
     def __init__(self, screen_surface: pygame.Surface):
         self.set_screen_surface(screen_surface)
 
         self.parent: typing.Never = None
-        self.active: bool = True
-        self.visible: bool = True
+        self.status: UIRoot.UIRootStatus = UIRoot.UIRootStatus()
         self.scroll_offset = pygame.Vector2()
         self.children: list[Element] = []
         self.ignore_raycast: bool = False
@@ -50,10 +54,6 @@ class UIRoot:
 
     def _first_frame(self):
         ...
-
-    def _event(self, event: pygame.Event):
-        for child in self.children:
-            child._event(event)
 
     def _logic(self):
         for child in self.children:

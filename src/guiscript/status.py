@@ -26,6 +26,10 @@ class UIStatus:
         self.hover_start_time: float = 0
         self.press_start_time: float = 0
         self.right_press_start_time: float = 0
+        
+        self.dirty: bool = True
+        self.visible: bool = True
+        self.active: bool = True
 
         self.callbacks: dict[str, list[common.StatusCallback]] = {}
         self.register_callbacks(*common.DEFAULT_CALLBACKS)

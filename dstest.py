@@ -37,7 +37,7 @@ with (w1:=guis.Window(pygame.Rect(0,0,200,200), "1",
                 settings=guis.WindowSettings(
                 have_collapse_button=True, resizers=("bottom",)
     ))).enter():
-    guis.ProgressBar(0, rect(50,50,500,100), settings=guis.ProgressBarSettings(direction=guis.ProgressBarDirection.left_right))
+    guis.ProgressBar(50, rect(50,50,500,100), settings=guis.ProgressBarSettings(direction=guis.ProgressBarDirection.left_right))
     
 with (w2:=guis.Window(pygame.Rect(0,0,200,200), "2", settings=guis.WindowSettings(have_collapse_button=True, resizers=("bottom",)))).enter():
     ...

@@ -77,7 +77,7 @@ class VStack(UIStack):
         active_children_num = 0
         children_with_fill_y: list[Element] = []
         for i, child in enumerate(self.children):
-            if child.ignore_stack or not child.visible:
+            if child.ignore_stack or not child.status.visible:
                 continue
             if child.relative_rect.w > total_x and not child.style.stack.fill_x:
                 total_x = child.relative_rect.w
@@ -111,14 +111,14 @@ class VStack(UIStack):
         else:
             self.vscrollbar._refresh(0)
             scroll_x = 0
-            if self.vscrollbar.visible:
+            if self.vscrollbar.status.visible:
                 scroll_x = style.stack.scrollbar_size
             scroll_y = 0
             self.hscrollbar._refresh(scroll_x)
-            if self.hscrollbar.visible:
+            if self.hscrollbar.status.visible:
                 scroll_y = style.stack.scrollbar_size
                 self.vscrollbar._refresh(scroll_y)
-                if self.vscrollbar.visible:
+                if self.vscrollbar.status.visible:
                     scroll_x = style.stack.scrollbar_size
                     self.hscrollbar._refresh(scroll_x)
 
@@ -160,7 +160,7 @@ class VStack(UIStack):
 
         i_o = 0
         for i, child in enumerate(self.children):
-            if child.ignore_stack or not child.visible:
+            if child.ignore_stack or not child.status.visible:
                 i_o += 1
                 continue
             if i > i_o:
@@ -206,7 +206,7 @@ class HStack(UIStack):
         active_children_num = 0
         children_with_fill_x: list[Element] = []
         for i, child in enumerate(self.children):
-            if child.ignore_stack or not child.visible:
+            if child.ignore_stack or not child.status.visible:
                 continue
 
             if child.relative_rect.h > total_y and not child.style.stack.fill_y:
@@ -241,14 +241,14 @@ class HStack(UIStack):
         else:
             self.vscrollbar._refresh(0)
             scroll_x = 0
-            if self.vscrollbar.visible:
+            if self.vscrollbar.status.visible:
                 scroll_x = style.stack.scrollbar_size
             scroll_y = 0
             self.hscrollbar._refresh(scroll_x)
-            if self.hscrollbar.visible:
+            if self.hscrollbar.status.visible:
                 scroll_y = style.stack.scrollbar_size
                 self.vscrollbar._refresh(scroll_y)
-                if self.vscrollbar.visible:
+                if self.vscrollbar.status.visible:
                     scroll_x = style.stack.scrollbar_size
                     self.hscrollbar._refresh(scroll_x)
 
@@ -287,7 +287,7 @@ class HStack(UIStack):
 
         i_o = 0
         for i, child in enumerate(self.children):
-            if child.ignore_stack or not child.visible:
+            if child.ignore_stack or not child.status.visible:
                 i_o += 1
                 continue
             if i > i_o:

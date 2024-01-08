@@ -42,6 +42,7 @@ class Manager:
         self._running: bool = False
         self._all_elements: list[Element] = []
         self._last_rendered: Element = None
+        self._event_callbacks: list[Element] = []
         self.cursors: UICursors = UICursors(self)
         self.interact: UIInteract = UIInteract(self)
         self.navigation: UINavigation = UINavigation(self)
@@ -79,7 +80,8 @@ class Manager:
         self._running_check()
         if event.type == pygame.MOUSEWHEEL:
             UIState.mouse_wheel = pygame.Vector2(event.x, event.y)
-        self.root._event(event)
+        for el in self._event_callbacks:
+            el.on_event(event)
         self.interact._event(event)
         self.navigation._event(event)
         return self
@@ -102,6 +104,10 @@ class Manager:
         """Set this manager as the current. All elements created after this call will use this as their manager, unless a different one is specified"""
         UIState.current_manager = self
         return self
+    
+    def is_current(self) -> bool:
+        """Return wheather this manager is set as current"""
+        return self is UIState.current_manager
 
     def set_gss_vars(self, **names_values) -> typing.Self:
         """Update the variables used to execute style scripts"""

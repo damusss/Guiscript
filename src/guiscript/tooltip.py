@@ -64,7 +64,7 @@ class Tooltips:
                     break
             if tt_data is None:
                 return
-            if not cls.active_tooltip.visible:
+            if not cls.active_tooltip.status.visible:
                 if UIState.mouse_rel.length() != 0:
                     tt_data["start_hover_time"] = pygame.time.get_ticks()
                 if pygame.time.get_ticks()-tt_data["start_hover_time"] >= cls.hover_time:

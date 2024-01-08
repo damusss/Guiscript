@@ -182,25 +182,31 @@ def help_element_types() -> typing.LiteralString:
     ImageButton: (element, image, button, imagebutton)
     IconButton: (element, icon, button, iconbutton)
     Checkbox: (element, button, checkbox)
+    
     HStack: (element, stack, hstack)
     VStack: (element, stack, vstack)
         HStack/VStack.vscrollbar: (element, scrollbar, vscrollbar)
             HStack/VStack.vscrollbar.handle: (element, handle, scrollbar_handle, vscrollbar_handle)
         HStack/VStack.hscrollbar: (element, scrollbar, hscrollbar)
             HStack/VStack.hscrollbar.handle: (element, handle, scrollbar_handle, hscrollbar_handle)
+            
     Slider: (element, slider)
         Slider.bar: (element, slider_bar)
         Slider.handle: (element, handle, slider_handle)
+        
     ProgressBar: (element, progressbar)
     GIF: (element, image, gif)
+    
     Slideshow: (element, image, slideshow)
         Slideshow.left_arrow: (*Button, slideshow_arrow, slideshow_left_arrow)
         Slideshow.right_arrow: (*Button, slideshow_arrow, slideshow_right_arrow)
+        
     SoundPlayer: (*HStack, player, soundplayer)
         SoundPlayer.track_slider: (*Slider, soundplayer_slider, soundplayer_track_slider)
         SoundPlayer.volume_slider: (*Slider, soundplayer_slider, soundplayer_volume_slider)
         SoundPlayer.play_button: (*Button, soundplayer_button, soundplayer_play_button)
         SoundPlayer.volume_button: (*Button, soundplayer_button, soundplayer_volume_button)
+        
     VideoPlayer: (element, player, videoplayer)
         VideoPlayer.video_image: (*Image, videoplayer_video)
         VideoPlayer.control_stack: (*HStack, videoplayer_control_stack)
@@ -208,18 +214,23 @@ def help_element_types() -> typing.LiteralString:
         VideoPlayer.volume_slider: (*Slider, videoplayer_slider, videoplayer_volume_slider)
         VideoPlayer.play_button: (*Button, videoplayer_button, videoplayer_play_button)
         VideoPlayer.volume_button: (*Button, videoplayer_button, videoplayer_volume_button)
+        
     DropMenu: (element, menu, dropmenu)
         DropMenu.option_button: (*Button, dropmenu_button, dropmenu_selected_option)
         DropMenu.arrow_button: (*Button, dropmenu_button, dropmenu_arrow)
         DropMenu.menu_cont: (*VStack, dropmenu_menu)
             DropMenu.menu_cont.*: (*Button, dropmenu_option)
+            
     SelectionList: (*VStack, menu, selectionlist)
         SelectionList.*: (*Button, selectionlist_option)
+        
     InvisElement: (element, invisible_element)
     HLine: (element, line, hline)
     VLine: (element, line, vline)
+    
     Entry: (*HStack, entry)
         Entry.text_element: (*Label, entry_text)
+        
     Window: (element, window)
         Window.title_bar: (*HStack, window_title_bar)
             Window.title: (*Button, window_title)
@@ -350,6 +361,7 @@ def help_style_script() -> typing.LiteralString:
         cursor_width: number
         cursor_rel_h: number
         cursor_enabled: bool
+        rich: bool Enable rich text. Use html tags for localized styling while the text style properties will act as defaults. More with guiscript.help_rich_text()
 
     icon:
         name: string
@@ -556,7 +568,7 @@ def help_buffers() -> typing.LiteralString:
 
 
 def help_navigation() -> typing.LiteralString:
-    """Return keyboard navigation keybinds as a string"""
+    """Provide a help string with keyboard navigation keybinds"""
     return """
     Exit: ESC
     Start: TAB
@@ -568,8 +580,9 @@ def help_navigation() -> typing.LiteralString:
     """
     
 def help_rich_text() -> typing.LiteralString:
-    """Return rich text tags as a string"""
+    """Provide a help string with rich text tags"""
     return """
+    The other text style properties will act as defaults.
     Rich text (html-like string) tags: (case unsensitive, shorter alias)
     - <b / bold> -> bold
     - <i / italic> -> italic

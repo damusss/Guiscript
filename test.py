@@ -2,7 +2,7 @@ import pygame
 import sys, os
 import src.guiscript as guis
 from pygame import Rect as rect
-
+pygame.Rect()
 W, H = 1200, 800
 pygame.init()
 screen = pygame.display.set_mode((W, H))
@@ -16,31 +16,18 @@ manager = guis.Manager(screen, True, ["tests/example.gss"], None, {
     "MENU_HOVER": menu_surf,
     "MENU_PRESS": menu_surf,
     
-})
-    
-def on_start_hover(element: guis.Element):
-    element.animate_wh_to(big, 300, guis.AnimRepeatMode.norepeat, guis.AnimEaseFunc.out_expo)
-    
-def on_stop_hover(element: guis.Element):
-    element.animate_wh_to(base, 300, guis.AnimRepeatMode.norepeat, guis.AnimEaseFunc.out_expo)
+})    
 
 surfaces = [test_surf, menu_surf, test_surf]
 
 v = 0
 with guis.VStack(guis.SizeR(1200, 800), style_id="invis_cont"):
     with guis.VStack(guis.SizeR(600,700), style_id="no_scroll").set_resizers(guis.ALL_RESIZERS):
-        el = guis.Entry(guis.SizeR(500,80)).set_resizers(guis.ALL_RESIZERS)
-        btn = guis.Button("TEST BUTTON", guis.SizeR(100,100), style_id="turn_red").set_ghost(guis.SizeR(200,200))\
-            .status.add_listener("on_start_hover", on_start_hover).add_listener("on_stop_hover", on_stop_hover).element.set_resizers(guis.ALL_RESIZERS)
-        base = btn.relative_rect.w
-        big = btn.relative_rect.w+100
+        el = guis.Entry(guis.SizeR(500,80), '<c fg="green">ciao!!</c>', settings=guis.EntrySettings(inner_style_id="richtext")).set_resizers(guis.ALL_RESIZERS)
         pb = guis.ProgressBar(0, rect(50,50,500,100), settings=guis.ProgressBarSettings(direction=guis.ProgressBarDirection.left_right))
-        guis.Label(
-"""<i>this</i>
-is
-<c fg="green">a</c>
-<f name="times new roman" size='50'>test</f>""", guis.SizeR(600,300), style_id="richtext")
-    
+        lb = guis.Label("""<c fg="red">ciao
+come va</c>""", guis.SizeR(100,100), style_id="richtext")
+        nlb = guis.Label("", guis.SizeR(300,100), style_id="changing").activate()
                 
 while True:   
     for event in pygame.event.get():

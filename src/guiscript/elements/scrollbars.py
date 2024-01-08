@@ -35,7 +35,7 @@ class UIVScrollbar(UIScrollbar):
             (style.scrollbar_size, self.parent.relative_rect.h), False)
 
         if not style.scroll_y or style.grow_y:
-            self.visible = False
+            self.status.visible = False
             return
         if self.parent.total_y <= self.parent.relative_rect.h:
             if self.parent.scroll_offset.y != 0:
@@ -43,10 +43,10 @@ class UIVScrollbar(UIScrollbar):
                 self.handle.set_relative_pos((0, 0))
                 for child in self.parent.children:
                     child._update_absolute_rect_pos()
-            self.visible = False
+            self.status.visible = False
             return
 
-        self.visible = True
+        self.status.visible = True
 
         handle_y = (self.relative_rect.h*(self.relative_rect.h -
                     scroll_y))/(self.parent.content_y+0.000001)
@@ -54,12 +54,12 @@ class UIVScrollbar(UIScrollbar):
             handle_y, self.relative_rect.h)), False)
 
     def on_logic(self):
-        if not self.visible or not self.parent.status.scroll_hovered:
+        if not self.status.visible or not self.parent.status.scroll_hovered:
             return
 
         prev_y = self.handle.relative_rect.y
 
-        if self.handle.status.pressed and self.handle.active:
+        if self.handle.status.pressed and self.handle.status.active:
             self.handle.set_relative_pos(
                 (0, self.handle.relative_rect.y+UIState.mouse_rel[1]))
 
@@ -90,14 +90,14 @@ class UIHScrollbar(UIScrollbar):
     def _refresh(self, scroll_x):
         style = self.parent.style.stack
 
-        x_remove = style.scrollbar_size if self.parent.vscrollbar.visible else 0
+        x_remove = style.scrollbar_size if self.parent.vscrollbar.status.visible else 0
         self.set_relative_pos(
             (0, self.parent.relative_rect.h-style.scrollbar_size))
         self.set_size((self.parent.relative_rect.w -
                       x_remove, style.scrollbar_size), False)
 
         if not style.scroll_x or style.grow_x:
-            self.visible = False
+            self.status.visible = False
             return
         if self.parent.total_x <= self.parent.relative_rect.w:
             if self.parent.scroll_offset.x != 0:
@@ -105,9 +105,9 @@ class UIHScrollbar(UIScrollbar):
                 self.handle.set_relative_pos((0, 0))
                 for child in self.parent.children:
                     child._update_absolute_rect_pos()
-            self.visible = False
+            self.status.visible = False
             return
-        self.visible = True
+        self.status.visible = True
 
         handle_x = (self.relative_rect.w*(self.relative_rect.w -
                     scroll_x))/(self.parent.content_x+0.000001)
@@ -115,16 +115,16 @@ class UIHScrollbar(UIScrollbar):
             (min(handle_x, self.relative_rect.w), style.scrollbar_size), False)
 
     def on_logic(self):
-        if not self.visible or not self.parent.status.scroll_hovered:
+        if not self.status.visible or not self.parent.status.scroll_hovered:
             return
 
         prev_x = self.handle.relative_rect.x
 
-        if self.handle.status.pressed and self.handle.active:
+        if self.handle.status.pressed and self.handle.status.active:
             self.handle.set_relative_pos(
                 (self.handle.relative_rect.x+UIState.mouse_rel[0], 0))
 
-        if UIState.mouse_wheel.y and (UIState.keys_pressed[pygame.K_LCTRL] or not self.parent.vscrollbar.visible):
+        if UIState.mouse_wheel.y and (UIState.keys_pressed[pygame.K_LCTRL] or not self.parent.vscrollbar.status.visible):
             self.handle.set_relative_pos(
                 (self.handle.relative_rect.x-UIState.mouse_wheel.y*self.manager.scroll_multiplier, 0))
         elif UIState.mouse_wheel.x:
@@ -138,7 +138,7 @@ class UIHScrollbar(UIScrollbar):
                 (self.relative_rect.w-self.handle.relative_rect.w, 0))
 
         if self.handle.relative_rect.x != prev_x:
-            x_add = self.parent.style.stack.scrollbar_size if self.parent.vscrollbar.visible and not self.parent.style.stack.floating_scrollbars else 0
+            x_add = self.parent.style.stack.scrollbar_size if self.parent.vscrollbar.status.visible and not self.parent.style.stack.floating_scrollbars else 0
             handle_size = ((self.relative_rect.w+x_add) *
                            self.handle.relative_rect.w)/max(1, self.relative_rect.w)
             handle_x = ((self.relative_rect.w-handle_size)*self.handle.relative_rect.x) / \

@@ -128,7 +128,7 @@ class Window(Element):
 
     def get_title(self) -> str:
         """Shortcut to retrieve the window's title"""
-        return self.title.text.get_active_text()
+        return self.title.text.real_text
 
     def move_on_top(self) -> typing.Self:
         """Move this window on top of the stack"""

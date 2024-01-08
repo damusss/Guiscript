@@ -17,3 +17,19 @@
 .richtext:: {
     text.rich true;
 }
+
+.changing:: {
+    text.rich true;
+}
+
+.changing {
+    text.text 'silly default text';
+}
+
+.changing:press {
+    text.text 'silly little pressing uwu';
+}
+
+.changing:hover {
+    text.text 'silly hovering';
+}

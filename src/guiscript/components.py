@@ -230,6 +230,7 @@ class UITextComp(UIComponent):
 
     def _init(self):
         self.text: str = None
+        self.real_text: str = None
         self.selection_rects: list[pygame.Rect] = []
         self.can_select: bool = True
         self.cursor_index: int = -1
@@ -248,7 +249,7 @@ class UITextComp(UIComponent):
         self.element.element_surface.blit(self.text_surf, self.text_rect)
         if self.cursor_index > -1 and style.cursor_enabled:
             x = 0
-            for i, c in enumerate(self.text):
+            for i, c in enumerate(self.real_text):
                 if i >= self.cursor_index:
                     break
                 x += style.font.size(c)[0]
@@ -261,13 +262,10 @@ class UITextComp(UIComponent):
     def _size_changed(self):
         self._build(self.element.style)
 
-    def get_active_text(self) -> str:
-        """Return the text the component is rendering as a string"""
-        return self.element.style.text.text if self.element.style.text.text else self.text
-
     def _build(self, style):
         text = style.text.text if style.text.text else self.text
         if not style.text.rich:
+            self.real_text = text
             style.text.apply_mods()
             self.text_surf: pygame.Surface = style.text.font.render(text,
                                                                     style.text.antialas,
@@ -287,6 +285,7 @@ class UITextComp(UIComponent):
                 richtext.ModifierName.strikethrough: style.text.strikethrough,
             }
             output_text, modifiers = richtext.global_rich_text_parser.parse_text(text)
+            self.real_text = output_text
             self.text_surf: pygame.Surface = richtext.render(output_text,
                                                              modifiers,
                                                              default_modifiers,

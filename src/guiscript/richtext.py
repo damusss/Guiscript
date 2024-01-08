@@ -74,9 +74,12 @@ class RichTextParser(html_parser.HTMLParser):
         self.start_i_stack.append(len(self.output_text))
 
     def handle_endtag(self, tag: str) -> None:
-        modifier = self.modifiers_stack[-1]
-        start_i = self.start_i_stack[-1]
-        end_i = len(self.output_text)-1
+        try:
+            modifier = self.modifiers_stack[-1]
+            start_i = self.start_i_stack[-1]
+            end_i = len(self.output_text)-1
+        except IndexError:
+            return
 
         self.parse_modifier(modifier, start_i, end_i)
 
