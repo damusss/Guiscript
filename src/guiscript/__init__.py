@@ -12,13 +12,13 @@ import pygame
 from pygame import Rect as rect
 pygame.init()
 
-from .elements.element import Element
-from .manager import Manager
-from .icon import Icons
-from .buffer import Buffer
-from .tooltip import Tooltips
+from ._guis.elements.element import Element
+from ._guis.manager import Manager
+from ._guis.icon import Icons
+from ._guis.buffer import Buffer
+from ._guis.tooltip import Tooltips
 
-from .enums import (
+from ._guis.enums import (
     TextAlign, 
     FontAlign, 
     ShapeType,
@@ -36,7 +36,7 @@ from .enums import (
     Anchor
 )
 
-from .elements.factories import (
+from ._guis.elements.factories import (
     Label, 
     Icon,
     Image,
@@ -53,13 +53,13 @@ from .elements.factories import (
     VLine
 )
 
-from .elements.stacks import (VStack, HStack)
-from .elements.players import (SoundPlayer, VideoPlayer)
-from .elements.menus import (DropMenu, SelectionList)
-from .elements.windows import (Window, ) # FileDialog
-from .elements.entries import (Entry)#, TextBox)
+from ._guis.elements.stacks import (VStack, HStack)
+from ._guis.elements.players import (SoundPlayer, VideoPlayer)
+from ._guis.elements.menus import (DropMenu, SelectionList)
+from ._guis.elements.windows import (Window, ModalContainer) #, FileDialog)
+from ._guis.elements.entries import (Entry)#, TextBox)
 
-from .settings import (
+from ._guis.settings import (
     SlideshowSettings, 
     SlideshowDefaultSettings,
     SliderSettings,
@@ -78,13 +78,19 @@ from .settings import (
     EntryDefaultSettings,
     WindowSettings,
     WindowDefaultSettings,
-    CollapsingWindowDefaultSettings
+    CollapsingWindowDefaultSettings,
+    ModalSettings,
+    ModalDefaultSettings
 )
 
-from .utils import (
+from ._guis.utils import (
     VERSION,
     ALL_RESIZERS,
     ANCHOR_PARENT,
+    NO_SOUND,
+    bind_one_selected_only,
+    custom_hscrollbar,
+    custom_vscrollbar,
     static_dock,
     dragging_mouse,
     static_logic,
@@ -95,6 +101,8 @@ from .utils import (
     set_default_style_id,
     DefaultStyleID,
     get_builtin_image,
+    get_current_manager,
+    get_current_parent,
     help_element_types,
     help_style_script,
     help_z_index,
@@ -108,7 +116,7 @@ from .utils import (
     PosRect as PosR
 )
 
-from .types import (
+from ._guis.types import (
     AnimType,
     StyleAnimType,
     PropertyAnimType,
@@ -138,12 +146,14 @@ from .types import (
     StyleHolderType,
     StatusType,
     BuffersType,
+    SoundsType,
     StackType,
     ScrollbarType,
     VScrollbarType,
     HScrollbarType
 )
 
-from .events import *
+from ._guis.events import *
 
 print(f"Guiscript {VERSION}")
+_guis = None

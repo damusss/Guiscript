@@ -7,9 +7,38 @@ from .factories import Button
 from ..manager import Manager
 from ..state import UIState
 from .. import settings as settings_
-from .. import utils
 from .. import common
 from .. import events
+
+
+class ModalContainer(VStack):
+    """A helper container that covers all the screen containing a specified element. Default styling will darken the sorrounding and starts hidden"""
+    need_event = True
+
+    def __init__(self,
+                 modal_element: Element,
+                 element_id: str = "none",
+                 style_id: str = "",
+                 manager: Manager | None = None,
+                 settings: settings_.ModalSettings = settings_.ModalDefaultSettings
+                 ):
+        super().__init__(pygame.Rect(), element_id, style_id, None, manager)
+        self.set_size(self.manager.root.relative_rect.size).add_element_type("modal_container").hide()
+        if settings.hide_when_clicking_sourroundings:
+            self.activate()
+        self.settings: settings_.ModalSettings = settings
+        self.modal_element: Element = modal_element
+        self.modal_element.set_parent(self)
+
+    def on_destroy(self):
+        if self.settings.destroy_modal_element_on_destroy:
+            self.modal_element.destroy()
+
+    def on_event(self, event: pygame.Event):
+        if event.type == pygame.VIDEORESIZE:
+            self.set_size((event.w, event.h))
+        elif self.settings.hide_when_clicking_sourroundings and event.type == events.CLICK and event.element is self:
+            self.hide()
 
 
 class Window(Element):

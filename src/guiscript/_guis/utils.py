@@ -5,12 +5,15 @@ import string
 import warnings
 if typing.TYPE_CHECKING:
     from .elements.element import Element
+    from .manager import Manager
 
 from .animation import UIAnimUpdater
 from .tooltip import Tooltips
 from .state import UIState
 from .error import UIError
 from .script import UIScript
+from .elements.scrollbars import UIVScrollbar, UIHScrollbar
+from .elements.stacks import UIStack
 from . import common
 from . import strimages
 from . import enums
@@ -25,6 +28,42 @@ ALL_RESIZERS: tuple[enums.Resizer] = (enums.Resizer.top,
                                       enums.Resizer.bottomleft,
                                       enums.Resizer.bottomright)
 ANCHOR_PARENT: str = "parent"
+NO_SOUND: str = "nosound"
+
+
+def bind_one_selected_only(selectable_elements: list["Element"], can_deselect: bool = False):
+    """Bind listeners so that when one of the given elements is selected, all the other ones are deselected. Useful for example for layouts when the user must only choose one option in a checkbox list"""
+    def _on_select(el):
+        for e in selectable_elements:
+            if e is not el:
+                e.status.deselect()
+        
+    def _on_deselect(el):
+        el.status.select()
+    
+    for el in selectable_elements:
+        el.status.deselect()
+        if not can_deselect:
+            el.status.add_multi_listeners(on_select=_on_select, on_deselect=_on_deselect)
+        else:
+            el.status.add_listener("on_select", _on_select)
+
+
+def custom_hscrollbar(stack: UIStack, element_id: str = "none", style_id: str = "") -> UIHScrollbar:
+    """Make a custom horizontal scrollbar to use on a stack. The user must bound it to the stack manually. The scrollbar won't be auto positioned and sized to give freedom to the user"""
+    sbar = UIHScrollbar(stack, style_id)
+    sbar.set_element_id(element_id)
+    sbar._is_custom = True
+    return sbar
+
+
+def custom_vscrollbar(stack: UIStack, element_id: str = "none", style_id: str = "") -> UIVScrollbar:
+    """Make a custom vertical scrollbar to use on a stack. The user must bound it to the stack manually. The scrollbar won't be auto positioned and sized to give freedom to the user"""
+    sbar = UIVScrollbar(stack, style_id)
+    sbar.set_element_id(element_id)
+    sbar._is_custom = True
+    return sbar
+
 
 def static_dock(root: "Element", ids_elements: list[tuple[int, "Element"]], ids_root_anchors: list[tuple[int, enums.DockAnchor]], ids_connection_ids: list[tuple[int, enums.DockConn, int]]):
     """
@@ -166,9 +205,21 @@ class DefaultStyleID:
 
 def get_builtin_image(name: str) -> pygame.Surface:
     """Return the surface of a builtin image for UI, or raise an error if it doesnt exist."""
+    if name == "1x1":
+        return strimages._1X1SURF
     if name not in strimages.STRING_IMAGES_SURFACES.keys():
-        raise UIError(f"Builtin image '{name}' does not exist. Available are {list(strimages.STRING_IMAGES_SURFACES.keys())}")
+        raise UIError(f"Builtin image '{name}' does not exist. Available are {list(strimages.STRING_IMAGES_SURFACES.keys())} + '1x1'")
     return strimages.STRING_IMAGES_SURFACES[name]
+
+
+def get_current_manager() -> "Manager":
+    """Return the manager set as current"""
+    return UIState.current_manager
+
+
+def get_current_parent() -> "Element":
+    """Return the element which is currently set as the default parent for the next elements in its context manager"""
+    return UIState.current_parent
 
 
 def help_element_types() -> typing.LiteralString:
@@ -237,6 +288,9 @@ def help_element_types() -> typing.LiteralString:
             ?Window.close_btn: (*Button, window_close_button)
             ?Window.collapse_btn: (*Button, window_collapse_button)
         Window.content: (*VStack, window_content)
+        
+    ModalContainer: (*VStack, modal_container)
+        ModalContainer.modal_element: any
     """
 
 
@@ -326,6 +380,8 @@ def help_style_script() -> typing.LiteralString:
         border_scale: number When border_size > 0, the scale to multiply said border
         outline_width: number Outline outlinining the image
         outline_color: Color
+        fill_color: Color Fill all pixels with the specified color
+        alpha: number 0-255 Extra alpha modifier
 
     shape:
         color: Color
@@ -362,6 +418,7 @@ def help_style_script() -> typing.LiteralString:
         cursor_rel_h: number
         cursor_enabled: bool
         rich: bool Enable rich text. Use html tags for localized styling while the text style properties will act as defaults. More with guiscript.help_rich_text()
+        rich_modifiers: bool Extension of rich text not to automatically parse html tags but to use modifiers. It's preferred to avoid this setting as it's complex to use
 
     icon:
         name: string

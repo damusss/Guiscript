@@ -43,3 +43,6 @@ STRING_IMAGES_SURFACES: dict[str, pygame.Surface] = {
     name: pygame.image.frombytes(image["data"], image["size"], "RGBA")
     for name, image in STRING_IMAGES_DATA.items() if len(image["size"]) > 0
 }
+
+_1X1SURF = pygame.Surface((1,1), pygame.SRCALPHA)
+_1X1SURF.fill(0)

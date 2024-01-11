@@ -1,5 +1,6 @@
 import pygame
 from enum import StrEnum, IntEnum
+from . import common
 
 
 class TextAlign(StrEnum):

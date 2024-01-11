@@ -33,3 +33,9 @@
 .changing:hover {
     text.text 'silly hovering';
 }
+
+.imgtest:: {
+    image.image 'builtin.1x1';
+    image.fill_color red;
+    image.alpha 50;
+}

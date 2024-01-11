@@ -103,6 +103,7 @@ class UIImageComp(UIComponent):
         original_surface = self.original_surface if self.original_surface else style.image.image
         if not original_surface:
             return
+        original_surface = original_surface.copy()
         original_surface = pygame.transform.scale_by(
             original_surface, style.image.border_scale)
 
@@ -138,13 +139,15 @@ class UIImageComp(UIComponent):
         w, h = max(w, 1), max(h, 1)
         if style.image.border_size <= 0:
             self.image_surf: pygame.Surface = pygame.transform.scale(
-                original_surface, (w, h)).convert_alpha()
+                original_surface, (w, h))
             if style.image.fill:
                 self.image_surf = self.image_surf.subsurface(
                     (w//2-tw//2, h//2-th//2, tw, th))
             w, h = self.image_surf.get_size()
         else:
             self.image_surf = original_surface
+        if style.image.fill_color is not None:
+            self.image_surf.fill(style.image.fill_color)
         self.image_rect: pygame.Rect = pygame.Rect(0, 0, w, h)
         self.image_rect.center = self.element.static_rect.center
         if style.image.border_radius > 0:
@@ -154,7 +157,9 @@ class UIImageComp(UIComponent):
                              (0, 0, w, h), 0, style.image.border_radius)
             mask = pygame.mask.from_surface(mask_surf)
             self.image_surf = mask.to_surface(
-                None, self.image_surf, None, None, (0, 0, 0, 0))
+                None, self.image_surf, None, (255, 255, 255, 255), (0, 0, 0, 0))
+        if style.image.alpha != 255:
+                self.image_surf.set_alpha(style.image.alpha)
         self.element.set_dirty()
 
     def _render(self):
@@ -234,6 +239,7 @@ class UITextComp(UIComponent):
         self.selection_rects: list[pygame.Rect] = []
         self.can_select: bool = True
         self.cursor_index: int = -1
+        self.rich_modifiers = None
         self._selection_start_idxs: list[int] = None
         self._selection_end_idxs: list[int] = None
         self._cursor_draw_pos: int = 0
@@ -284,7 +290,10 @@ class UITextComp(UIComponent):
                 richtext.ModifierName.italic: style.text.italic,
                 richtext.ModifierName.strikethrough: style.text.strikethrough,
             }
-            output_text, modifiers = richtext.global_rich_text_parser.parse_text(text)
+            if style.text.rich_modifiers and self.rich_modifiers is not None:
+                output_text, modifiers = text, self.rich_modifiers
+            else:
+                output_text, modifiers = richtext.global_rich_text_parser.parse_text(text)
             self.real_text = output_text
             self.text_surf: pygame.Surface = richtext.render(output_text,
                                                              modifiers,

@@ -23,7 +23,7 @@ class Buffer[T]:
         return self
 
 
-class Buffers:
+class UIBuffers:
     """Keeps bound buffers of an element"""
 
     def __init__(self, element: "Element"):

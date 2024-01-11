@@ -106,7 +106,7 @@ class Manager:
         return self
     
     def is_current(self) -> bool:
-        """Return wheather this manager is set as current"""
+        """Return whether this manager is set as current"""
         return self is UIState.current_manager
 
     def set_gss_vars(self, **names_values) -> typing.Self:

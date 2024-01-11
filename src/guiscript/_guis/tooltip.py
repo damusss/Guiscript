@@ -2,7 +2,6 @@ import pygame
 import typing
 if typing.TYPE_CHECKING:
     from .elements.element import Element
-
 from .state import UIState
 
 

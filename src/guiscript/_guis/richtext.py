@@ -121,10 +121,10 @@ class RichTextParser(html_parser.HTMLParser):
                     match attrmod:
                         case "fg":
                             self.modifiers[ModifierName.fg_color].append(
-                                [start_i, end_i, value if value.replace(" ", "").isascii() else eval(value)])
+                                [start_i, end_i, value if value.replace(" ", "").isalpha() else eval(value)])
                         case "bg":
                             self.modifiers[ModifierName.bg_color].append(
-                                [start_i, end_i, value if value.replace(" ", "").isascii() else eval(value)])
+                                [start_i, end_i, value if value.replace(" ", "").isalpha() else eval(value)])
 
 
 class TextAlign(StrEnum):

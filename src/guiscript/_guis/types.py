@@ -7,6 +7,7 @@ from . import navigation
 from . import status
 from . import buffer
 from . import cursors
+from . import sound
 from .elements import stacks
 from .elements import scrollbars
 from .elements import root
@@ -44,7 +45,8 @@ type StyleGroupType = style.UIStyleGroup
 type StyleHolderType = style.UIStyleHolder
 
 type StatusType = status.UIStatus
-type BuffersType = buffer.Buffers
+type BuffersType = buffer.UIBuffers
+type SoundsType = sound.UISounds
 
 type StackType = stacks.UIStack
 type ScrollbarType = scrollbars.UIScrollbar

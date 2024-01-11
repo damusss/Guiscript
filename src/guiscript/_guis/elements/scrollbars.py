@@ -15,7 +15,8 @@ class UIScrollbar(Element):
             False).deactivate().set_z_index(common.Z_INDEXES["scrollbar"])
         self.handle: Element = Element(pygame.Rect(
             0, 0, 10, 10), self.element_id+"_handle", self.style_id, ("element", "handle", "scrollbar_handle", f"{scrollbar_dir_prefix}scrollbar_handle"), self, self.manager)
-
+        self._is_custom: bool = False
+        
     def _refresh(self):
         ...
 
@@ -29,10 +30,11 @@ class UIVScrollbar(UIScrollbar):
     def _refresh(self, scroll_y):
         style = self.parent.style.stack
 
-        self.set_relative_pos(
-            (self.parent.relative_rect.w-style.scrollbar_size, 0))
-        self.set_size(
-            (style.scrollbar_size, self.parent.relative_rect.h), False)
+        if not self._is_custom:
+            self.set_relative_pos(
+                (self.parent.relative_rect.w-style.scrollbar_size, 0))
+            self.set_size(
+                (style.scrollbar_size, self.parent.relative_rect.h), False)
 
         if not style.scroll_y or style.grow_y:
             self.status.visible = False
@@ -90,11 +92,12 @@ class UIHScrollbar(UIScrollbar):
     def _refresh(self, scroll_x):
         style = self.parent.style.stack
 
-        x_remove = style.scrollbar_size if self.parent.vscrollbar.status.visible else 0
-        self.set_relative_pos(
-            (0, self.parent.relative_rect.h-style.scrollbar_size))
-        self.set_size((self.parent.relative_rect.w -
-                      x_remove, style.scrollbar_size), False)
+        if not self._is_custom:
+            x_remove = style.scrollbar_size if self.parent.vscrollbar.status.visible else 0
+            self.set_relative_pos(
+                (0, self.parent.relative_rect.h-style.scrollbar_size))
+            self.set_size((self.parent.relative_rect.w -
+                        x_remove, style.scrollbar_size), False)
 
         if not style.scroll_x or style.grow_x:
             self.status.visible = False

@@ -29,6 +29,22 @@ class UIStack(Element):
         self.hscrollbar: UIHScrollbar = UIHScrollbar(self, scrollbars_style_id)
         self._done = True
         self.deactivate()
+        
+    def bind_hscrollbar(self, hscrollbar: UIHScrollbar) -> typing.Self:
+        """Register a new horizontal scrollbar and destroy the old one. The scrollbar must be made with guiscript.custom_hscrollbar for it to work properly"""
+        self._done = False
+        self.hscrollbar.destroy(True)
+        self.hscrollbar = hscrollbar
+        self._done = True
+        return self
+    
+    def bind_vscrollbar(self, vscrollbar: UIVScrollbar) -> typing.Self:
+        """Register a new vertical scrollbar and destroy the old one. The scrollbar must be made with guiscript.custom_vscrollbar for it to work properly"""
+        self._done = False
+        self.vscrollbar.destroy(True)
+        self.vscrollbar = vscrollbar
+        self._done = True
+        return self
 
     def is_stack(self) -> bool:
         return True

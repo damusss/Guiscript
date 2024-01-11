@@ -14,6 +14,21 @@ StatusCallback: typing.TypeAlias = typing.Callable[[
     "Element"], typing.Any] | None
 CursorLike: typing.TypeAlias = pygame.Cursor | int
 
+_cache = False
+def validate_import():
+    print(_cache, __name__)
+    if not _cache:
+        raise UIError(f"Invalid import detected from the restricted '_guis' submodule. All library content will be imported into guiscript, no need to access submodules")
+    #print("validating", _cache)
+    
+def _cache_set():
+    global _cache
+    _cache = True
+    
+def _cache_unset():
+    global _cache
+    _cache = False
+
 
 class UIAnchorData:
     def __init__(self, target: "Element", self_anchor: str, target_anchor: str, offset: Coordinate):
@@ -456,7 +471,7 @@ checkbox:press {
     text.enabled false;
 }
 
-slideshow, gif, videoplayer_video, videoplayer_control_stack, dropmenu:: {
+slideshow, gif, videoplayer_video, videoplayer_control_stack, dropmenu, modal_container:: {
     bg.enabled false;
     outline.enabled false;
 }
@@ -500,6 +515,16 @@ window:: {
     stack.padding 3;
 }
 
+modal_container:: {
+    image.fill true;
+    image.enabled true;
+    image.fill_color black;
+    image.padding 0;
+    image.border_radius 0;
+    image.alpha 180;
+    image.image 'builtin.1x1';
+}
+
 / INNER ELEMENTS
 entry_text:: {
     text.do_wrap false;
@@ -511,21 +536,21 @@ entry_text:: {
 
 slideshow_arrow:: {
     text.font_name googleicons;
-    text.font_size 30;
+    text.font_size 22;
     bg.enabled false;
     outline.enabled false;
 }
 
 soundplayer_button,videoplayer_button:: {
     text.font_name googleicons;
-    text.font_size 30;
+    text.font_size 22;
     bg.enabled false;
     outline.enabled false;
 }
 
 dropmenu_arrow::{
     text.font_name googleicons;
-    text.font_size 30;
+    text.font_size 22;
 }
 
 dropmenu_option, selectionlist_option:: {

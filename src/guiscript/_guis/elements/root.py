@@ -67,12 +67,16 @@ class UIRoot:
         """Return an empty pygame.Vector2"""
         return pygame.Vector2(0, 0)
 
-    def is_stack(self) -> bool:
+    def is_stack(self) -> typing.Literal[False]:
         """Always return False"""
         return False
+    
+    def is_root(self) -> typing.Literal[True]:
+        """Always return True"""
+        return True
 
     def can_navigate(self) -> typing.Literal[False]:
-        """Return False"""
+        """Always return False"""
         return False
 
     def find_navigable_child(self) -> "Element":

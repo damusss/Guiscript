@@ -7,7 +7,8 @@ if typing.TYPE_CHECKING:
 from ..state import UIState
 from ..error import UIError
 from ..status import UIStatus
-from ..buffer import Buffers
+from ..sound import UISounds
+from ..buffer import UIBuffers
 from ..tooltip import Tooltips
 from ..animation import UIPropertyAnim
 from ..style import UIStyleGroup, UIStyles, UIStyle
@@ -48,7 +49,7 @@ class Element:
         # None checking
         if self.manager is None:
             raise UIError(
-                f"Element ui manager can't be None. Make sure to give a valid manager parameter or set the correct current manager")
+                f"Element manager can't be None. Make sure to give a valid manager parameter or set the correct current manager")
 
         self.parent: Element | "UIRoot" = parent or UIState.current_parent or self.manager.root
         self.manager._all_elements.append(self)
@@ -56,7 +57,7 @@ class Element:
         if self.relative_rect is None:
             raise UIError(
                 f"Element relative rect can't be None. Make sure to give a valid relative_rect parameter")
-        self.relative_rect = relative_rect.copy()
+        self.relative_rect = pygame.Rect(relative_rect)
 
         if self.parent is None:
             raise UIError(
@@ -64,6 +65,7 @@ class Element:
 
         # str attrs
         self.element_id: str = element_id
+        self.object_id: int = id(self)
         self.style_id: str = (
             UIState.current_style_id+";" if UIState.current_style_id is not None else "") + style_id
         self.element_types: tuple[str] = element_types
@@ -95,7 +97,8 @@ class Element:
 
         # obj attrs
         self.status: UIStatus = UIStatus(self)
-        self.buffers: Buffers = Buffers(self)
+        self.buffers: UIBuffers = UIBuffers(self)
+        self.sounds: UISounds = UISounds(self)
         self._last_style: UIStyle = None
         self.style_group: UIStyleGroup = UIStyles.get_style_group(self)
         self.style: UIStyle = self.style_group.style
@@ -126,57 +129,56 @@ class Element:
 
     # override
     def init(self):
-        """Called at the end of '__init__', overridable"""
-        ...
+        """Called at the very end of '__init__', overridable"""
 
     def on_logic(self):
         """Called on 'logic', overridable"""
-        ...
 
     def on_render(self):
         """Called on 'render', overridable"""
-        ...
 
     def on_destroy(self):
         """Called when the element is being destroyed, overridable"""
-        ...
 
     def on_event(self, event: pygame.Event):
         """Called for every event if the need_event flag on the class is set to True, overridable"""
-        ...
 
     def _refresh_stack(self):
-        """Used by the stack to organize children, overridable"""
-        ...
+        """Used by the stacks to organize children, overridable"""
 
     def size_changed(self):
         """Called when the size changes, overridable"""
-        ...
 
     def style_changed(self):
         """Called when the style changes, overridable"""
-        ...
 
     def position_changed(self):
         """Called when the position changes, overridable"""
-        ...
 
     def build(self):
         """Called when the size or style changes, overridable"""
-        ...
 
     # children
     def _add_child(self, element: "Element") -> typing.Self:
         if element not in self.children:
             self.children.append(element)
-        self._refresh_stack()
-        self.set_dirty()
+            self._refresh_stack()
+            self.set_dirty()
         return self
 
     def remove_child(self, element: "Element") -> typing.Self:
         """Remove a child from the children, without destroying it"""
         if element in self.children:
             self.children.remove(element)
+            self._refresh_stack()
+            self.set_dirty()
+        return self
+    
+    def remove_children(self, *elements: "Element") -> typing.Self:
+        """Remove the specified children without destroying them"""
+        for el in elements:
+            if el in self.children:
+                self.children.remove(el)
         self._refresh_stack()
         self.set_dirty()
         return self
@@ -260,7 +262,7 @@ class Element:
 
     # get
     def can_render(self) -> bool:
-        """Return wheather the element can be rendered. If the element is not visible or outside of the parent's bounds False is returned. Can be useful not to waste performance on some operations"""
+        """Return whether the element can be rendered. If the element is not visible or outside of the parent's bounds False is returned. Can be useful not to waste performance on some operations"""
         return self.status.visible and self.absolute_rect.colliderect(self.parent.absolute_rect)
     
     def get_absolute_topleft(self) -> pygame.Vector2:
@@ -281,9 +283,17 @@ class Element:
     def get_index_in_parent(self) -> int:
         """Return the current index in the parent's children"""
         return self.parent.children.index(self)
+    
+    def get_destroyable_children(self) -> list["Element"]:
+        """Return a list with the children this element can destroy (that have the can_destroy flag set to True)"""
+        return [el for el in self.children if el.can_destroy]
 
     def is_stack(self) -> bool:
         """Return whether this is a stack element. Useful since properties like scrollbars are only accessible for stacks"""
+        return False
+    
+    def is_root(self) -> bool:
+        """Return whether this is the root element. Useful since root elements have very limited attributes"""
         return False
 
     # navigation
@@ -425,7 +435,7 @@ class Element:
         for name in self.resizers:
             if name not in old_resizers:
                 resizer = Element(pygame.Rect(0, 0, 1, 1), self.element_id+"_resizer",
-                                  common.style_id_or_copy(self, style_id), ("element", "resizer"), self, self.manager).set_z_index(common.Z_INDEXES["resizer"])
+                                  common.style_id_or_copy(self, style_id), ("element", "resizer"), self, self.manager).set_z_index(common.Z_INDEXES["resizer"]).set_ignore(True, True)
                 if name in ["left", "right"]:
                     resizer.set_anchor("parent", name, name).set_anchor(
                         "parent", "centery", "centery")
@@ -490,7 +500,7 @@ class Element:
             self.attrs[name] = val
         return self
 
-    def set_absolute_pos(self, position: common.Coordinate) -> typing.Self:
+    def set_absolute_pos(self, position: common.Coordinate, apply_anchors: bool = True) -> typing.Self:
         """Set the topleft position from the origin of the window"""
         old = self.relative_rect.topleft
         self.relative_rect.topleft = position-self.parent.get_absolute_topleft()
@@ -504,7 +514,7 @@ class Element:
         self.status.invoke_callbacks("on_position_change")
         for obs in self._anchor_observers:
             obs._apply_anchors()
-        self._apply_anchors()
+        if apply_anchors: self._apply_anchors()
         return self
 
     def set_relative_pos(self, position: common.Coordinate) -> typing.Self:
@@ -588,7 +598,13 @@ class Element:
         self.element_types = element_types
         self.set_style_group(UIStyles.get_style_group(self))
         return self
-
+    
+    def set_element_id(self, element_id: str) -> typing.Self:
+        """Set the element id of the element and build a new style group"""
+        self.element_id = element_id
+        self.set_style_group(UIStyle.get_style_group(self))
+        return self
+    
     def set_parent(self, parent: "Element") -> typing.Self:
         """Set the element's parent """
         if parent is self.parent:
@@ -835,6 +851,8 @@ class Element:
         self.status.invoke_callback("on_first_frame", "on_position_change")
         
     def _apply_anchors(self):
+        if all([x is None for x in self._anchors.values()]):
+            return
         temp_r = self.absolute_rect.copy()
         if (cxad := self._anchors["centerx"]) is not None:
             temp_r.centerx = getattr(
@@ -879,7 +897,7 @@ class Element:
             temp_r.top = top
             temp_r.height = bottom-top
         self.set_size(temp_r.size, apply_anchors=False)
-        self.set_absolute_pos(temp_r.topleft)
+        self.set_absolute_pos(temp_r.topleft, apply_anchors=False)
         
     # runtime
     def _logic(self):

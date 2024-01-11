@@ -14,7 +14,6 @@ class UIInteract:
     """Update the status of the elements bound to a Manager"""
 
     def __init__(self, manager: "Manager"):
-        # pygame.scrap.init()
         self.manager: "Manager" = manager
 
         self.hovered_el: Element = None
@@ -25,6 +24,23 @@ class UIInteract:
         self.start_idxs: list[int] = None
         self.last_idxs: list[int] = None
         self.text_select_el: Element = None
+        
+        self.click_sound: pygame.mixer.Sound|None = None
+        self.immediate_click_sound: pygame.mixer.Sound|None = None
+        self.hover_sound: pygame.mixer.Sound|None = None
+        self.leave_hover_sound: pygame.mixer.Sound|None = None
+        
+    def set_sounds(self,
+                click_sound: pygame.mixer.Sound|None = None,
+                immediate_click_sound: pygame.mixer.Sound|None = None,
+                hover_sound: pygame.mixer.Sound|None = None,
+                leave_hover_sound: pygame.mixer.Sound|None = None) -> typing.Self:
+        """Set the interaction sounds. Element with custom sounds will override the specified ones"""
+        self.click_sound = click_sound
+        self.immediate_click_sound = immediate_click_sound
+        self.hover_sound = hover_sound
+        self.leave_hover_sound = leave_hover_sound
+        return self
 
     def _logic(self):
         if self.manager._last_rendered is None:
@@ -78,6 +94,7 @@ class UIInteract:
                     "on_stop_press", "on_click")
                 events._post_base_event(events.STOP_PRESS, self.pressed_el)
                 events._post_base_event(events.CLICK, self.pressed_el)
+                self.pressed_el.sounds.play("click")
                 # update selection
                 if self.pressed_el.status.can_select:
                     # toggle selection
@@ -131,6 +148,7 @@ class UIInteract:
                 if old is not self.hovered_el:
                     old.status.invoke_callback("on_stop_hover")
                     events._post_base_event(events.STOP_HOVER, old)
+                    old.sounds.play("leave_hover")
                     if self.last_scroll_hovered is not None:
                         self.last_scroll_hovered.status.scroll_hovered = False
                         self.last_scroll_hovered = None
@@ -147,6 +165,7 @@ class UIInteract:
                 if not self.hovered_el.status.hovered:
                     self.hovered_el.status.hovered = True
                     self.hovered_el.status.invoke_callback("on_start_hover")
+                    self.hovered_el.sounds.play("hover")
                     self.hovered_el.status.hover_start_time = pygame.time.get_ticks()
                     events._post_base_event(
                         events.START_HOVER, self.hovered_el)
@@ -164,6 +183,7 @@ class UIInteract:
                         self.hovered_el.status.press_start_time = pygame.time.get_ticks()
                         events._post_base_event(
                             events.START_PRESS, self.hovered_el)
+                        self.hovered_el.sounds.play("immediate_click")
                         # set pressed and set pressed el
                         self.pressed_el = self.hovered_el
                         self._text_select_start_press(self.pressed_el)

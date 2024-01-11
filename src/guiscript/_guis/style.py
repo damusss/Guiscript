@@ -74,6 +74,8 @@ class UIImageStyle(UICompStyle):
         self.border_scale: float = 1
         self.outline_width = 0
         self.outline_color = (50, 50, 50)
+        self.fill_color = None
+        self.alpha = 255
 
 
 class UIShapeStyle(UICompStyle):
@@ -120,14 +122,14 @@ class UITextStyle(UICompStyle):
         self.cursor_rel_h: float = 1.0
         self.cursor_enabled: bool = False
         self.rich: bool = False
+        self.rich_modifiers: bool = False
 
     def build_font(self) -> typing.Self:
         """Build the font object after changes in the font properties"""
         func = pygame.font.SysFont if self.sysfont else pygame.Font
         font_name = self.font_name
         if font_name == "googleicons":
-            font_name = str(pathlib.Path(__file__).parent) + \
-                "/googleiconsfontttf.py"
+            font_name = str(pathlib.Path(__file__).parent) + "/googleiconsfontttf.py"
             func = pygame.Font
         self.font = func(font_name, int(self.font_size))
         return self

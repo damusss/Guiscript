@@ -44,6 +44,7 @@ DONE THINGS
 - resizing
 - static docking
 - rich text
+- sounds
 
 DONE ELEMENTS
 
@@ -67,3 +68,4 @@ DONE ELEMENTS
 - selection list
 - entry
 - window
+- modal

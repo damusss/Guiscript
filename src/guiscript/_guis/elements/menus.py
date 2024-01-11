@@ -13,6 +13,7 @@ from .. import events
 
 class DropMenu(Element):
     """An element with a menu that can open and closes with options to choose from"""
+    need_event = True
 
     def __init__(self,
                  options: list[str],
@@ -92,6 +93,10 @@ class DropMenu(Element):
         else:
             self.open_menu()
         return self
+    
+    def get_open(self) -> bool:
+        """Return whether the drop menu is open or not"""
+        return self.menu_cont.status.visible
 
     def _on_option_click(self, btn: Button):
         self.close_menu()
@@ -138,6 +143,12 @@ class DropMenu(Element):
             self.menu_cont.set_absolute_pos((self.absolute_rect.x+self.style.stack.padding,
                                             self.absolute_rect.top-self.menu_cont.absolute_rect.h-self.style.stack.spacing+self.parent.scroll_offset.y))
 
+    def on_event(self, event: pygame.Event):
+        if not self.settings.close_when_click_outside or not self.get_open():
+            return
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if not self.menu_cont.absolute_rect.collidepoint(event.pos) and not self.absolute_rect.collidepoint(event.pos):
+                self.close_menu()
 
 class SelectionList(VStack):
     """An element with options the user can select or deselect"""

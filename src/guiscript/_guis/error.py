@@ -1,5 +1,4 @@
 
-
 class UIError(Exception):
     """Base error class for guiscript errors"""
     ...

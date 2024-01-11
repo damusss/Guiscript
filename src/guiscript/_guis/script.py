@@ -411,6 +411,8 @@ class UIScriptParser:
                 img_name = value.replace("builtin.", "").strip()
                 if img_name in strimages.STRING_IMAGES_SURFACES:
                     value = strimages.STRING_IMAGES_SURFACES[img_name]
+                elif img_name == "1x1":
+                    value = strimages._1X1SURF
                 else:
                     warnings.warn(f"Warning: No builtin image exists with the name '{img_name}'. Available are {list(strimages.STRING_IMAGES_SURFACES.keys())}"+self.error_suffix(), UserWarning)
             else:

@@ -76,6 +76,7 @@ class DropMenuSettings:
     direction: str = DropMenuDirection.down
     option_height: float = 30
     arrow_rel_w: float = 0.15
+    close_when_click_outside: bool = True
     down_arrow_txt: str = "arrow_drop_down"
     up_arrow_txt: str = "arrow_drop_up"
     menu_style_id: str = "copy"
@@ -125,6 +126,12 @@ class WindowSettings:
     scrollbars_style_id: str = "copy"
     collapse_down_txt: str = "arrow_drop_down"
     collapse_up_txt: str = "arrow_drop_up"
+    
+    
+@dataclasses.dataclass(slots=True)
+class ModalSettings:
+    destroy_modal_element_on_destroy: bool = True
+    hide_when_clicking_sourroundings: bool = False
 
 
 SlideshowDefaultSettings = SlideshowSettings()
@@ -140,3 +147,4 @@ EntryDefaultSettings = EntrySettings()
 WindowDefaultSettings = WindowSettings()
 CollapsingWindowDefaultSettings = WindowSettings(
     have_collapse_button=True, have_close_button=False)
+ModalDefaultSettings = ModalSettings()
