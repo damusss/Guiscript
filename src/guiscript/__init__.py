@@ -50,7 +50,7 @@ from ._guis.elements.factories import (
     ProgressBar
 )
 
-from ._guis.elements.stacks import (VStack, HStack)
+from ._guis.elements.stacks import (VStack, HStack, Box)
 from ._guis.elements.players import (SoundPlayer, VideoPlayer)
 from ._guis.elements.menus import (DropMenu, SelectionList)
 from ._guis.elements.windows import (Window, ModalContainer) #, FileDialog)

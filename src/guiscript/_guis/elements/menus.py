@@ -38,20 +38,20 @@ class DropMenu(Element):
                                             common.style_id_or_copy(
                                                 self, self.settings.inner_buttons_style_id),
                                             False, self, self.manager).status.add_listener("on_click", self._on_arrow_click).element\
-            .add_element_types("dropmenu_button", "dropmenu_selected_option")
+            .add_element_types("dropmenu_button", "dropmenu_selected_option").set_attr("builtin", True)
         self.arrow_button: Button = Button(self.settings.down_arrow_txt if self.settings.direction == "down" else self.settings.up_arrow_txt,
                                            pygame.Rect(0, 0, 0, 0),
                                            self.element_id+"_arrow",
                                            common.style_id_or_copy(
                                                self, self.settings.inner_buttons_style_id),
                                            False, self, self.manager).status.add_listener("on_click", self._on_arrow_click).element\
-            .add_element_types("dropmenu_button", "dropmenu_arrow")
+            .add_element_types("dropmenu_button", "dropmenu_arrow").set_attr("builtin", True)
         self.menu_cont: VStack = VStack(pygame.Rect(0, 0, 0, 0),
                                         self.element_id+"_menu",
                                         common.style_id_or_copy(
                                             self, self.settings.menu_style_id),
                                         self.parent if settings.menu_parent is None else settings.menu_parent, self.manager)\
-            .set_ignore(stack=True, scroll=True).hide().set_z_index(common.Z_INDEXES["menu"]).add_element_type("dropmenu_menu")
+            .set_ignore(stack=True, scroll=True).hide().set_z_index(common.Z_INDEXES["menu"]).add_element_type("dropmenu_menu").set_attr("builtin", True)
         self.__done = True
         self.build()
         self.position_changed()
@@ -132,7 +132,7 @@ class DropMenu(Element):
                    self.element_id +
                    f"_option_{i}", common.style_id_or_copy(
                 self.menu_cont, self.settings.option_style_id),
-                False, self.menu_cont, self.manager).status.add_listener("on_click", self._on_option_click).element.add_element_type("dropmenu_option")
+                False, self.menu_cont, self.manager).status.add_listener("on_click", self._on_option_click).element.add_element_type("dropmenu_option").set_attr("builtin", True)
         self.menu_cont._refresh_stack()
 
     def on_logic(self):
@@ -227,5 +227,5 @@ class SelectionList(VStack):
                              self, self.settings.option_style_id),
                          True, self, self.manager).add_element_types("selectionlist_option").\
                 status.add_multi_listeners(
-                    on_select=self._on_option_select, on_deselect=self._on_option_deselect).element
+                    on_select=self._on_option_select, on_deselect=self._on_option_deselect).element.set_attr("builtin", True)
             self.option_buttons.append(btn)

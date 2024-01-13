@@ -54,6 +54,7 @@ DONE ELEMENTS
 - image button
 - checkbox
 - vstack, hstack
+- scrollbars
 - progress bar
 - slideshow
 - gif
@@ -70,3 +71,5 @@ DONE ELEMENTS
 - window
 - modal
 - textbox
+- box
+- row/column

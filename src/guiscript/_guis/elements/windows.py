@@ -67,11 +67,11 @@ class Window(Element):
                                         "invis_cont", self, self.manager).add_element_type("window_title_bar")\
             .set_anchor("parent", "left", "left")\
             .set_anchor("parent", "right", "right")\
-            .set_anchor("parent", "top", "top")
+            .set_anchor("parent", "top", "top").set_attr("builtin", True)
         self.title: Button = Button(title, pygame.Rect(0, 0, 0, 0), self.element_id+"_title",
                                     common.style_id_or_copy(self, settings.title_style_id), False, self.title_bar, self.manager)\
             .add_element_type("window_title").status.add_multi_listeners(when_pressed=self._on_title_drag, on_stop_press=self._on_title_stop_drag)\
-            .element.text.disable_selection().element
+            .element.text.disable_selection().element.set_attr("builtin", True)
         if settings.have_collapse_button:
             if self.settings.min_size[1] > self.settings.title_bar_height+self.style.stack.padding*2:
                 self.settings.min_size = (
@@ -79,13 +79,13 @@ class Window(Element):
                 self.resize_min = self.settings.min_size
             self.collapse_btn: Button | None = Button(settings.collapse_down_txt, pygame.Rect(0, 0, settings.title_bar_height, settings.title_bar_height),
                                                       self.element_id+"_collapse_btn", common.style_id_or_copy(self, settings.collapse_button_style_id), False, self.title_bar, self.manager)\
-                .add_element_type("window_collapse_button").status.add_listener("on_click", self._on_collapse_click).element
+                .add_element_type("window_collapse_button").status.add_listener("on_click", self._on_collapse_click).element.set_attr("builtin", True)
         else:
             self.collapse_btn: Button | None = None
         if settings.have_close_button:
             self.close_btn: Button | None = Button(settings.close_button_txt, pygame.Rect(0, 0, settings.title_bar_height, settings.title_bar_height),
                                                    self.element_id+"_close_btn", common.style_id_or_copy(self, settings.close_button_style_id), False, self.title_bar, self.manager)\
-                .add_element_type("window_close_button").status.add_listener("on_click", self._on_close_click).element
+                .add_element_type("window_close_button").status.add_listener("on_click", self._on_close_click).element.set_attr("builtin", True)
         else:
             self.close_btn: Button | None = None
         self._before_collapse_h: int = self.relative_rect.h
@@ -94,7 +94,7 @@ class Window(Element):
             .set_anchor("parent", "left", "left")\
             .set_anchor("parent", "right", "right")\
             .set_anchor(self.title_bar, "top", "bottom")\
-            .set_anchor("parent", "bottom", "bottom")
+            .set_anchor("parent", "bottom", "bottom").set_attr("builtin", True)
         Window.window_stack.append(self)
         self.collapsed: bool = False
         self.move_on_top()

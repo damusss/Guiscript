@@ -244,6 +244,7 @@ class UITextComp(UIComponent):
         self._selection_start_idxs: list[int] = None
         self._selection_end_idxs: list[int] = None
         self._cursor_draw_pos: pygame.Vector2 = pygame.Vector2()
+        self._show_cursor: bool = False
         self.set_text("")
 
     def _render(self):
@@ -254,35 +255,8 @@ class UITextComp(UIComponent):
             pygame.draw.rect(self.element.element_surface,
                              style.selection_color, rect)
         self.element.element_surface.blit(self.text_surf, self.text_rect)
-        if self.cursor_x > -1 and self.cursor_y > -1 and style.cursor_enabled:
+        if self._show_cursor and style.cursor_enabled:
             self._render_cursor(style)
-            
-    def _render_cursor_OLD(self, style):
-        x = y = li = 0
-        lines = self.real_text.split("\n")
-        i = 0
-        for c in self.real_text:
-            if c == "\n" and i < self.cursor_index:
-                y += style.font.get_height()
-                x = 0
-                li += 1
-                continue
-            if i >= self.cursor_index:
-                break
-            x += style.font.size(c)[0]
-            i += 1
-        h = style.font.size(" ")[1]*style.cursor_rel_h
-        line = lines[li]
-        ls = common.line_size_x(style.font, line)
-        match style.font_align:
-            case pygame.FONT_CENTER:
-                x = x+self.text_rect.w//2-ls//2
-            case pygame.FONT_RIGHT:
-                x = self.text_rect.w-ls//2+x
-        pygame.draw.rect(self.element.element_surface, style.cursor_color,
-                            (self.text_rect.x+x, self.text_rect.y+y,
-                            style.cursor_width, h))
-        self._cursor_draw_pos = self.text_rect.x+x
         
     def _render_cursor(self, style):
         line = self.real_text.split("\n")[self.cursor_y]
@@ -304,8 +278,10 @@ class UITextComp(UIComponent):
 
     def _build(self, style):
         text = style.text.text if style.text.text else self.text
-        if text and text[-1] == "\n":
+        if text.strip() and text[-1] == "\n":
             text += " "
+        elif not text.strip():
+            text = " "
         if not style.text.rich:
             self.real_text = text
             style.text.apply_mods()
@@ -376,8 +352,13 @@ class UITextComp(UIComponent):
         self._build(self.element.style)
         return self
 
-    def set_cursor_index(self, x: int=-1, y=0) -> typing.Self:
+    def set_cursor_index(self, x: int=0, y=0, show: bool = None) -> typing.Self:
         """Set the cursor index. A bar will be drawn at the said index. -1 or lower means no cursor (default)"""
+        if show is None:
+            show = self._show_cursor
+        if self._show_cursor != show:
+            self._show_cursor = show
+            self.element.set_dirty()
         if self.cursor_x != x:
             self.cursor_x = x
             self.element.set_dirty()

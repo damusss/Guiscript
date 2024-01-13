@@ -189,14 +189,17 @@ def render(text: str,
                 longest_line = cur_x
             cur_line.append(tallest_char)
             cur_line.append(cur_x)
-            total_h += tallest_char
+            if tallest_char > 0:
+                total_h += tallest_char
+            else:
+                font = font_cache.cache[f"{default_modifiers[ModifierName.font_name]}_{default_modifiers[ModifierName.font_size]}"]
+                total_h += font.get_height()
             lines.append(cur_line)
             tallest_char = cur_x = 0
             cur_line = []
             continue
         char_mods = modifiers_of_char(i, modifiers, default_modifiers, start_i)
-        font = font_cache.cache[f"{char_mods[ModifierName.font_name]}_{
-            char_mods[ModifierName.font_size]}"]
+        font = font_cache.cache[f"{char_mods[ModifierName.font_name]}_{char_mods[ModifierName.font_size]}"]
         char_w, char_h = font.size(char)
         if wraplength != -1:
             if cur_x + char_w > wraplength:
@@ -221,7 +224,7 @@ def render(text: str,
         cur_line.append(cur_x)
         total_h += tallest_char
         lines.append(cur_line)
-
+        
     line_w = longest_line
     if mask is not None:
         if longest_line > mask.w:
@@ -241,37 +244,40 @@ def render(text: str,
         this_line_w = line[-1]
         line.pop()
         line.pop()
-        for c_mods, c_w, c_h, font, char in line:
-            rx = x
-            if align == TextAlign.right:
-                rx = line_w-this_line_w+x
-            elif align == TextAlign.middle:
-                rx = (line_w//2)-(this_line_w//2)+x
-            pos = (rx, y+((tall//2)-c_h//2))
-            x += c_w
+        if len(line) > 0:
+            for c_mods, c_w, c_h, font, char in line:
+                rx = x
+                if align == TextAlign.right:
+                    rx = line_w-this_line_w+x
+                elif align == TextAlign.middle:
+                    rx = (line_w//2)-(this_line_w//2)+x
+                pos = (rx, y+((tall//2)-c_h//2))
+                x += c_w
 
-            if mask is not None:
-                c1, c2 = mask.collidepoint(pos), mask.collidepoint(
-                    (pos[0]+c_w, pos[1]+c_h))
-                if ((not c1 and not c2) and not strict_mask) or ((not c1 or not c2) and strict_mask):
-                    i += 1
-                    continue
-                pos = (pos[0]-mask.x, pos[1]-mask.y)
+                if mask is not None:
+                    c1, c2 = mask.collidepoint(pos), mask.collidepoint(
+                        (pos[0]+c_w, pos[1]+c_h))
+                    if ((not c1 and not c2) and not strict_mask) or ((not c1 or not c2) and strict_mask):
+                        i += 1
+                        continue
+                    pos = (pos[0]-mask.x, pos[1]-mask.y)
 
-            font.bold, font.italic, font.underline, font.strikethrough = (
-                c_mods[ModifierName.bold],
-                c_mods[ModifierName.italic],
-                c_mods[ModifierName.underline],
-                c_mods[ModifierName.strikethrough],
-            )
-            render_surf.blit(font.render(char,
-                                         c_mods[ModifierName.antialiasing],
-                                         c_mods[ModifierName.fg_color],
-                                         c_mods[ModifierName.bg_color]),
-                             pos)
-            i += 1
-
-        y += tall
+                font.bold, font.italic, font.underline, font.strikethrough = (
+                    c_mods[ModifierName.bold],
+                    c_mods[ModifierName.italic],
+                    c_mods[ModifierName.underline],
+                    c_mods[ModifierName.strikethrough],
+                )
+                render_surf.blit(font.render(char,
+                                            c_mods[ModifierName.antialiasing],
+                                            c_mods[ModifierName.fg_color],
+                                            c_mods[ModifierName.bg_color]),
+                                pos)
+                i += 1
+            y += tall
+        else:
+            font = font_cache.cache[f"{default_modifiers[ModifierName.font_name]}_{default_modifiers[ModifierName.font_size]}"]
+            y += font.get_height()
     return render_surf
 
 

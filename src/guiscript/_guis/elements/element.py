@@ -302,6 +302,15 @@ class Element:
     def is_root(self) -> bool:
         """Return whether this is the root element. Useful since root elements have very limited attributes"""
         return False
+    
+    def get_user_children(self) -> list["Element"]:
+        """Return a list of children without elements added by guiscript like automatic scrollbars and resizers"""
+        res = []
+        for ch in self.children:
+            if ch.has_attr("builtin"):
+                continue
+            res.append(ch)
+        return res
 
     # navigation
     def can_navigate(self) -> bool:
@@ -386,6 +395,33 @@ class Element:
         return self
 
     # set
+    def set_children(self, children: list["Element"], destroy_old: bool = False) -> typing.Self:
+        """Replace the current element's children with the specified ones. The old children will be destroyed following the destroy_old flag"""
+        for ch in list(self.children):
+            if ch not in children:
+                if destroy_old:
+                    ch.destroy()
+                else:
+                    self.remove_child(ch)
+        for ch in children:
+            if ch not in self.children:
+                ch.set_parent(self)
+        return self
+        
+    def set_user_children(self, children: list["Element"], destroy_old: bool = False) -> typing.Self:
+        """Replace the current element's user children with the specified ones. The old children will be destroyed following the destroy_old flag"""
+        user_children = self.get_user_children()
+        for ch in user_children:
+            if ch not in children:
+                if destroy_old:
+                    ch.destroy()
+                else:
+                    self.remove_child(ch)
+        for ch in children:
+            if ch not in user_children:
+                ch.set_parent(self)
+        return self
+    
     def set_anchors(self, *target_selfanchor_targetanchor_offset: tuple[typing.Union[typing.Literal["parent"], None, "Element"], enums.Anchor, enums.Anchor, float]) -> typing.Self:
         """Sets multiple anchors. This element's set_anchor function will be called for each of the provided tuples which items should correspond to the arguments"""
         for tuple_data in target_selfanchor_targetanchor_offset:
@@ -459,7 +495,7 @@ class Element:
                         "parent", name.replace("bottom", ""), name.replace("bottom", ""))
                 else:
                     common.warn(f"Could not properly anchor resizer with name '{name}'")
-                resizer.set_attr("resizer_name", name)
+                resizer.set_attrs(resizer_name=name, builtin=True)
                 self._resizers_elements[name] = resizer
         self._update_resizers_size()
         return self
@@ -614,8 +650,10 @@ class Element:
         self.set_style_group(UIStyle.get_style_group(self))
         return self
     
-    def set_parent(self, parent: "Element") -> typing.Self:
-        """Set the element's parent """
+    def set_parent(self, parent: typing.Union["Element", None]) -> typing.Self:
+        """Set the element's parent. If the provided parent is None, the root will be used"""
+        if parent is None:
+            parent = self.manager.root
         if parent is self.parent:
             return self
         self.parent.remove_child(self)

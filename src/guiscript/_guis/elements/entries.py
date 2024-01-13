@@ -42,7 +42,7 @@ class Textbox(VStack):
                                              self.element_id+"_text", settings.inner_style_id+";"+settings.disabled_text_style_id,
                                              ("element", "text", "textbox_text"), self, self.manager)\
                 .deactivate().text.set_text(self.settings.placeholder).element.status.enable_selection()\
-                .add_multi_listeners(on_select=self._on_inner_select, on_deselect=self._on_inner_deselect, on_text_selection_change=self._selection_changed).element
+                .add_multi_listeners(on_select=self._on_inner_select, on_deselect=self._on_inner_deselect, on_text_selection_change=self._selection_changed).element.set_attr("builtin", True)
         self.set_text(start_text)
         
     def _on_self_click(self):
@@ -59,6 +59,8 @@ class Textbox(VStack):
         self._cursor_x = self.text_element.text.cursor_x
         self._cursor_y = self.text_element.text.cursor_y
         self._last_blink = pygame.time.get_ticks()
+        self.text_element.text._show_cursor = True
+        self.text_element.set_dirty()
         
     def on_event(self, event):
         if not self.is_focused():
@@ -120,10 +122,15 @@ class Textbox(VStack):
         
         if pygame.time.get_ticks()-self._last_blink >= self.settings.blink_speed and self.is_focused():
             self._last_blink = pygame.time.get_ticks()
-            if self.text_element.text.cursor_x != -1:
-                self.text_element.text.set_cursor_index(-1, self._cursor_y)
+            if self.text_element.text._show_cursor:
+                self.text_element.text._show_cursor = False
             else:
-                self.text_element.text.set_cursor_index(self._cursor_x, self._cursor_y)
+                self.text_element.text._show_cursor = True
+            self.text_element.set_dirty()
+            
+        if not self.is_focused() and self.text_element.text._show_cursor:
+            self.text_element.text._show_cursor = False
+            self.text_element.set_dirty()
 
         if self._repeat_key is None:
             return
@@ -153,7 +160,7 @@ class Textbox(VStack):
         self.text_element.text.set_text("\n".join(lines))
     
     def _refresh_cursor_idx(self):
-        self.text_element.text.set_cursor_index(self._cursor_x, self._cursor_y)
+        self.text_element.text.set_cursor_index(self._cursor_x, self._cursor_y, True)
         self._last_blink = pygame.time.get_ticks()
 
     def _remove_interaction(self):
@@ -215,7 +222,7 @@ class Textbox(VStack):
         self._lines_to_txt(lines)
 
         self.status.invoke_callback("on_change", self.get_text())
-        events._post_entry_event("change", self)
+        events._post_textbox_event("change", self)
         self.buffers.update("text", self.get_text())
         return True
         
@@ -273,7 +280,7 @@ class Textbox(VStack):
         self._refresh_cursor_idx()
         
         self.status.invoke_callback("on_change", self.get_text())
-        events._post_entry_event("change", self)
+        events._post_textbox_event("change", self)
         self.buffers.update("text", self.get_text())
         
     def _on_backspace(self):
@@ -301,7 +308,7 @@ class Textbox(VStack):
         self._refresh_cursor_idx()
 
         self.status.invoke_callback("on_change", self.get_text())
-        events._post_entry_event("change", self)
+        events._post_textbox_event("change", self)
         self.buffers.update("text", self.get_text())
         
     def _on_delete(self):
@@ -326,7 +333,7 @@ class Textbox(VStack):
                 pass
 
         self.status.invoke_callback("on_change", self.get_text())
-        events._post_entry_event("change", self)
+        events._post_textbox_event("change", self)
         self.buffers.update("text", self.get_text())
         
     def _on_unicode(self, unicode: str):
@@ -354,7 +361,7 @@ class Textbox(VStack):
         
         self._refresh_cursor_idx()
         self.status.invoke_callback("on_change", self.get_text())
-        events._post_entry_event("change", self)
+        events._post_textbox_event("change", self)
         self.buffers.update("text", self.get_text())
         
     def unfocus(self) -> typing.Self:
@@ -362,7 +369,7 @@ class Textbox(VStack):
         self.text_element.status.deselect()
         self.text_element.text.set_cursor_index(-1)
         self._remove_interaction()
-        if not self.text_element.text.real_text:
+        if not self.text_element.text.real_text.strip():
             self._is_placeholder = True
             self.text_element.text.set_text(self.settings.placeholder)
             self.text_element.set_style_id(
@@ -451,7 +458,7 @@ class Entry(VStack):
                                              self.element_id+"_text", settings.inner_style_id +";"+settings.disabled_text_style_id,
                                              ("element", "text", "entry_text"), self, self.manager)\
             .deactivate().text.set_text(self.settings.placeholder).element.status.enable_selection()\
-            .add_multi_listeners(on_select=self._on_inner_select, on_deselect=self._on_inner_deselect, on_text_selection_change=self._selection_changed).element
+            .add_multi_listeners(on_select=self._on_inner_select, on_deselect=self._on_inner_deselect, on_text_selection_change=self._selection_changed).element.set_attr("builtin", True)
         self.set_text(start_text)
         
     def _on_self_click(self):
@@ -465,6 +472,8 @@ class Entry(VStack):
     def _selection_changed(self):
         self._cursor_index = self.text_element.text.cursor_x
         self._last_blink = pygame.time.get_ticks()
+        self.text_element.text._show_cursor = True
+        self.text_element.set_dirty()
 
     def on_event(self, event):
         if not self.is_focused():
@@ -510,10 +519,15 @@ class Entry(VStack):
 
         if pygame.time.get_ticks()-self._last_blink >= self.settings.blink_speed and self.is_focused():
             self._last_blink = pygame.time.get_ticks()
-            if self.text_element.text.cursor_x != -1:
-                self.text_element.text.set_cursor_index(-1)
+            if self.text_element.text._show_cursor:
+                self.text_element.text._show_cursor = False
             else:
-                self.text_element.text.set_cursor_index(self._cursor_index)
+                self.text_element.text._show_cursor = True
+            self.text_element.set_dirty()
+            
+        if not self.is_focused() and self.text_element.text._show_cursor:
+            self.text_element.text._show_cursor = False
+            self.text_element.set_dirty()
 
         if self._repeat_key is None:
             return
@@ -605,7 +619,7 @@ class Entry(VStack):
         return self.text_element.text.real_text[0:self._cursor_index], self.text_element.text.real_text[self._cursor_index:]
 
     def _refresh_cursor_idx(self):
-        self.text_element.text.set_cursor_index(self._cursor_index)
+        self.text_element.text.set_cursor_index(self._cursor_index, show=True)
         self._last_blink = pygame.time.get_ticks()
 
     def _remove_interaction(self):
@@ -627,7 +641,7 @@ class Entry(VStack):
         self.text_element.status.deselect()
         self.text_element.text.set_cursor_index(-1)
         self._remove_interaction()
-        if not self.text_element.text.real_text:
+        if not self.text_element.text.real_text.strip():
             self._is_placeholder = True
             self.text_element.text.set_text(self.settings.placeholder)
             self.text_element.set_style_id(

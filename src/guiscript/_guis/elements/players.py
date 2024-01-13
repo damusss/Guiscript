@@ -54,14 +54,14 @@ class SoundPlayer(HStack):
             self.element_id+"_play_button",
             common.style_id_or_copy(self, self.settings.buttons_style_id),
             False, self, self.manager
-        )
+        ).set_attr("builtin", True)
         self.track_slider = Slider(
             pygame.Rect(0, 0, 100, 100),
             self.element_id+"_track_slider",
             common.style_id_or_copy(self, self.settings.sliders_style_id),
             self, self.manager, ElementAlign.middle,
             self.settings.sliders_settings
-        )
+        ).set_attr("builtin", True)
         self.volume_button = Button(
             self.settings.volume_up_txt,
             pygame.Rect(0, 0, self.settings.buttons_size,
@@ -69,14 +69,14 @@ class SoundPlayer(HStack):
             self.element_id+"_volume_button",
             common.style_id_or_copy(self, self.settings.buttons_style_id),
             False, self, self.manager
-        )
+        ).set_attr("builtin", True)
         self.volume_slider = Slider(
             pygame.Rect(0, 0, 100, 100),
             self.element_id+"_track_slider",
             common.style_id_or_copy(self, self.settings.sliders_style_id),
             self, self.manager, ElementAlign.middle,
             self.settings.sliders_settings
-        )
+        ).set_attr("builtin", True)
         self.__done = True
 
         self.play_button.add_element_types(
@@ -300,13 +300,13 @@ class VideoPlayer(Element):
                                  self.element_id+"_video_image",
                                  common.style_id_or_copy(
                                      self, self.settings.video_style_id),
-                                 self, self.manager)
+                                 self, self.manager).set_attr("builtin", True)
         self.control_stack = HStack(
             pygame.Rect(0, 0, 200, 50),
             self.element_id+"_control_stack",
             common.style_id_or_copy(self, self.settings.control_style_id),
             StackAnchor.max_spacing, self, self.manager
-        )
+        ).set_attr("builtin", True)
 
         self.play_button = Button(
             self.settings.play_txt,
@@ -315,14 +315,14 @@ class VideoPlayer(Element):
             self.element_id+"_play_button",
             common.style_id_or_copy(self, self.settings.buttons_style_id),
             False, self.control_stack, self.manager
-        )
+        ).set_attr("builtin", True)
         self.track_slider = Slider(
             pygame.Rect(0, 0, 100, 100),
             self.element_id+"_track_slider",
             common.style_id_or_copy(self, self.settings.sliders_style_id),
             self.control_stack, self.manager, ElementAlign.middle,
             self.settings.sliders_settings
-        )
+        ).set_attr("builtin", True)
         self.volume_button = Button(
             self.settings.volume_up_txt,
             pygame.Rect(0, 0, self.settings.buttons_size,
@@ -330,14 +330,14 @@ class VideoPlayer(Element):
             self.element_id+"_volume_button",
             common.style_id_or_copy(self, self.settings.buttons_style_id),
             False, self.control_stack, self.manager
-        )
+        ).set_attr("builtin", True)
         self.volume_slider = Slider(
             pygame.Rect(0, 0, 100, 100),
             self.element_id+"_track_slider",
             common.style_id_or_copy(self, self.settings.sliders_style_id),
             self.control_stack, self.manager, ElementAlign.middle,
             self.settings.sliders_settings
-        )
+        ).set_attr("builtin", True)
         self.__done = True
 
         self.video_image.add_element_types("videoplayer_video")

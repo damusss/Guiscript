@@ -102,7 +102,7 @@ class Slider(Element):
             ("element", "slider_bar"),
             self,
             self.manager
-        )
+        ).set_attr("builtin", True)
         self.handle = Element(
             pygame.Rect(0, 0, self.settings.handle_size,
                         self.settings.handle_size),
@@ -112,7 +112,7 @@ class Slider(Element):
             ("element", "handle", "slider_handle"),
             self,
             self.manager
-        )
+        ).set_attr("builtin", True)
         self.deactivate()
         self.bar.deactivate()
         self.build()
@@ -276,7 +276,7 @@ class Slideshow(Element):
                                  False,
                                  self,
                                  self.manager,
-                                 )
+                                 ).set_attr("builtin", True)
         self.right_arrow = Button(self.settings.right_arrow_txt,
                                   pygame.Rect(0, 0, 100, 100),
                                   self.element_id+"_right_arrow",
@@ -285,7 +285,7 @@ class Slideshow(Element):
                                   False,
                                   self,
                                   self.manager,
-                                  )
+                                  ).set_attr("builtin", True)
         self.left_arrow.status.add_listener(
             "on_stop_press", self._on_left_click)
         self.right_arrow.status.add_listener(

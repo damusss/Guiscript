@@ -25,7 +25,7 @@ def close_modal():
 with guis.column((W, H), False) as MAIN:
     with guis.VStack(guis.SizeR(600,700), style_id="no_scroll").set_resizers(guis.ALL_RESIZERS):
         el = guis.Entry(guis.SizeR(500,80), '<c fg="green">ciao!!</c>', settings=guis.EntrySettings(inner_style_id="richtext")).set_resizers(guis.ALL_RESIZERS)
-        guis.Textbox(guis.SizeR(500,300), "ciaooo\ncome\nstaiii")
+        tb = guis.Textbox(guis.SizeR(500,300), "ciaooo\ncome\nstaiii", settings=guis.TextboxSettings(inner_style_id="richtext")).set_resizers(guis.ALL_RESIZERS)
         t=guis.Text("ABC\nDEF\nPKM", guis.SizeR(200,100), style_id="cursor")
         t.text.set_cursor_index(1,1)
         with guis.row((0, 150)):
@@ -58,6 +58,11 @@ while True:
             screen = pygame.display.set_mode((W, H), pygame.RESIZABLE)
             manager.set_screen_surface(screen)
             MAIN.set_size((W, H))
+        elif event.type == guis.TEXTBOX_CHANGE:
+            if True:
+                txt = event.text
+                event.textbox.set_text(txt.replace("ciao", f'<b>ciao</b>'))
+                event.textbox.focus()
             
         manager.event(event)
         

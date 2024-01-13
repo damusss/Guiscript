@@ -25,8 +25,8 @@ class UIStack(Element):
         self.content_y: int = 0
         self.total_x: int = 0
         self.total_y: int = 0
-        self.vscrollbar: UIVScrollbar = UIVScrollbar(self, scrollbars_style_id)
-        self.hscrollbar: UIHScrollbar = UIHScrollbar(self, scrollbars_style_id)
+        self.vscrollbar: UIVScrollbar = UIVScrollbar(self, scrollbars_style_id).set_attr("builtin", True)
+        self.hscrollbar: UIHScrollbar = UIHScrollbar(self, scrollbars_style_id).set_attr("builtin", True)
         self._done = True
         self.deactivate()
         
@@ -197,6 +197,32 @@ class VStack(UIStack):
             child.set_relative_pos((child_x, current_y))
             current_y += child.relative_rect.h
 
+
+class Box(VStack):
+    """A vertical container (direction doesn't really matter) that is supposed to contain only 1 user child (not enforced) with shortcuts to access and change it"""
+    def __init__(self,
+                 relative_rect: pygame.Rect,
+                 child: Element | None = None,
+                 element_id: str = "none",
+                 style_id: str = "",
+                 parent: Element | None = None,
+                 manager: Manager | None = None,
+                 scrollbars_style_id: str = "copy"
+                 ):
+        super().__init__(relative_rect, element_id, style_id, parent,
+                         manager, scrollbars_style_id)
+        self.child: Element|None = None
+        self.set_child(child)
+        
+    def set_child(self, element: Element|None) -> typing.Self:
+        """Set the box's child or remove it by passing None"""
+        if self.child is not None:
+            self.child.set_parent(None)
+        if element is not None:
+            element.set_parent(self)
+        self.child = element
+        return self
+    
 
 class HStack(UIStack):
     """Organize children horizontally using stack style settings"""
