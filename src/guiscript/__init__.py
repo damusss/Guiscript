@@ -37,7 +37,7 @@ from ._guis.enums import (
 )
 
 from ._guis.elements.factories import (
-    Label, 
+    Text, 
     Icon,
     Image,
     Button,
@@ -47,17 +47,14 @@ from ._guis.elements.factories import (
     Slideshow,
     GIF,
     Slider,
-    ProgressBar,
-    InvisElement,
-    HLine,
-    VLine
+    ProgressBar
 )
 
 from ._guis.elements.stacks import (VStack, HStack)
 from ._guis.elements.players import (SoundPlayer, VideoPlayer)
 from ._guis.elements.menus import (DropMenu, SelectionList)
 from ._guis.elements.windows import (Window, ModalContainer) #, FileDialog)
-from ._guis.elements.entries import (Entry)#, TextBox)
+from ._guis.elements.entries import (Entry, Textbox)
 
 from ._guis.settings import (
     SlideshowSettings, 
@@ -76,6 +73,8 @@ from ._guis.settings import (
     SelectionListDefaultSettings,
     EntrySettings,
     EntryDefaultSettings,
+    TextboxSettings,
+    TextboxDefaultSettings,
     WindowSettings,
     WindowDefaultSettings,
     CollapsingWindowDefaultSettings,
@@ -91,6 +90,11 @@ from ._guis.utils import (
     bind_one_selected_only,
     custom_hscrollbar,
     custom_vscrollbar,
+    row,
+    column,
+    invis_element,
+    hline,
+    vline,
     static_dock,
     dragging_mouse,
     static_logic,
@@ -103,6 +107,12 @@ from ._guis.utils import (
     get_builtin_image,
     get_current_manager,
     get_current_parent,
+    ZeroRect as ZeroR,
+    SizeRect as SizeR,
+    PosRect as PosR
+)
+
+from ._guis.help import (
     help_element_types,
     help_style_script,
     help_z_index,
@@ -110,10 +120,7 @@ from ._guis.utils import (
     help_buffers,
     help_rich_text,
     help_events,
-    help_callbacks,
-    ZeroRect as ZeroR,
-    SizeRect as SizeR,
-    PosRect as PosR
+    help_callbacks
 )
 
 from ._guis.types import (

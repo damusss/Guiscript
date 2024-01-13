@@ -102,6 +102,17 @@ class EntrySettings:
     repeat_speed: int = 40
     repeat_start_cooldown: int = 370
     disabled_text_style_id: str = "entry_disabled_text"
+    
+    
+@dataclasses.dataclass(slots=True)
+class TextboxSettings:
+    """Initialization settings for the textbox element"""
+    placeholder: str = "Start typing..."
+    inner_style_id: str = ""
+    blink_speed: int = 400
+    repeat_speed: int = 40
+    repeat_start_cooldown: int = 370
+    disabled_text_style_id: str = "entry_disabled_text"
 
 
 @dataclasses.dataclass(slots=True)
@@ -144,6 +155,7 @@ ProgressBarDefaultSettings = ProgressBarSettings()
 DropMenuDefaultSettings = DropMenuSettings()
 SelectionListDefaultSettings = SelectionListSettings()
 EntryDefaultSettings = EntrySettings()
+TextboxDefaultSettings = TextboxSettings()
 WindowDefaultSettings = WindowSettings()
 CollapsingWindowDefaultSettings = WindowSettings(
     have_collapse_button=True, have_close_button=False)

@@ -8,26 +8,12 @@ if typing.TYPE_CHECKING:
 from .error import UIError
 from .state import UIState
 
+
 Coordinate: typing.TypeAlias = typing.Iterable[float] | pygame.Vector2
 Color: typing.TypeAlias = typing.Iterable[int] | str | pygame.Color
 StatusCallback: typing.TypeAlias = typing.Callable[[
     "Element"], typing.Any] | None
 CursorLike: typing.TypeAlias = pygame.Cursor | int
-
-_cache = False
-def validate_import():
-    print(_cache, __name__)
-    if not _cache:
-        raise UIError(f"Invalid import detected from the restricted '_guis' submodule. All library content will be imported into guiscript, no need to access submodules")
-    #print("validating", _cache)
-    
-def _cache_set():
-    global _cache
-    _cache = True
-    
-def _cache_unset():
-    global _cache
-    _cache = False
 
 
 class UIAnchorData:
@@ -109,6 +95,13 @@ def text_wrap_str(text: str, wrapsize: int, font: pygame.Font) -> list[str]:
     return paragraph_lines
 
 
+def line_size_x(font: pygame.Font, line: str) -> int:
+    size = 0
+    for c in line:
+        size += font.size(c)[0]
+    return size
+
+
 def text_click_idx(lines: list[str], font: pygame.Font, pos: pygame.Vector2, rect: pygame.Rect, absolute_topleft: pygame.Vector2) -> tuple[int, int, int, str] | None:
     if len(lines) <= 0:
         return
@@ -121,18 +114,18 @@ def text_click_idx(lines: list[str], font: pygame.Font, pos: pygame.Vector2, rec
     line = lines[line_idx]
     if not line:
         return
-    start_x = tot_w = char_i = 0
+    tot_w = char_i = 0
+    start_x = rect.left
     if font.align == pygame.FONT_CENTER:
-        start_x = rect.w//2-font.size(line)[0]//2
+        start_x = rect.left+rect.w//2-line_size_x(font, line)//2
     elif font.align == pygame.FONT_RIGHT:
-        start_x = rect.w-font.size(line)[0]
-    rel_x = rel_pos.x
-    if rel_x <= start_x:
+        start_x = rect.left+rect.w-line_size_x(font, line)
+    if rel_pos.x <= start_x:
         return
     for i, char in enumerate(line):
         char_w = font.size(char)[0]
         tot_w += char_w
-        if tot_w+start_x >= rel_x:
+        if tot_w+start_x >= rel_pos.x:
             char_i = i
             break
     else:
@@ -156,43 +149,42 @@ def text_select_rects(start_li: int, start_ci: int, end_li: int, end_ci: int, li
             line = lines[start_li]
             offset = 0
             if font.align == pygame.FONT_CENTER:
-                offset = rect.w//2-font.size(line)[0]//2
+                offset = rect.w//2-line_size_x(font, line)//2
             elif font.align == pygame.FONT_RIGHT:
-                offset = rect.w-font.size(line)[0]
+                offset = rect.w-line_size_x(font, line)
             if start_ci == end_ci:
                 if not rel_move or not UIState.mouse_pressed[0]:
                     return rects
                 char = lines[start_li][start_ci]
-                rects.append(pygame.Rect(rect.left+offset+font.size(line[:start_ci])[
-                             0], font_h*start_li+rect.top, font.size(char)[0], font_h))
+                rects.append(pygame.Rect(rect.left+offset+line_size_x(font, line[:start_ci]), font_h*start_li+rect.top, line_size_x(font, char), font_h))
                 return rects
             if start_ci > end_ci:
                 start_ci, end_ci = end_ci, start_ci
-            rects.append(pygame.Rect(rect.left+offset+font.size(line[:start_ci])[0],
-                                     font_h*start_li+rect.top, font.size(line[start_ci:end_ci+1])[0], font_h))
+            rects.append(pygame.Rect(rect.left+offset+line_size_x(font, line[:start_ci]),
+                                     font_h*start_li+rect.top, line_size_x(font, line[start_ci:end_ci+1]), font_h))
         else:
             mid_lines = lines[start_li+1:end_li]
             start_line = lines[start_li]
             end_line = lines[end_li]
             start_offset = end_offset = 0
             if font.align == pygame.FONT_CENTER:
-                start_offset = rect.w//2-font.size(start_line)[0]//2
-                end_offset = rect.w//2-font.size(end_line)[0]//2
+                start_offset = rect.w//2-line_size_x(font, start_line)//2
+                end_offset = rect.w//2-line_size_x(font, end_line)//2
             elif font.align == pygame.FONT_RIGHT:
-                start_offset = rect.w-font.size(start_line)[0]
-                end_offset = rect.w-font.size(end_line)[0]
-            rects.append(pygame.Rect(rect.left+start_offset+font.size(start_line[:start_ci])[0],
-                                     font_h*start_li+rect.top, font.size(start_line[start_ci:])[0], font_h))
+                start_offset = rect.w-line_size_x(font, start_line)
+                end_offset = rect.w-line_size_x(font, end_line)
+            rects.append(pygame.Rect(rect.left+start_offset+line_size_x(font, start_line[:start_ci]),
+                                     font_h*start_li+rect.top, line_size_x(font, start_line[start_ci:]), font_h))
             rects.append(pygame.Rect(rect.left+end_offset, font_h*end_li +
-                         rect.top, font.size(end_line[:end_ci+1])[0], font_h))
+                         rect.top, line_size_x(font, end_line[:end_ci+1]), font_h))
             for i, line in enumerate(mid_lines):
                 offset = 0
                 if font.align == pygame.FONT_CENTER:
-                    offset = rect.w//2-font.size(line)[0]//2
+                    offset = rect.w//2-line_size_x(font, line)//2
                 elif font.align == pygame.FONT_RIGHT:
-                    offset = rect.w-font.size(line)[0]
+                    offset = rect.w-line_size_x(font, line)
                 rects.append(pygame.Rect(rect.left+offset, font_h *
-                             (i+start_li+1)+rect.top, font.size(line)[0], font_h))
+                             (i+start_li+1)+rect.top, line_size_x(font, line), font_h))
     except Exception as e:
         return rects
     return rects
@@ -430,7 +422,7 @@ STYLE_ANIMATION_TYPES = {
 
 DEFAULT_STYLE_GSS: str = """
 / BUILTIN ELEMENT TYPES
-label:: {
+text:: {
     text.enabled true;
     bg.enabled false;
     outline.enabled false;
@@ -511,6 +503,11 @@ entry:: {
     stack.floating_scrollbars true;
 }
 
+textbox:: {
+    stack.floating_scrollbars true;
+    stack.anchor top;
+}
+
 window:: {
     stack.padding 3;
 }
@@ -532,6 +529,16 @@ entry_text:: {
     stack.fill_y true;
     stack.align left;
     text.cursor_enabled true;
+}
+
+textbox_text:: {
+    text.do_wrap false;
+    text.grow_x true;
+    text.grow_y true;
+    stack.align left;
+    text.cursor_enabled true;
+    text.align topleft;
+    text.font_align left;
 }
 
 slideshow_arrow:: {
@@ -670,5 +677,22 @@ window_collapse_button:: {
 
 .fill_y:: {
     stack.fill_y true;
+}
+
+.resize_x:: {
+    stack.grow_x true;
+    stack.shrink_x true;
+}
+
+.resize_y:: {
+    stack.grow_y true;
+    stack.shrink_y true;
+}
+
+.resize:: {
+    stack.grow_x true;
+    stack.shrink_x true;
+    stack.grow_y true;
+    stack.shrink_y true;
 }
 """

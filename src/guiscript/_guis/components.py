@@ -238,11 +238,12 @@ class UITextComp(UIComponent):
         self.real_text: str = None
         self.selection_rects: list[pygame.Rect] = []
         self.can_select: bool = True
-        self.cursor_index: int = -1
+        self.cursor_x: int = -1
+        self.cursor_y: int = 0
         self.rich_modifiers = None
         self._selection_start_idxs: list[int] = None
         self._selection_end_idxs: list[int] = None
-        self._cursor_draw_pos: int = 0
+        self._cursor_draw_pos: pygame.Vector2 = pygame.Vector2()
         self.set_text("")
 
     def _render(self):
@@ -253,23 +254,58 @@ class UITextComp(UIComponent):
             pygame.draw.rect(self.element.element_surface,
                              style.selection_color, rect)
         self.element.element_surface.blit(self.text_surf, self.text_rect)
-        if self.cursor_index > -1 and style.cursor_enabled:
-            x = 0
-            for i, c in enumerate(self.real_text):
-                if i >= self.cursor_index:
-                    break
-                x += style.font.size(c)[0]
-            h = style.font.size(" ")[1]*style.cursor_rel_h
-            pygame.draw.rect(self.element.element_surface, style.cursor_color,
-                             (self.text_rect.x+x, self.text_rect.centery-h//2,
-                              style.cursor_width, h))
-            self._cursor_draw_pos = self.text_rect.x+x
+        if self.cursor_x > -1 and self.cursor_y > -1 and style.cursor_enabled:
+            self._render_cursor(style)
+            
+    def _render_cursor_OLD(self, style):
+        x = y = li = 0
+        lines = self.real_text.split("\n")
+        i = 0
+        for c in self.real_text:
+            if c == "\n" and i < self.cursor_index:
+                y += style.font.get_height()
+                x = 0
+                li += 1
+                continue
+            if i >= self.cursor_index:
+                break
+            x += style.font.size(c)[0]
+            i += 1
+        h = style.font.size(" ")[1]*style.cursor_rel_h
+        line = lines[li]
+        ls = common.line_size_x(style.font, line)
+        match style.font_align:
+            case pygame.FONT_CENTER:
+                x = x+self.text_rect.w//2-ls//2
+            case pygame.FONT_RIGHT:
+                x = self.text_rect.w-ls//2+x
+        pygame.draw.rect(self.element.element_surface, style.cursor_color,
+                            (self.text_rect.x+x, self.text_rect.y+y,
+                            style.cursor_width, h))
+        self._cursor_draw_pos = self.text_rect.x+x
+        
+    def _render_cursor(self, style):
+        line = self.real_text.split("\n")[self.cursor_y]
+        y = self.cursor_y*style.font.get_height()+self.text_rect.y
+        x = self.text_rect.x
+        width = common.line_size_x(style.font, line[0:self.cursor_x])
+        x = self.text_rect.x+width
+        match style.font_align:
+            case pygame.FONT_CENTER:
+                x = x+self.text_rect.w//2-common.line_size_x(style.font, line)//2
+            case pygame.FONT_RIGHT:
+                x = self.text_rect.right-common.line_size_x(style.font, line)+width
+        pygame.draw.rect(self.element.element_surface, style.cursor_color,
+                         (x, y, style.cursor_width, style.font.get_height()))
+        self._cursor_draw_pos = pygame.Vector2(x, y)
 
     def _size_changed(self):
         self._build(self.element.style)
 
     def _build(self, style):
         text = style.text.text if style.text.text else self.text
+        if text and text[-1] == "\n":
+            text += " "
         if not style.text.rich:
             self.real_text = text
             style.text.apply_mods()
@@ -340,10 +376,13 @@ class UITextComp(UIComponent):
         self._build(self.element.style)
         return self
 
-    def set_cursor_index(self, index: int) -> typing.Self:
+    def set_cursor_index(self, x: int=-1, y=0) -> typing.Self:
         """Set the cursor index. A bar will be drawn at the said index. -1 or lower means no cursor (default)"""
-        if self.cursor_index != index:
-            self.cursor_index = index
+        if self.cursor_x != x:
+            self.cursor_x = x
+            self.element.set_dirty()
+        if self.cursor_y != y:
+            self.cursor_y = y
             self.element.set_dirty()
         return self
 
@@ -359,15 +398,23 @@ class UITextComp(UIComponent):
         self.element.set_dirty()
         return self
 
-    def _get_selection(self) -> tuple[int]:
+    def _get_selection(self, _2D=False) -> tuple[int]:
         if self._selection_end_idxs is None or self._selection_start_idxs is None:
             return None
         if len(self._selection_start_idxs) < 3 or len(self._selection_end_idxs) < 3:
             return None
-        selection = (min(self._selection_start_idxs[-1], self._selection_end_idxs[-1]), max(
-            self._selection_start_idxs[-1], self._selection_end_idxs[-1]))
-        if selection[1]-selection[0] == 0:
-            return None
+        if not _2D:
+            selection = (min(self._selection_start_idxs[-1], self._selection_end_idxs[-1]), max(
+                self._selection_start_idxs[-1], self._selection_end_idxs[-1]))
+            if selection[1]-selection[0] == 0:
+                return None
+        else:
+            selection = (min(self._selection_start_idxs[-3], self._selection_end_idxs[-3]), max(
+                self._selection_start_idxs[-3], self._selection_end_idxs[-3]),
+                         min(self._selection_start_idxs[-2], self._selection_end_idxs[-2]), max(
+                self._selection_start_idxs[-2], self._selection_end_idxs[-2]))
+            if selection[3]-selection[2] == 0 and selection[1]-selection[0] == 0:
+                return None
         return selection
 
 

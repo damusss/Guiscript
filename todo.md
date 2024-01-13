@@ -5,7 +5,6 @@ THINGS
 ELEMENTS
 
 - file dialog
-- textbox
 
 DONE THINGS
 
@@ -45,10 +44,11 @@ DONE THINGS
 - static docking
 - rich text
 - sounds
+- bugfix
 
 DONE ELEMENTS
 
-- label
+- text
 - image
 - button 
 - image button
@@ -69,3 +69,4 @@ DONE ELEMENTS
 - entry
 - window
 - modal
+- textbox

@@ -14,7 +14,6 @@ menu_surf = pygame.transform.scale_by(pygame.image.load("tests/menu.png").conver
 
 
 manager = guis.Manager(screen, True, ["tests/example.gss"])
-
 surfaces = [test_surf, menu_surf, test_surf]
 
 def open_modal():
@@ -23,23 +22,28 @@ def open_modal():
 def close_modal():
     modal.hide()
 
-with guis.VStack(guis.SizeR(W, H), style_id="invis_cont") as MAIN:
+with guis.column((W, H), False) as MAIN:
     with guis.VStack(guis.SizeR(600,700), style_id="no_scroll").set_resizers(guis.ALL_RESIZERS):
         el = guis.Entry(guis.SizeR(500,80), '<c fg="green">ciao!!</c>', settings=guis.EntrySettings(inner_style_id="richtext")).set_resizers(guis.ALL_RESIZERS)
-        guis.Image(None, guis.SizeR(200,200), style_id="imgtest")
-        guis.Button(f"OPEN", guis.SizeR(200,60)).status.add_listener("on_click", open_modal)
-        guis.DropMenu(["ciao", "ti", "amo", "tanto"], "comeva", guis.SizeR(150,30))
-        with guis.HStack(guis.SizeR(400, 50)):
-        #with guis.HStack(guis.SizeR(200,50), style_id="invisible"):
-            c1 = guis.Checkbox(guis.SizeR(40,40))
-            guis.Label("Check 1", guis.ZeroR(), style_id="fill")
-        #with guis.HStack(guis.SizeR(200,50), style_id="invisible"):
-            c2 = guis.Checkbox(guis.SizeR(40,40))
-            guis.Label("Check 2", guis.ZeroR(), style_id="fill") 
+        guis.Textbox(guis.SizeR(500,300), "ciaooo\ncome\nstaiii")
+        t=guis.Text("ABC\nDEF\nPKM", guis.SizeR(200,100), style_id="cursor")
+        t.text.set_cursor_index(1,1)
+        with guis.row((0, 150)):
+            with guis.column((200,0)):
+                with guis.row((0,50)):
+                    c1 = guis.Checkbox(guis.SizeR(40,40))
+                    guis.Text("Check 1", guis.ZeroR(), style_id="fill")
+                with guis.row((0,50)):
+                    c2 = guis.Checkbox(guis.SizeR(40,40))
+                    guis.Text("Check 2", guis.ZeroR(), style_id="fill") 
+            with guis.column((200,0)):
+                guis.Button(f"OPEN", guis.SizeR(200,60)).status.add_listener("on_click", open_modal)
+            
         guis.bind_one_selected_only((c1, c2), True)
-        
-with (modal_element:=guis.Window(guis.SizeR(300,300), "Modal Thing",
-                                 settings=guis.WindowSettings(have_close_button=False))).status.set_drag(False).element.set_ignore(False, False).enter():
+
+modal_element:guis.Window=guis.Window(guis.SizeR(300,300), "Modal Thing",
+                                 settings=guis.WindowSettings(have_close_button=False)).status.set_drag(False).element.set_ignore(False, False)
+with modal_element.enter():
     guis.Button(f"HIDE", guis.SizeR(200,60)).status.add_listener("on_click", close_modal)
     
 modal = guis.ModalContainer(modal_element)
@@ -62,7 +66,6 @@ while True:
     manager.logic()
     guis.static_logic(1)
     manager.render()
-
 
     clock.tick_busy_loop(0)
     pygame.display.flip()

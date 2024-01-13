@@ -48,6 +48,10 @@ ENTRY_CHANGE = pygame.event.custom_type()
 ENTRY_FOCUS = pygame.event.custom_type()
 ENTRY_UNFOCUS = pygame.event.custom_type()
 
+TEXTBOX_CHANGE = pygame.event.custom_type()
+TEXTBOX_FOCUS = pygame.event.custom_type()
+TEXTBOX_UNFOCUS = pygame.event.custom_type()
+
 WINDOW_CLOSE = pygame.event.custom_type()
 WINDOW_DRAG = pygame.event.custom_type()
 WINDOW_COLLAPSE = pygame.event.custom_type()
@@ -152,6 +156,17 @@ def _post_entry_event(mode:str, element: "Element"):
             "id": element.element_id,
             "element": element,
             "entry": element,
+            "text": element.get_text()
+        }
+    ))
+    
+def _post_textbox_event(mode:str, element: "Element"):
+    pygame.event.post(pygame.Event(
+        TEXTBOX_CHANGE if mode == "change" else TEXTBOX_FOCUS if mode == "focus" else TEXTBOX_UNFOCUS,
+        {
+            "id": element.element_id,
+            "element": element,
+            "textbox": element,
             "text": element.get_text()
         }
     ))

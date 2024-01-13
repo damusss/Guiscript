@@ -358,8 +358,8 @@ class Slideshow(Element):
                                            self.relative_rect.h//2-self.left_arrow.relative_rect.h//2))
 
 
-class Label(Element):
-    """Inactive element with a shortcut to set the text"""
+class Text(Element):
+    """Inactive element with a shortcut to set and get the text"""
 
     def __init__(self,
                  text: str,
@@ -370,7 +370,7 @@ class Label(Element):
                  manager: Manager | None = None,
                  ):
         super().__init__(relative_rect, element_id,
-                         style_id, ("element", "label"), parent, manager)
+                         style_id, ("element", "text"), parent, manager)
         self.text.set_text(text)
         self.deactivate()
 
@@ -378,10 +378,14 @@ class Label(Element):
         """Shortcut for 'element.text.set_text'"""
         self.text.set_text(text)
         return self
+    
+    def get_text(self) -> str:
+        """Shortcut to get the element's text"""
+        return self.text.real_text
 
 
 class Icon(Element):
-    """Inactive element with a shortcut to set the icon"""
+    """Inactive element with a shortcut to set and get the icon"""
 
     def __init__(self,
                  name: str | None,
@@ -400,10 +404,14 @@ class Icon(Element):
         """Shortcut for 'element.icon.set_icon'"""
         self.icon.set_icon(name)
         return self
+    
+    def get_icon(self) -> str:
+        """Shortcut to get the element's icon name"""
+        return self.icon.icon_name
 
 
 class Image(Element):
-    """Inactive element with a shortcut to set the image"""
+    """Inactive element with a shortcut to set and get the image"""
 
     def __init__(self,
                  surface: pygame.Surface,
@@ -422,10 +430,18 @@ class Image(Element):
         """Shortcut for 'element.image.set_surface'"""
         self.image.set_surface(surface, force_update)
         return self
+    
+    def get_surface(self) -> pygame.Surface:
+        """Shortcut to get the element's original surface (not the active one)"""
+        return self.image.get_original_surface()
+    
+    def get_active_surface(self) -> pygame.Surface:
+        """Shortcut to get the element's active surface (not the original one)"""
+        return self.image.get_active_surface()
 
 
 class Button(Element):
-    """Active element with a shortcut to set the text"""
+    """Active element with a shortcut to set and get the text"""
 
     def __init__(self,
                  text: str,
@@ -436,7 +452,7 @@ class Button(Element):
                  parent: Element | None = None,
                  manager: Manager | None = None,
                  ):
-        super().__init__(relative_rect, element_id, style_id, ("element", "label", "button"), parent,
+        super().__init__(relative_rect, element_id, style_id, ("element", "text", "button"), parent,
                          manager)
         self.text.set_text(text)
         self.status.can_select = selectable
@@ -445,10 +461,14 @@ class Button(Element):
         """Shortcut for 'element.text.set_text'"""
         self.text.set_text(text)
         return self
+    
+    def get_text(self) -> str:
+        """Shortcut to get the element's text"""
+        return self.text.real_text
 
 
 class ImageButton(Element):
-    """Active element with a shortcut to set the image"""
+    """Active element with a shortcut to set and get the image"""
 
     def __init__(self,
                  surface: pygame.Surface,
@@ -468,10 +488,18 @@ class ImageButton(Element):
         """Shortcut for 'element.image.set_surface'"""
         self.image.set_surface(surface)
         return self
+    
+    def get_surface(self) -> pygame.Surface:
+        """Shortcut to get the element's original surface (not the active one)"""
+        return self.image.get_original_surface()
+    
+    def get_active_surface(self) -> pygame.Surface:
+        """Shortcut to get the element's active surface (not the original one)"""
+        return self.image.get_active_surface()
 
 
 class IconButton(Element):
-    """Active element with a shortcut to set the icon"""
+    """Active element with a shortcut to set and get the icon"""
 
     def __init__(self,
                  name: str | None,
@@ -492,6 +520,10 @@ class IconButton(Element):
         """Shortcut for 'element.icon.set_icon'"""
         self.icon.set_icon(name)
         return self
+    
+    def get_icon(self) -> str:
+        """Shortcut to get the element's icon name"""
+        return self.icon.icon_name
 
 
 class Checkbox(Element):
@@ -526,53 +558,5 @@ class Checkbox(Element):
 
     def toggle(self) -> typing.Self:
         """Select or deselect based on the current status"""
-        if self.status.selected:
-            self.status.deselect()
-        else:
-            self.status.select()
+        self.status.toggle()
         return self
-
-
-class InvisElement(Element):
-    """Simple element with default style id 'invisible'"""
-
-    def __init__(self,
-                 relative_rect: pygame.Rect,
-                 element_id: str = "none",
-                 style_id: str = "invisible",
-                 parent: Element | None = None,
-                 manager: Manager | None = None,
-                 ):
-        super().__init__(relative_rect, element_id, style_id,
-                         ("element", "invisible_element"), parent, manager)
-        self.deactivate()
-
-
-class HLine(Element):
-    """Simple element with proper default styling to quickly make a horizontal line"""
-
-    def __init__(self,
-                 relative_rect: pygame.Rect,
-                 element_id: str = "none",
-                 style_id: str = "fill_x",
-                 parent: Element | None = None,
-                 manager: Manager | None = None,
-                 ):
-        super().__init__(relative_rect, element_id, style_id,
-                         ("element", "line", "hline"), parent, manager)
-        self.deactivate()
-
-
-class VLine(Element):
-    """Simple element with proper default styling to quickly make a vertical line"""
-
-    def __init__(self,
-                 relative_rect: pygame.Rect,
-                 element_id: str = "none",
-                 style_id: str = "fill_y",
-                 parent: Element | None = None,
-                 manager: Manager | None = None,
-                 ):
-        super().__init__(relative_rect, element_id, style_id,
-                         ("element", "line", "vline"), parent, manager)
-        self.deactivate()

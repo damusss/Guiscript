@@ -39,3 +39,7 @@
     image.fill_color red;
     image.alpha 50;
 }
+
+.cursor:: {
+    text.cursor_enabled true;
+}

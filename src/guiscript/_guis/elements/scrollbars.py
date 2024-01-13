@@ -54,6 +54,8 @@ class UIVScrollbar(UIScrollbar):
                     scroll_y))/(self.parent.content_y+0.000001)
         self.handle.set_size((style.scrollbar_size, min(
             handle_y, self.relative_rect.h)), False)
+        if self.parent.total_y != 0:
+            self.handle.set_relative_pos((0, (self.relative_rect.h/self.parent.total_y)*self.parent.scroll_offset.y))
 
     def on_logic(self):
         if not self.status.visible or not self.parent.status.scroll_hovered:
@@ -116,6 +118,8 @@ class UIHScrollbar(UIScrollbar):
                     scroll_x))/(self.parent.content_x+0.000001)
         self.handle.set_size(
             (min(handle_x, self.relative_rect.w), style.scrollbar_size), False)
+        if self.parent.total_x != 0:
+            self.handle.set_relative_pos(((self.relative_rect.w/self.parent.total_x)*self.parent.scroll_offset.x, 0))
 
     def on_logic(self):
         if not self.status.visible or not self.parent.status.scroll_hovered:

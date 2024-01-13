@@ -20,3 +20,4 @@ class UIState:
     frame_count: int = 0
     space_pressed: bool = False
     num_managers: int = 0
+    any_pressed: bool = False

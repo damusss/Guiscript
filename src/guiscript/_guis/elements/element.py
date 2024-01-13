@@ -220,6 +220,13 @@ class Element:
         self.parent.children.insert(new_idx, self)
         self.parent._refresh_stack()
         return self
+    
+    def call_in_children(self, function_name: str, *args, **kwargs) -> typing.Self:
+        """Run the specified function name in all elements with the same args and kwargs"""
+        for child in self.children:
+            if hasattr(child, function_name):
+                getattr(child, function_name)(*args, **kwargs)
+        return self
 
     # flags
     def activate(self) -> typing.Self:
@@ -407,6 +414,8 @@ class Element:
                     f"If target is not None self and target anchors must not be 'none'")
         if target == "parent":
             target = self.parent
+        if target.is_root():
+            raise UIError("Anchor target cannot be root")
         data = common.UIAnchorData(target, self_anchor, target_anchor, offset)
         if self._anchors[self_anchor] is not None:
             self._anchors[self_anchor].target._anchor_observers.remove(self)
@@ -625,14 +634,14 @@ class Element:
             Element(pygame.Rect(0, 0, width, title_h),
                     self.element_id+"tooltip_title",
                     common.style_id_or_copy(tooltip_cont, title_style_id),
-                    ("element", "tooltip", "label",
-                     "tooltip_label", "tooltip_title"),
+                    ("element", "tooltip", "text",
+                     "tooltip_text", "tooltip_title"),
                     tooltip_cont, self.manager).text.set_text(title).element
         Element(pygame.Rect(0, title_h if title else 0, width, height-title_h if title else height),
                 self.element_id+"tooltip_description",
                 common.style_id_or_copy(tooltip_cont, descr_style_id),
-                ("element", "tooltip", "label",
-                 "tooltip_label", "tooltip_description"),
+                ("element", "tooltip", "text",
+                 "tooltip_text", "tooltip_description"),
                 tooltip_cont, self.manager).text.set_text(description).element
         tooltip_cont.hide()
         Tooltips.register(tooltip_cont, self)
@@ -657,9 +666,9 @@ class Element:
         self.ghost_offset = pygame.Vector2(offset)
         return self
 
-    def set_render_offset(self, render_offset: pygame.Vector2) -> typing.Self:
+    def set_render_offset(self, render_offset: common.Coordinate) -> typing.Self:
         """Set the offset where to render element onto the parent"""
-        self.render_offset = render_offset
+        self.render_offset = pygame.Vector2(render_offset)
         self.set_dirty()
         return self
 

@@ -80,6 +80,10 @@ class Manager:
         self._running_check()
         if event.type == pygame.MOUSEWHEEL:
             UIState.mouse_wheel = pygame.Vector2(event.x, event.y)
+        elif event.type == pygame.KEYDOWN and not event.key == pygame.K_LCTRL:
+            UIState.any_pressed = True
+        elif event.type == pygame.KEYUP:
+            UIState.any_pressed = False
         for el in self._event_callbacks:
             el.on_event(event)
         self.interact._event(event)
