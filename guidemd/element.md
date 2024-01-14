@@ -132,3 +132,6 @@ You can use the appropriate methods to set, check and remove anchors. When an an
 
 ## Resizers
 With the appropriate methods small resizer elements on the specified element positions will be created and when they are pressed the element will resize. Useful for things like windows or textboxes. To allow a change in cursor the custom attr `resizer_name` is set
+
+## Subclassing
+When subclassing, remember to call the appropriate parent class's `__init__` method. Avoid using the 'private' attributes unless it's absolutely necessary. Methods like `init`, `on_logic`, `on_render`, `on_destroy`, `on_event`, `_refresh_stack` (implemented by stacks), `size_changed`, `style_changed`, `position_changed`, `build` have a default empty implementation and are supposed to be overridden whenever you need.
