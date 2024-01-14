@@ -7,16 +7,7 @@ The library comes with lots of default elements and styles that are easily expan
 It aims to be easy to use and pygame friendly with freedom of game loop.<br>
 It revolves around user responsible changes and good performance for games.<br>
 The elements structure is easy to follow thanks to the use of context managers.<br>
-Customization is easily accessible thanks to the styling and style priority and inheritance system.
-
-# Builtin Elements
-WIP
-
-# Other Features
-WIP
-
-## Builtin Styles
-WIP
+Customization is easily accessible thanks to the styling, style priority and inheritance system.
 
 # Installation
 # NOT OUT YET
@@ -29,8 +20,7 @@ It's recommended to shorten the name on import to code faster
 import guiscript as guis
 ```
 
-# Example Usage
-WIP
+# [Usage Guide](guidemd/guide.md)
 
 # Links
 ### [PyPI Project](https://pypi.org/project/guiscript/)

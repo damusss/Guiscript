@@ -6,7 +6,7 @@ The library comes with lots of default elements and styles that are easily expan
 It aims to be easy to use and pygame friendly with freedom of game loop.
 It revolves around user responsible changes and good performance for games.
 The elements structure is easy to follow thanks to the use of context managers.
-Customization is easily accessible thanks to the styling and style priority and inheritance system.
+Customization is easily accessible thanks to the styling, style priority and inheritance system.
 """
 import pygame
 from pygame import Rect as rect

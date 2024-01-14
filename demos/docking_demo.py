@@ -1,6 +1,6 @@
 import pygame
 import sys, os
-import src.guiscript as guis
+import guiscript as guis
 from pygame import Rect as rect
 
 W, H = 1200, 800

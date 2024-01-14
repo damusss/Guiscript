@@ -1,6 +1,6 @@
 THINGS
 
-...
+- guide
 
 ELEMENTS
 

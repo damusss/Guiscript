@@ -1,9 +1,9 @@
-import typing
-from .  import common
+[<- Back to guide](./guide.md)
+# Help Strings
+This same strings can be accessed calling the following functions.
 
-def help_element_types() -> typing.LiteralString:
-    """Provide a help string about the element types structure for built in elements"""
-    return """
+## help_element_types()
+```
     Element: (element, )
     Text: (element, text)
     Image: (element, image)
@@ -75,17 +75,242 @@ def help_element_types() -> typing.LiteralString:
     invis_element -> (element, invisible_element)
     hline -> (element, line, hline)
     vline -> (element, line, vline)
-    """
+    
+```
 
+## help_callbacks()
+```
+    Element:
+        when_hovered
+        when_pressed
+        when_right_pressed
+        on_start_hover
+        on_start_press
+        on_start_right_press
+        on_stop_hover
+        on_stop_press
+        on_stop_right_press
+        on_select
+        on_deselect
+        on_click
+        on_right_click
+        on_frame_start
+        on_animation_end (property animation)
+        on_move (used by few)
+        on_text_selection_change
+        on_position_change
+        on_style_change
+        on_size_change
+        on_build
+        on_resize
+        on_drag
+        args:
+            [Optional] element: Element
+            
+    SoundPlayer|VideoPlayer:
+        on_toggle
+        on_mute
+        on_volume_move
+        on_track_move
+    
+    DropMenu:
+        on_option_select
+        on_menu_toggle
+        extra args:
+            option: str
+        
+    SelectionList:
+        on_option_select
+        on_option_deselect
+        extra args:
+            option: str
+            
+    Entry:
+        on_change
+        on_focus
+        on_unfocus
+        extra args:
+            text: str
+            
+    Textbox:
+        on_change
+        on_focus
+        on_unfocus
+        extra args:
+            text: str
+            
+    Window:
+        on_close
+        on_collapse
+    
+```
 
-def help_z_index() -> dict[str, int]:
-    """Provide a help dictionary with default z index value for built in elements"""
-    return common.Z_INDEXES
+## help_events()
+```
+    ANIMATION_END
+        properties:
+            animation: UIPropertyAnimation
+            element: Element
 
+    Element:
+        HOVERED
+        PRESSED
+        RIGHT_PRESSED
+        START_HOVER
+        START_PRESS
+        START_RIGHT_PRESS
+        STOP_HOVER
+        STOP_RIGHT_PRESS
+        SELECT
+        DESELECT
+        CLICK
+        RIGHT_CLICK
+        DRAG
+        RESIZE
+        properties:
+            id: str
+            element: Element
+    
+    Slideshow:
+        SLIDESHOW_MOVE_LEFT
+        SLIDESHOW_MOVE_RIGHT
+        extra properties:
+            slideshow: Slideshow
+            
+    Slider:
+        SLIDER_MOVE
+        extra properties:
+            slider: Slider
+            old_value: float
+            old_percent: float
+            value: float
+            percent: float
+            
+    SoundPlayer:
+        SOUNDPLAYER_TOGGLE
+        SOUNDPLAYER_MUTE
+        SOUNDPLAYER_TRACK_MOVE
+        SOUNDPLAYER_VOLUME_MOVE
+        SOUNDPLAYER_END
+        extra properties:
+            soundplayer: SoundPlayer
+            playing: bool
+            muted: bool
+            paused: bool
+            time_passed: float
+            time_remaining: float
+            volume: float
+            
+    VideoPlayer:
+        VIDEOPLAYER_TOGGLE
+        VIDEOPLAYER_MUTE
+        VIDEOPLAYER_TRACK_MOVE
+        VIDEOPLAYER_VOLUME_MOVE
+        VIDEOPLAYER_END
+        extra properties:
+            videoplayer: VideoPlayer
+            playing: bool
+            muted: bool
+            paused: bool
+            time_passed: float
+            time_remaining: float
+            volume: float
+            
+    DropMenu:
+        DROPMENU_SELET
+        DROPMENU_TOGGLE
+        extra properties:
+            dropmenu: DropMenu
+            selected_option: str
+            selected: str
+            
+    SelectionList:
+        SELECTIONLIST_SELECT
+        SELECTIONLIST_DESELECT
+        extra properties:
+            selectionlist: SelectionList
+            selected: str|list[str]
+            option: str
+            
+    Entry:
+        ENTRY_CHANGE
+        ENTRY_FOCUS
+        ENTRY_UNFOCUS
+        extra properties:
+            entry: Entry
+            text: str
+            
+    Textbox:
+        TEXTBOX_CHANGE
+        TEXTBOX_FOCUS
+        TEXTBOX_UNFOCUS
+        extra properties:
+            textbox: Textbox
+            text: str
+            
+    Window:
+        WINDOW_CLOSE
+        WINDOW_DRAG
+        WINDOW_COLLAPSE
+        extra properties:
+            window: Window
+            collapsed: bool
+        
+    
+```
 
-def help_style_script() -> typing.LiteralString:
-    """Provide a help string with a guide for using the style scripring language"""
-    return """
+## help_buffers()
+```
+    Element: selected (sync with Element.status.selected)
+    Slider: value (sync with Slider.get_value())
+    Entry: text (sync with Entry.get_text())
+    Textbox: text (sync with Textbox.get_text())
+    
+```
+
+## help_z_index()
+```{
+  "ghost": -99,
+  "element": 0,
+  "scrollbar": 999,
+  "menu": 1999,
+  "window-start": 2000,
+  "window-end": 9998,
+  "resizer": 9999,
+  "tooltip": 10000
+}
+```
+
+## help_navigation()
+```
+    Exit: ESC
+    Start: TAB
+    Next Element: TAB
+    Previous Element: LSHIFT+TAB
+    First Child: ENTER
+    Parent: UP
+    Interact: SPACE
+    
+```
+
+## help_rich_text()
+```
+    The other text style properties will act as defaults.
+    Rich text (html-like string) tags: (case unsensitive, shorter alias)
+    - <b / bold> -> bold
+    - <i / italic> -> italic
+    - <u / underline> -> underline
+    - <s / strike / striketrough> -> striketrough
+    - <a / antialas / antialiasing> -> antialiasing
+    - <f / font size=FontSize> -> font size, where FontSize is a number
+    - <f / font name=FontName> -> font name, where FontName is a string
+    - <c / color fg=ColorValue> -> fg color, where ColorValue is a value supported by pygame
+    - <c / color bg=ColorValue> -> bg color, where ColorValue is a value supported by pygame
+    
+```
+
+## help_style_script()
+```
     A gss (short for gui script style) can be a file or a python string
     A gss is composed of 1 or more "style blocks"
     The style blocks get parsed and for each one a style holder python object will be created
@@ -231,226 +456,5 @@ def help_style_script() -> typing.LiteralString:
         resize, resize_x, resize_y: apply both grow and shrink stack properties for the specified axis
     
     Have fun styling your elements!
-    """
-
-
-def help_events() -> typing.LiteralString:
-    """Provide a help string with events for each element"""
-    return """
-    ANIMATION_END
-        properties:
-            animation: UIPropertyAnimation
-            element: Element
-
-    Element:
-        HOVERED
-        PRESSED
-        RIGHT_PRESSED
-        START_HOVER
-        START_PRESS
-        START_RIGHT_PRESS
-        STOP_HOVER
-        STOP_RIGHT_PRESS
-        SELECT
-        DESELECT
-        CLICK
-        RIGHT_CLICK
-        DRAG
-        RESIZE
-        properties:
-            id: str
-            element: Element
     
-    Slideshow:
-        SLIDESHOW_MOVE_LEFT
-        SLIDESHOW_MOVE_RIGHT
-        extra properties:
-            slideshow: Slideshow
-            
-    Slider:
-        SLIDER_MOVE
-        extra properties:
-            slider: Slider
-            old_value: float
-            old_percent: float
-            value: float
-            percent: float
-            
-    SoundPlayer:
-        SOUNDPLAYER_TOGGLE
-        SOUNDPLAYER_MUTE
-        SOUNDPLAYER_TRACK_MOVE
-        SOUNDPLAYER_VOLUME_MOVE
-        SOUNDPLAYER_END
-        extra properties:
-            soundplayer: SoundPlayer
-            playing: bool
-            muted: bool
-            paused: bool
-            time_passed: float
-            time_remaining: float
-            volume: float
-            
-    VideoPlayer:
-        VIDEOPLAYER_TOGGLE
-        VIDEOPLAYER_MUTE
-        VIDEOPLAYER_TRACK_MOVE
-        VIDEOPLAYER_VOLUME_MOVE
-        VIDEOPLAYER_END
-        extra properties:
-            videoplayer: VideoPlayer
-            playing: bool
-            muted: bool
-            paused: bool
-            time_passed: float
-            time_remaining: float
-            volume: float
-            
-    DropMenu:
-        DROPMENU_SELET
-        DROPMENU_TOGGLE
-        extra properties:
-            dropmenu: DropMenu
-            selected_option: str
-            selected: str
-            
-    SelectionList:
-        SELECTIONLIST_SELECT
-        SELECTIONLIST_DESELECT
-        extra properties:
-            selectionlist: SelectionList
-            selected: str|list[str]
-            option: str
-            
-    Entry:
-        ENTRY_CHANGE
-        ENTRY_FOCUS
-        ENTRY_UNFOCUS
-        extra properties:
-            entry: Entry
-            text: str
-            
-    Textbox:
-        TEXTBOX_CHANGE
-        TEXTBOX_FOCUS
-        TEXTBOX_UNFOCUS
-        extra properties:
-            textbox: Textbox
-            text: str
-            
-    Window:
-        WINDOW_CLOSE
-        WINDOW_DRAG
-        WINDOW_COLLAPSE
-        extra properties:
-            window: Window
-            collapsed: bool
-        
-    """
-
-
-def help_callbacks() -> typing.LiteralString:
-    """Provide a help string with callbacks for each element"""
-    return """
-    Element:
-        when_hovered
-        when_pressed
-        when_right_pressed
-        on_start_hover
-        on_start_press
-        on_start_right_press
-        on_stop_hover
-        on_stop_press
-        on_stop_right_press
-        on_select
-        on_deselect
-        on_click
-        on_right_click
-        on_frame_start
-        on_animation_end (property animation)
-        on_move (used by few)
-        on_text_selection_change
-        on_position_change
-        on_style_change
-        on_size_change
-        on_build
-        on_resize
-        on_drag
-        args:
-            [Optional] element: Element
-            
-    SoundPlayer|VideoPlayer:
-        on_toggle
-        on_mute
-        on_volume_move
-        on_track_move
-    
-    DropMenu:
-        on_option_select
-        on_menu_toggle
-        extra args:
-            option: str
-        
-    SelectionList:
-        on_option_select
-        on_option_deselect
-        extra args:
-            option: str
-            
-    Entry:
-        on_change
-        on_focus
-        on_unfocus
-        extra args:
-            text: str
-            
-    Textbox:
-        on_change
-        on_focus
-        on_unfocus
-        extra args:
-            text: str
-            
-    Window:
-        on_close
-        on_collapse
-    """
-
-
-def help_buffers() -> typing.LiteralString:
-    """Provide a help string with buffers for each element"""
-    return """
-    Element: selected (sync with Element.status.selected)
-    Slider: value (sync with Slider.get_value())
-    Entry: text (sync with Entry.get_text())
-    Textbox: text (sync with Textbox.get_text())
-    """
-
-
-def help_navigation() -> typing.LiteralString:
-    """Provide a help string with keyboard navigation keybinds"""
-    return """
-    Exit: ESC
-    Start: TAB
-    Next Element: TAB
-    Previous Element: LSHIFT+TAB
-    First Child: ENTER
-    Parent: UP
-    Interact: SPACE
-    """
-    
-def help_rich_text() -> typing.LiteralString:
-    """Provide a help string with rich text tags"""
-    return """
-    The other text style properties will act as defaults.
-    Rich text (html-like string) tags: (case unsensitive, shorter alias)
-    - <b / bold> -> bold
-    - <i / italic> -> italic
-    - <u / underline> -> underline
-    - <s / strike / striketrough> -> striketrough
-    - <a / antialas / antialiasing> -> antialiasing
-    - <f / font size=FontSize> -> font size, where FontSize is a number
-    - <f / font name=FontName> -> font name, where FontName is a string
-    - <c / color fg=ColorValue> -> fg color, where ColorValue is a value supported by pygame
-    - <c / color bg=ColorValue> -> bg color, where ColorValue is a value supported by pygame
-    """
+```
