@@ -14,7 +14,7 @@ The Icons class will provide useful functions to set and download icons even asy
 If you don't want the default scrollbar positioning and sizing use the `custom_[v/h]scrollbar` function and bind it to the stack
 
 ## Rects
-Shortuts for zero, size-only and position-only rects:
+Shortcuts for zero, size-only and position-only rects:
 - `ZeroRect`/`ZeroR` -> `pygame.Rect(0, 0, 0, 0)`
 - `SizeRect`/`SizeR` -> `pygame.Rect(0, 0, w, h)`
 - `PosRect`/`PosR` -> `pygame.Rect(x, y, 0, 0)`

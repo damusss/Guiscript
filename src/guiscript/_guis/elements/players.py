@@ -28,15 +28,16 @@ class SoundPlayer(HStack):
                  style_id: str = "",
                  parent: Element | None = None,
                  manager: Manager | None = None,
-                 settings: settings_.SoundPlayerSettings = settings_.SoundPlayerDefaultSettings
+                 settings: settings_.SoundPlayerSettings|None = None
                  ):
+        if settings is None:
+            settings = settings_.SoundPlayerSettings()
         self.__done = False
-        super().__init__(relative_rect, element_id, style_id,
-                         StackAnchor.max_spacing, parent, manager)
+        super().__init__(relative_rect, element_id, style_id, parent, manager)
         self.add_element_types("player", "soundplayer")
         self.settings = settings
         if self.settings.sliders_settings is None:
-            self.settings.sliders_settings = settings_.SliderDefaultSettings
+            self.settings.sliders_settings = settings_.SliderSettings()
         self.media_player = MediaPlayer(filename, ff_opts={"paused": True})
         self.filename = filename
         self.playing = self.paused = self.muted = False
@@ -46,7 +47,7 @@ class SoundPlayer(HStack):
         self.volume_before_mute = self.media_player.get_volume()
         self.play_start_time = self.start_position = self.pause_position = 0
 
-        style = self.callback_component.get_style()
+        style = self.style
         self.play_button = Button(
             self.settings.play_txt,
             pygame.Rect(0, 0, self.settings.buttons_size,
@@ -59,7 +60,7 @@ class SoundPlayer(HStack):
             pygame.Rect(0, 0, 100, 100),
             self.element_id+"_track_slider",
             common.style_id_or_copy(self, self.settings.sliders_style_id),
-            self, self.manager, ElementAlign.middle,
+            self, self.manager,
             self.settings.sliders_settings
         ).set_attr("builtin", True)
         self.volume_button = Button(
@@ -74,7 +75,7 @@ class SoundPlayer(HStack):
             pygame.Rect(0, 0, 100, 100),
             self.element_id+"_track_slider",
             common.style_id_or_copy(self, self.settings.sliders_style_id),
-            self, self.manager, ElementAlign.middle,
+            self, self.manager,
             self.settings.sliders_settings
         ).set_attr("builtin", True)
         self.__done = True
@@ -190,7 +191,7 @@ class SoundPlayer(HStack):
             self.resume()
         else:
             self.pause()
-        events._post_sound_player_event(events.SOUND_PLAYER_TOGGLE, self)
+        events._post_sound_player_event(events.SOUNDPLAYER_TOGGLE, self)
         self.status.invoke_callback("on_toggle")
 
     def _on_volume_click(self, btn):
@@ -198,7 +199,7 @@ class SoundPlayer(HStack):
             self.unmute()
         else:
             self.mute()
-        events._post_sound_player_event(events.SOUND_PLAYER_MUTE, self)
+        events._post_sound_player_event(events.SOUNDPLAYER_MUTE, self)
         self.status.invoke_callback("on_mute")
 
     def _on_track_move(self, slider):
@@ -207,12 +208,12 @@ class SoundPlayer(HStack):
         self.play()
         if was_paused:
             self.pause()
-        events._post_sound_player_event(events.SOUND_PLAYER_TRACK_MOVE, self)
+        events._post_sound_player_event(events.SOUNDPLAYER_TRACK_MOVE, self)
         self.status.invoke_callback("on_track_move")
 
     def _on_volume_move(self, slider):
         self.media_player.set_volume(self.get_volume())
-        events._post_sound_player_event(events.SOUND_PLAYER_VOLUME_MOVE, self)
+        events._post_sound_player_event(events.SOUNDPLAYER_VOLUME_MOVE, self)
         self.status.invoke_callback("on_volume_move")
 
     def on_logic(self):
@@ -230,7 +231,7 @@ class SoundPlayer(HStack):
                 if time_passed >= self.duration:
                     self.stop()
                     events._post_sound_player_event(
-                        events.SOUND_PLAYER_END, self)
+                        events.SOUNDPLAYER_END, self)
             else:
                 self.track_slider.set_value(
                     self.pause_position/self.duration)
@@ -243,7 +244,7 @@ class SoundPlayer(HStack):
             return
         if not self.__done:
             return
-        style = self.callback_component.get_style()
+        style = self.style
         btn_size = (self.settings.buttons_size,
                     self.relative_rect.h-style.stack.padding*2)
         self.play_button.set_size(btn_size)
@@ -264,11 +265,13 @@ class VideoPlayer(Element):
                  style_id: str = "",
                  parent: Element | None = None,
                  manager: Manager | None = None,
-                 settings: settings_.VideoPlayerSettings = settings_.VideoPlayerDefaultSettings
+                 settings: settings_.VideoPlayerSettings|None = None
                  ):
+        if settings is None:
+            settings = settings_.VideoPlayerSettings()
         self.settings = settings
         if self.settings.sliders_settings is None:
-            self.settings.sliders_settings = settings_.SliderDefaultSettings
+            self.settings.sliders_settings = settings_.SliderSettings()
         super().__init__(relative_rect, element_id, style_id,
                          ("element", "player", "videoplayer"), parent, manager)
         self.filename = filename
@@ -294,7 +297,7 @@ class VideoPlayer(Element):
         self.deactivate()
 
         self.__done = False
-        style = self.callback_component.get_style()
+        style = self.style
         self.video_image = Image(None,
                                  pygame.Rect(0, 0, 100, 100),
                                  self.element_id+"_video_image",
@@ -304,8 +307,7 @@ class VideoPlayer(Element):
         self.control_stack = HStack(
             pygame.Rect(0, 0, 200, 50),
             self.element_id+"_control_stack",
-            common.style_id_or_copy(self, self.settings.control_style_id),
-            StackAnchor.max_spacing, self, self.manager
+            common.style_id_or_copy(self, self.settings.control_style_id), self, self.manager
         ).set_attr("builtin", True)
 
         self.play_button = Button(
@@ -320,7 +322,7 @@ class VideoPlayer(Element):
             pygame.Rect(0, 0, 100, 100),
             self.element_id+"_track_slider",
             common.style_id_or_copy(self, self.settings.sliders_style_id),
-            self.control_stack, self.manager, ElementAlign.middle,
+            self.control_stack, self.manager,
             self.settings.sliders_settings
         ).set_attr("builtin", True)
         self.volume_button = Button(
@@ -335,7 +337,7 @@ class VideoPlayer(Element):
             pygame.Rect(0, 0, 100, 100),
             self.element_id+"_track_slider",
             common.style_id_or_copy(self, self.settings.sliders_style_id),
-            self.control_stack, self.manager, ElementAlign.middle,
+            self.control_stack, self.manager,
             self.settings.sliders_settings
         ).set_attr("builtin", True)
         self.__done = True
@@ -369,7 +371,7 @@ class VideoPlayer(Element):
                 self.frame_surface,
                 numpy.flip(numpy.rot90(frame[::-1]))
             )
-            self.video_image.image.set_surface(self.frame_surface, True)
+            self.video_image.image.set_surface(self.frame_surface.convert_alpha(), True)
         self.stop()
 
     def play(self):
@@ -469,7 +471,7 @@ class VideoPlayer(Element):
             self.resume()
         else:
             self.pause()
-        events._post_video_player_event(events.VIDEO_PLAYER_TOGGLE, self)
+        events._post_video_player_event(events.VIDEOPLAYER_TOGGLE, self)
         self.status.invoke_callback("on_toggle")
 
     def _on_volume_click(self):
@@ -477,7 +479,7 @@ class VideoPlayer(Element):
             self.unmute()
         else:
             self.mute()
-        events._post_video_player_event(events.VIDEO_PLAYER_MUTE, self)
+        events._post_video_player_event(events.VIDEOPLAYER_MUTE, self)
         self.status.invoke_callback("on_mute")
 
     def _on_track_move(self):
@@ -489,16 +491,16 @@ class VideoPlayer(Element):
                 self.frame_surface,
                 numpy.flip(numpy.rot90(frame[::-1]))
             )
-            self.video_image.image.set_surface(self.frame_surface, True)
+            self.video_image.image.set_surface(self.frame_surface.convert_alpha(), True)
         self.play()
         if was_paused:
             self.pause()
-        events._post_video_player_event(events.VIDEO_PLAYER_TRACK_MOVE, self)
+        events._post_video_player_event(events.VIDEOPLAYER_TRACK_MOVE, self)
         self.status.invoke_callback("on_track_move")
 
     def _on_volume_move(self):
         self.media_player.set_volume(self.get_volume())
-        events._post_video_player_event(events.VIDEO_PLAYER_VOLUME_MOVE, self)
+        events._post_video_player_event(events.VIDEOPLAYER_VOLUME_MOVE, self)
         self.status.invoke_callback("on_volume_move")
 
     def on_logic(self):
@@ -521,12 +523,12 @@ class VideoPlayer(Element):
                             numpy.flip(numpy.rot90(frame[::-1]))
                         )
                         self.video_image.image.set_surface(
-                            self.frame_surface, True)
+                            self.frame_surface.convert_alpha(), True)
                     self.last_frame_update = UIState.frame_count
                 if time_passed >= self.duration:
                     self.stop()
                     events._post_video_player_event(
-                        events.VIDEO_PLAYER_END, self)
+                        events.VIDEOPLAYER_END, self)
             else:
                 self.track_slider.set_value(
                     self.pause_position/self.duration)
@@ -539,7 +541,7 @@ class VideoPlayer(Element):
             return
         if not self.__done:
             return
-        style = self.callback_component.get_style()
+        style = self.style
         self.video_image.set_relative_pos(
             (style.stack.padding, style.stack.padding))
         self.video_image.set_size((self.relative_rect.w-style.stack.padding*2,
@@ -549,7 +551,7 @@ class VideoPlayer(Element):
         self.control_stack.set_size(
             (self.relative_rect.w, self.settings.control_h))
 
-        style = self.control_stack.callback_component.get_style()
+        style = self.control_stack.style
         btn_size = (self.settings.buttons_size,
                     self.control_stack.relative_rect.h-style.stack.padding*2)
         self.play_button.set_size(btn_size)

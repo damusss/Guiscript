@@ -60,7 +60,7 @@ class UIRoot:
             child._logic()
 
     def _render(self):
-        for child in self.children:
+        for child in sorted(self.children, key=lambda el: el.z_index):
             child._render(0, True)
 
     def get_absolute_topleft(self) -> pygame.Vector2:

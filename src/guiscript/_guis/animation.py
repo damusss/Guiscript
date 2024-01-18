@@ -42,6 +42,7 @@ class UIPropertyAnim(UIAnimation):
                  start: bool = True
                  ):
         self.element: "Element" = element
+        self.element.playing_animations.append(self)
         self.property_type: AnimPropertyType = property_type
         self.repeat_mode: AnimRepeatMode = repeat_mode
         self.ease_func = common.ANIMATION_FUNCTIONS[ease_func_name]
@@ -117,7 +118,7 @@ class UIPropertyAnim(UIAnimation):
             if self.current_value > self.end_value-1:
                 self.current_value = self.end_value
                 match self.repeat_mode:
-                    case AnimRepeatMode.norepeat:
+                    case AnimRepeatMode.once:
                         self.on_finish()
                         self.started = False
                         self.dead = True
@@ -133,7 +134,7 @@ class UIPropertyAnim(UIAnimation):
             if self.current_value <= 1:
                 self.current_value = 0
                 match self.repeat_mode:
-                    case AnimRepeatMode.norepeat:
+                    case AnimRepeatMode.once:
                         self.on_finish()
                         self.started = False
                         self.direction = 1
@@ -148,6 +149,12 @@ class UIPropertyAnim(UIAnimation):
                         self.start_time = pygame.time.get_ticks()
 
         self.apply_value()
+        
+    def destroy(self):
+        self.on_finish()
+        self.started = False
+        self.direction = 1
+        self.dead = True
 
 
 class UIStyleAnim(UIAnimation):
@@ -243,6 +250,7 @@ class UIAnimUpdater:
             anim.logic()
             if anim.dead:
                 cls.animations.remove(anim)
+                anim.element.playing_animations.remove(anim)
 
     @classmethod
     def register(cls, animation: UIPropertyAnim) -> typing.Self:

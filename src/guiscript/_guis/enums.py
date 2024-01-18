@@ -100,7 +100,7 @@ class AnimPropertyType(StrEnum):
 
 class AnimRepeatMode(StrEnum):
     """How should the property animation repeat when it ends"""
-    norepeat = "norepeat"
+    once = "once"
     restart = "restart"
     repeat = "repeat"
 

@@ -289,7 +289,7 @@ class UITextComp(UIComponent):
                                                                     style.text.antialas,
                                                                     style.text.color,
                                                                     style.text.bg_color,
-                                                                    self.element.relative_rect.w if style.text.do_wrap else 0)
+                                                                    max(self.element.relative_rect.w, 1) if style.text.do_wrap else 0)
         else:
             default_modifiers = {
                 richtext.ModifierName.font_name: style.text.font_name if style.text.font_name != "googleicons" else None,

@@ -47,6 +47,7 @@ class Manager:
         self.interact: UIInteract = UIInteract(self)
         self.navigation: UINavigation = UINavigation(self)
         self.scroll_multiplier: float = 12
+        self.min_scroll_handle_size: int = 5
         self.root: UIRoot = UIRoot(screen_surface)
 
         if is_current:

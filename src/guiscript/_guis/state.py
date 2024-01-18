@@ -17,6 +17,7 @@ class UIState:
     mouse_rel: pygame.Vector2 = pygame.Vector2()
     mouse_pressed: tuple[bool, bool, bool] = pygame.mouse.get_pressed()
     keys_pressed = pygame.key.get_pressed()
+    just_pressed = pygame.key.get_just_pressed()
     frame_count: int = 0
     space_pressed: bool = False
     num_managers: int = 0

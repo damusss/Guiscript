@@ -1,4 +1,4 @@
-import pygame
+import pygame, pathlib
 import sys, os
 import guiscript as guis
 from pygame import Rect as rect
@@ -21,32 +21,42 @@ def open_modal():
     
 def close_modal():
     modal.hide()
+    
+def starthover(opt: guis.Element):
+    opt.remove_animations()
+    opt.animate_h_to(60, 150)
+    
+def stophover(opt: guis.Element):
+    opt.remove_animations()
+    opt.animate_h_to(30, 150)
+    
+class FD:
+    fd: guis.FileDialog = None
+
+options = []
+
+def openfd():
+    if FD.fd is not None:
+        return
+    def onclose():
+        FD.fd = None
+    FD.fd = guis.FileDialog(os.getcwd(), pygame.Rect(50,50,700,500), settings=guis.FileDialogSettings(
+            selectionlist_settings=guis.SelectionListSettings(multi_select=True),            
+        ))
+    FD.fd.status.add_listener("on_close", onclose).element
+    FD.fd.title.set_tooltip("YO HI BROTHA", height=40)
 
 with guis.column((W, H), False) as MAIN:
     with guis.VStack(guis.SizeR(600,700), style_id="no_scroll").set_resizers(guis.ALL_RESIZERS):
-        el = guis.Entry(guis.SizeR(500,80), '<c fg="green">ciao!!</c>', settings=guis.EntrySettings(inner_style_id="richtext")).set_resizers(guis.ALL_RESIZERS)
-        tb = guis.Textbox(guis.SizeR(500,300), "ciaooo\ncome\nstaiii", settings=guis.TextboxSettings(inner_style_id="richtext")).set_resizers(guis.ALL_RESIZERS)
-        t=guis.Text("ABC\nDEF\nPKM", guis.SizeR(200,100), style_id="cursor")
-        t.text.set_cursor_index(1,1)
-        with guis.row((0, 150)):
-            with guis.column((200,0)):
-                with guis.row((0,50)):
-                    c1 = guis.Checkbox(guis.SizeR(40,40))
-                    guis.Text("Check 1", guis.ZeroR(), style_id="fill")
-                with guis.row((0,50)):
-                    c2 = guis.Checkbox(guis.SizeR(40,40))
-                    guis.Text("Check 2", guis.ZeroR(), style_id="fill") 
-            with guis.column((200,0)):
-                guis.Button(f"OPEN", guis.SizeR(200,60)).status.add_listener("on_click", open_modal)
-            
-        guis.bind_one_selected_only((c1, c2), True)
-
+        guis.Button("Open Filedialog", guis.SizeR(200,50)).status.add_listener("on_click", openfd).element.set_tooltip("Open Filedialog", "Open the silly file dialogue with coolie animations uwu")
+        guis.ColorPicker(guis.SizeR(300,300), pygame.Color(255,0,255)).set_resizers(guis.ALL_RESIZERS)
+        
 modal_element:guis.Window=guis.Window(guis.SizeR(300,300), "Modal Thing",
                                  settings=guis.WindowSettings(have_close_button=False)).status.set_drag(False).element.set_ignore(False, False)
 with modal_element.enter():
     guis.Button(f"HIDE", guis.SizeR(200,60)).status.add_listener("on_click", close_modal)
     
-modal = guis.ModalContainer(modal_element)
+modal = guis.Modal(modal_element)
           
 while True:   
     for event in pygame.event.get():
@@ -58,15 +68,18 @@ while True:
             screen = pygame.display.set_mode((W, H), pygame.RESIZABLE)
             manager.set_screen_surface(screen)
             MAIN.set_size((W, H))
-        elif event.type == guis.TEXTBOX_CHANGE:
-            if True:
-                txt = event.text
-                event.textbox.set_text(txt.replace("ciao", f'<b>ciao</b>'))
-                event.textbox.focus()
+        elif event.type == guis.FILEDIALOG_OK:
+            print(event.selected, event.path)
             
         manager.event(event)
         
     screen.fill("black")
+    
+    if FD.fd is not None:
+        if options != FD.fd.selectionlist.option_buttons:
+            for opt in FD.fd.selectionlist.option_buttons:
+                opt.status.add_multi_listeners(on_start_hover=starthover, on_stop_hover=stophover)
+            options = FD.fd.selectionlist.option_buttons
 
     manager.logic()
     guis.static_logic(1)

@@ -4,7 +4,7 @@ The manager contains all elements that belong to it and other objects and is the
 Multiple ones are possible, but you should only have one manager getting updated/rendered at once.<br>
 
 ## What is a 'current manager'
-When you pass `is_current=True` to the Manager's init or when you call set_current, the manager becomes the current.
+When you pass `is_current=True` to the Manager's init or when you call `set_current`, the manager becomes the current.
 This mean that when you create any element, and pass None (default) as the manager parameter, the manager set to current will be used.
 
 Whenever you need to change scene and use a different manager, call manager.`set_current()` before creating the next elements and remember to destroy the previous one to release the memory hold by the previous elements. For simple applications with a single scene, you won't ever need to do this.

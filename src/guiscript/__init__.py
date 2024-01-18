@@ -53,33 +53,24 @@ from ._guis.elements.factories import (
 from ._guis.elements.stacks import (VStack, HStack, Box)
 from ._guis.elements.players import (SoundPlayer, VideoPlayer)
 from ._guis.elements.menus import (DropMenu, SelectionList)
-from ._guis.elements.windows import (Window, ModalContainer) #, FileDialog)
+from ._guis.elements.windows import (Window, Modal, FileDialog)
 from ._guis.elements.entries import (Entry, Textbox)
+from ._guis.elements.extra import (ColorPicker, )
 
 from ._guis.settings import (
     SlideshowSettings, 
-    SlideshowDefaultSettings,
     SliderSettings,
-    SliderDefaultSettings,
     SoundPlayerSettings,
-    SoundPlayerDefaultSettings,
     VideoPlayerSettings,
-    VideoPlayerDefaultSettings,
     ProgressBarSettings,
-    ProgressBarDefaultSettings,
     DropMenuSettings,
-    DropMenuDefaultSettings,
     SelectionListSettings,
-    SelectionListDefaultSettings,
     EntrySettings,
-    EntryDefaultSettings,
     TextboxSettings,
-    TextboxDefaultSettings,
     WindowSettings,
-    WindowDefaultSettings,
-    CollapsingWindowDefaultSettings,
+    FileDialogSettings,
     ModalSettings,
-    ModalDefaultSettings
+    ColorPickerSettings
 )
 
 from ._guis.utils import (
@@ -87,6 +78,7 @@ from ._guis.utils import (
     ALL_RESIZERS,
     ANCHOR_PARENT,
     NO_SOUND,
+    EXTENSION_FOLDER,
     bind_one_selected_only,
     custom_hscrollbar,
     custom_vscrollbar,

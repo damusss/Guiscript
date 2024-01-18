@@ -73,7 +73,6 @@ class UIInteract:
                         self._text_select_el.text.selection_rects = select_rects
                         self._text_select_el.set_dirty()
                         self._text_select_el.status.invoke_callback("on_text_selection_change")
-
         # LEFT PRESSING
         if self._pressed_el is not None:
             self._pressed_el.status.invoke_callback("when_pressed")
@@ -113,7 +112,7 @@ class UIInteract:
             self._right_pressed_el.status.hovered = self._right_pressed_el.absolute_rect.collidepoint(UIState.mouse_pos)
             
             # stop pressing
-            if not UIState.mouse_pressed[1]:
+            if not UIState.mouse_pressed[2]:
                 self._right_pressed_el.status.right_pressed = False
                 self._right_pressed_el.status.invoke_callbacks(
                     "on_stop_right_press", "on_right_click")
@@ -168,7 +167,7 @@ class UIInteract:
                         self._text_select_start_press(self._pressed_el)
                         
                 # start right press
-                elif UIState.mouse_pressed[1]:
+                elif UIState.mouse_pressed[2]:
                     if not self._hovered_el.status.right_pressed:
                         self._hovered_el.status.right_pressed = True
                         self._hovered_el.status.invoke_callback("on_start_right_press")

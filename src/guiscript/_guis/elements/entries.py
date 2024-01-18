@@ -20,8 +20,10 @@ class Textbox(VStack):
                  style_id: str = "",
                  parent: Element | None = None,
                  manager: Manager | None = None,
-                 settings: settings_.TextboxSettings = settings_.TextboxDefaultSettings,
+                 settings: settings_.TextboxSettings|None = None
                  ):
+        if settings is None:
+            settings = settings_.TextboxSettings()
         super().__init__(relative_rect, element_id, style_id, parent, manager)
         self.add_element_type("textbox").status.add_listener("on_click", self._on_self_click)\
             .register_callbacks("on_change", "on_focus", "on_unfocus")
@@ -435,8 +437,10 @@ class Entry(VStack):
                  style_id: str = "",
                  parent: Element | None = None,
                  manager: Manager | None = None,
-                 settings: settings_.EntrySettings = settings_.EntryDefaultSettings,
+                 settings: settings_.EntrySettings|None = None
                  ):
+        if settings is None:
+            settings = settings_.EntrySettings()
         super().__init__(relative_rect, element_id, style_id, parent, manager, "invisible")
         self.vscrollbar.deactivate()
         self.hscrollbar.deactivate()
@@ -672,6 +676,7 @@ class Entry(VStack):
 
     def set_text(self, text: str) -> typing.Self:
         """Manually set the text of the entry"""
+        text = str(text)
         self.focus()
         self.text_element.text.set_text(text.replace("\n", ""))
         self.unfocus()
@@ -680,6 +685,7 @@ class Entry(VStack):
 
     def add_text(self, text: str) -> typing.Self:
         """Manually add text on the cursor position, replacing the selection if necessary"""
+        text = str(text)
         self.focus()
         self._on_unicode(text.replace("\n", ""))
         return self
@@ -689,6 +695,13 @@ class Entry(VStack):
         self._cursor_index = pygame.math.clamp(
             index, 0, len(self.text_element.text.real_text))
         self._refresh_cursor_idx()
+        return self
+    
+    def move_cursor(self, places: int) -> typing.Self:
+        return self.set_cursor_index(self._cursor_index+places)
+    
+    def delete_at_cursor(self, forward: bool = False) -> typing.Self:
+        self._on_delete() if forward else self._on_backspace()
         return self
 
     def remove_selection(self) -> typing.Self:

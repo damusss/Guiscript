@@ -27,6 +27,7 @@ ALL_RESIZERS: tuple[enums.Resizer] = (enums.Resizer.top,
                                       enums.Resizer.bottomright)
 ANCHOR_PARENT: str = "parent"
 NO_SOUND: str = "nosound"
+EXTENSION_FOLDER: str = "folder"
 
 
 def invis_element(relative_rect: pygame.Rect, element_id: str = "none", extra_style_id: str = "invisible",
@@ -178,6 +179,7 @@ def static_logic(delta_time: float = 1):
     UIState.mouse_rel = pygame.Vector2(pygame.mouse.get_rel())
     UIState.mouse_pressed = pygame.mouse.get_pressed()
     UIState.keys_pressed = pygame.key.get_pressed()
+    UIState.just_pressed = pygame.key.get_just_pressed()
     UIState.space_pressed = UIState.keys_pressed[pygame.K_SPACE]
     UIState.frame_count += 1
     UIAnimUpdater.logic()

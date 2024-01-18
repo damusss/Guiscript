@@ -75,7 +75,7 @@ class Element:
         self.ghost_element: Element | None = None
         self.ghost_offset: pygame.Vector2 = pygame.Vector2()
         self.element_surface: pygame.Surface = pygame.Surface(
-            self.relative_rect.size, pygame.SRCALPHA)
+            (max(self.relative_rect.w, 1), max(self.relative_rect.h, 1)), pygame.SRCALPHA)
         self.absolute_rect: pygame.Rect = self.relative_rect.copy()
         self.static_rect: pygame.Rect = self.relative_rect.copy()
         self.ignore_stack: bool = False
@@ -91,6 +91,8 @@ class Element:
         self.resizers: tuple[str] = ()
         self.resize_min: common.Coordinate | None = (20, 20)
         self.resize_max: common.Coordinate | None = None
+        self.playing_animations: list[UIPropertyAnim] = []
+        self.tooltip: Element|None = None
         self._resizers_elements: dict[str, "Element"] = {}
         self._anchor_observers: list["Element"] = []
         self._anchors: dict[str, common.UIAnchorData | None] = dict.fromkeys(("left", "right", "top", "bottom", "centerx", "centery"), None)
@@ -394,6 +396,11 @@ class Element:
                 rel.destroy()
         return self
 
+    def remove_animations(self) -> typing.Self:
+        """Set all property animations of the element to a dead state"""
+        for anim in list(self.playing_animations):
+            anim.destroy()
+
     # set
     def set_children(self, children: list["Element"], destroy_old: bool = False) -> typing.Self:
         """Replace the current element's children with the specified ones. The old children will be destroyed following the destroy_old flag"""
@@ -564,7 +571,7 @@ class Element:
 
     def set_relative_pos(self, position: common.Coordinate) -> typing.Self:
         """Set the relative position to the parent"""
-        if self.relative_rect.topleft == position:
+        if self.relative_rect.topleft == (int(position[0]), int(position[1])):
             return self
 
         self.relative_rect.topleft = position
@@ -578,12 +585,13 @@ class Element:
         self._apply_anchors()
         return self
 
-    def set_size(self, size: common.Coordinate, propagate_up: bool = False, apply_anchors: bool = True) -> typing.Self:
+    def set_size(self, size: common.Coordinate, propagate_up: bool = False, apply_anchors: bool = True, refresh_stack: bool = True) -> typing.Self:
         """Set the element's size"""
-        if self.relative_rect.size == size:
+        s0, s1 = int(size[0]), int(size[1])
+        if self.relative_rect.size == (s0, s1):
             return self
 
-        self.relative_rect.size = (max(1, size[0]), max(1, size[1]))
+        self.relative_rect.size = (max(1, s0), max(1, s1))
         self._update_absolute_rect_size(propagate_up)
         self._update_surface_size()
         for comp in self.components:
@@ -597,7 +605,7 @@ class Element:
             obs._apply_anchors()
         if apply_anchors:
             self._apply_anchors()
-        self._refresh_stack()
+        if refresh_stack: self._refresh_stack()
         return self
 
     def set_width(self, width: int) -> typing.Self:
@@ -661,7 +669,7 @@ class Element:
         self.parent._add_child(self)
         return self
 
-    def set_tooltip(self, title: str, description: str, width: int = 200, height: int = 200, title_h: int = 40, style_id: str = "copy", title_style_id: str = "copy", descr_style_id: str = "copy") -> "Element":
+    def set_tooltip(self, title: str, description: str = "", width: int = 200, height: int = 200, title_h: int = 40, style_id: str = "copy", title_style_id: str = "copy", descr_style_id: str = "copy") -> typing.Self:
         """Build a new tooltip object with the provided settings and register it"""
         tooltip_cont = Element(pygame.Rect(0, 0, width, height),
                                self.element_id+"tooltip_container",
@@ -681,15 +689,17 @@ class Element:
                 ("element", "tooltip", "text",
                  "tooltip_text", "tooltip_description"),
                 tooltip_cont, self.manager).text.set_text(description).element
+        self.tooltip = tooltip_cont
         tooltip_cont.hide()
         Tooltips.register(tooltip_cont, self)
-        return tooltip_cont
+        return self
 
     def set_custom_tooltip(self, tooltip: "Element") -> typing.Self:
         """Register a given tooltip object to appear when hovering this element"""
         if tooltip.z_index < common.Z_INDEXES["tooltip"]:
             tooltip.set_z_index(common.Z_INDEXES["tooltip"])
         tooltip.hide()
+        self.tooltip = tooltip
         Tooltips.register(tooltip, self)
         return self
 
@@ -709,37 +719,43 @@ class Element:
         self.render_offset = pygame.Vector2(render_offset)
         self.set_dirty()
         return self
+    
+    def build_components(self) -> typing.Self:
+        """Manually build the rendering components"""
+        for comp in self.components:
+            comp._build(self.style)
+        return self
 
     # animation
-    def animate_x(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+    def animate_x(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.once,
                   ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the x coordinate"""
         UIPropertyAnim(self, AnimPropertyType.x, increase,
                        duration_ms, repeat_mode, ease_func_name)
         return self
 
-    def animate_offset_x(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+    def animate_offset_x(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.once,
                          ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the x render offset coordinate"""
         UIPropertyAnim(self, AnimPropertyType.render_x, increase,
                        duration_ms, repeat_mode, ease_func_name)
         return self
 
-    def animate_y(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+    def animate_y(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.once,
                   ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the y coordinate"""
         UIPropertyAnim(self, AnimPropertyType.y, increase,
                        duration_ms, repeat_mode, ease_func_name)
         return self
 
-    def animate_offset_y(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+    def animate_offset_y(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.once,
                          ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the y render offset coordinate"""
         UIPropertyAnim(self, AnimPropertyType.render_y, increase,
                        duration_ms, repeat_mode, ease_func_name)
         return self
 
-    def animate_xy(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+    def animate_xy(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.once,
                    ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the x and y coordinates"""
         UIPropertyAnim(self, AnimPropertyType.x, increase,
@@ -748,7 +764,7 @@ class Element:
                        duration_ms, repeat_mode, ease_func_name)
         return self
 
-    def animate_offset_xy(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+    def animate_offset_xy(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.once,
                           ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the x and y render offset coordinates"""
         UIPropertyAnim(self, AnimPropertyType.render_x, increase,
@@ -757,21 +773,21 @@ class Element:
                        duration_ms, repeat_mode, ease_func_name)
         return self
 
-    def animate_w(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+    def animate_w(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.once,
                   ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the width"""
         UIPropertyAnim(self, AnimPropertyType.width, increase,
                        duration_ms, repeat_mode, ease_func_name)
         return self
 
-    def animate_h(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+    def animate_h(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.once,
                   ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the height"""
         UIPropertyAnim(self, AnimPropertyType.height, increase,
                        duration_ms, repeat_mode, ease_func_name)
         return self
 
-    def animate_wh(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+    def animate_wh(self, increase: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.once,
                    ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the width and height"""
         UIPropertyAnim(self, AnimPropertyType.width, increase,
@@ -780,27 +796,27 @@ class Element:
                        duration_ms, repeat_mode, ease_func_name)
         return self
 
-    def animate_x_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+    def animate_x_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.once,
                      ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the x coordinate setting the increase relative to the current value and end value"""
         return self.animate_x(value-self.relative_rect.x, duration_ms, repeat_mode, ease_func_name)
 
-    def animate_offset_x_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+    def animate_offset_x_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.once,
                             ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the x render offset coordinate setting the increase relative to the current value and end value"""
         return self.animate_offset_x(value-self.render_offset.x, duration_ms, repeat_mode, ease_func_name)
 
-    def animate_y_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+    def animate_y_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.once,
                      ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the y coordinate setting the increase relative to the current value and end value"""
         return self.animate_y(value-self.relative_rect.y, duration_ms, repeat_mode, ease_func_name)
 
-    def animate_offset_y_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+    def animate_offset_y_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.once,
                             ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the y render offset coordinate setting the increase relative to the current value and end value"""
         return self.animate_offset_y(value-self.render_offset.y, duration_ms, repeat_mode, ease_func_name)
 
-    def animate_xy_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+    def animate_xy_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.once,
                       ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the x and y coordinates setting the increase relative to the current value and end value"""
         self.animate_x(value-self.relative_rect.x, duration_ms,
@@ -809,7 +825,7 @@ class Element:
                        repeat_mode, ease_func_name)
         return self
 
-    def animate_offset_xy_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+    def animate_offset_xy_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.once,
                              ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the x and y render offset coordinates setting the increase relative to the current value and end value"""
         self.animate_offset_x(value-self.render_offset.x, duration_ms,
@@ -818,17 +834,17 @@ class Element:
                               repeat_mode, ease_func_name)
         return self
 
-    def animate_w_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+    def animate_w_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.once,
                      ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the width setting the increase relative to the current value and end value"""
         return self.animate_w(value-self.relative_rect.w, duration_ms, repeat_mode, ease_func_name)
 
-    def animate_h_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+    def animate_h_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.once,
                      ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the height setting the increase relative to the current value and end value"""
         return self.animate_h(value-self.relative_rect.h, duration_ms, repeat_mode, ease_func_name)
 
-    def animate_wh_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.repeat,
+    def animate_wh_to(self, value: float, duration_ms: int, repeat_mode: AnimRepeatMode = AnimRepeatMode.once,
                       ease_func_name: AnimEaseFunc = AnimEaseFunc.ease_in) -> typing.Self:
         """Create a new property animation for the width and height setting the increase relative to the current value and end value"""
         self.animate_w(value-self.relative_rect.w, duration_ms,
@@ -895,7 +911,7 @@ class Element:
         self._refresh_stack()
         self.build()
         self.position_changed()
-        self.status.invoke_callback("on_first_frame", "on_position_change")
+        self.status.invoke_callback("on_first_frame", "on_position_change", "on_build")
         
     def _apply_anchors(self):
         if all([x is None for x in self._anchors.values()]):

@@ -56,6 +56,15 @@ WINDOW_CLOSE = pygame.event.custom_type()
 WINDOW_DRAG = pygame.event.custom_type()
 WINDOW_COLLAPSE = pygame.event.custom_type()
 
+FILEDIALOG_CANCEL = pygame.event.custom_type()
+FILEDIALOG_ENTER = pygame.event.custom_type()
+FILEDIALOG_BACK = pygame.event.custom_type()
+FILEDIALOG_OK = pygame.event.custom_type()
+FILEDIALOG_CLOSE = pygame.event.custom_type()
+FILEDIALOG_HOME = pygame.event.custom_type()
+
+COLORPICKER_CHANGE = pygame.event.custom_type()
+
 
 def _post_base_event(type_: int, element: "Element"):
     pygame.event.post(pygame.Event(type_, {
@@ -180,5 +189,30 @@ def _post_window_event(mode: str, element: "Element"):
             "element": element,
             "window": element,
             "collapsed": element.collapsed
+        }
+    ))
+
+
+def _post_filedialog_event(type: int, element: "Element"):
+    pygame.event.post(pygame.Event(
+        type,
+        {
+            "id": element.element_id,
+            "element": element,
+            "filedialog": element,
+            "path": element.current_path,
+            "selected": element.get_valid_selected()
+        }
+    ))
+    
+
+def _post_colorpicker_event(element: "Element"):
+    pygame.event.post(pygame.Event(
+        COLORPICKER_CHANGE,
+        {
+            "id": element.element_id,
+            "element": element,
+            "colorpicker": element,
+            "color": element.color,
         }
     ))

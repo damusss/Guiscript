@@ -1,5 +1,6 @@
 import dataclasses
 import typing
+import pathlib
 
 from .enums import SliderAxis, ProgressBarDirection, DropMenuDirection, Resizer
 from . import common
@@ -102,8 +103,8 @@ class EntrySettings:
     repeat_speed: int = 40
     repeat_start_cooldown: int = 370
     disabled_text_style_id: str = "entry_disabled_text"
-    
-    
+
+
 @dataclasses.dataclass(slots=True)
 class TextboxSettings:
     """Initialization settings for the textbox element"""
@@ -137,26 +138,51 @@ class WindowSettings:
     scrollbars_style_id: str = "copy"
     collapse_down_txt: str = "arrow_drop_down"
     collapse_up_txt: str = "arrow_drop_up"
-    
-    
+
+
+@dataclasses.dataclass(slots=True)
+class FileDialogSettings:
+    allow_folder: bool = True
+    extension_whitelist: list[str | pathlib.Path] | None = None
+    extension_blacklist: list[str | pathlib.Path] | None = None
+    name_whitelist: list[str | pathlib.Path] | None = None
+    name_blacklist: list[str | pathlib.Path] | None = None
+    full_name_whitelist: list[str | pathlib.Path] | None = None
+    full_name_blacklist: list[str | pathlib.Path] | None = None
+    path_whitelist: list[str | pathlib.Path] | None = None
+    path_blacklist: list[str | pathlib.Path] | None = None
+    window_settings: WindowSettings = None
+    selectionlist_settings: SelectionListSettings = None
+    entry_settings: EntrySettings = None
+    entry_buttons_h: int = 30
+    top_btns_w: int = 30
+    bottom_btns_rel_w: float = 0.15
+    entry_style_id: str = "copy"
+    selectionlist_style_id: str = "copy"
+    buttons_style_id: str = "copy"
+    back_btn_txt: str = "arrow_back"
+    home_btn_txt: str = "home"
+
+
 @dataclasses.dataclass(slots=True)
 class ModalSettings:
     destroy_modal_element_on_destroy: bool = True
     hide_when_clicking_sourroundings: bool = False
 
 
-SlideshowDefaultSettings = SlideshowSettings()
-SliderDefaultSettings = SliderSettings()
-SoundPlayerDefaultSettings = SoundPlayerSettings(
-    sliders_settings=SliderDefaultSettings)
-VideoPlayerDefaultSettings = VideoPlayerSettings(
-    sliders_settings=SliderDefaultSettings)
-ProgressBarDefaultSettings = ProgressBarSettings()
-DropMenuDefaultSettings = DropMenuSettings()
-SelectionListDefaultSettings = SelectionListSettings()
-EntryDefaultSettings = EntrySettings()
-TextboxDefaultSettings = TextboxSettings()
-WindowDefaultSettings = WindowSettings()
-CollapsingWindowDefaultSettings = WindowSettings(
-    have_collapse_button=True, have_close_button=False)
-ModalDefaultSettings = ModalSettings()
+@dataclasses.dataclass(slots=True)
+class ColorPickerSettings:
+    alpha: bool = True
+    range_01: bool = False
+    hex: bool = True
+    main_preview: bool = True
+    rows_h: int = 32
+    previews_w: int = 32
+    entries_w: int = 55
+    slider_settings: SliderSettings|None = None
+    entry_settings: EntrySettings|None = None
+    hex_entry_settings: EntrySettings|None = None
+    previews_style_id: str = "copy"
+    main_preview_style_id: str = "copy"
+    sliders_style_id: str = "copy"
+    entries_style_id: str = "copy"

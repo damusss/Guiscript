@@ -23,8 +23,10 @@ class DropMenu(Element):
                  style_id: str = "",
                  parent: Element | None = None,
                  manager: Manager | None = None,
-                 settings: settings_.DropMenuSettings = settings_.DropMenuDefaultSettings,
+                 settings: settings_.DropMenuSettings|None = None
                  ):
+        if settings is None:
+            settings = settings_.DropMenuSettings()
         super().__init__(relative_rect, element_id, style_id,
                          ("element", "menu", "dropmenu"), parent, manager)
         self.deactivate().status.register_callbacks(
@@ -54,6 +56,7 @@ class DropMenu(Element):
             .set_ignore(stack=True, scroll=True).hide().set_z_index(common.Z_INDEXES["menu"]).add_element_type("dropmenu_menu").set_attr("builtin", True)
         self.__done = True
         self.build()
+        self._build_options()
         self.position_changed()
 
     def set_options(self, options: list[str], selected_option: str) -> typing.Self:
@@ -61,6 +64,7 @@ class DropMenu(Element):
         self.options = list(options)
         self.option_button.set_text(selected_option)
         self.build()
+        self._build_options()
         return self
 
     def get_selected(self) -> str:
@@ -126,13 +130,17 @@ class DropMenu(Element):
             (self.option_button.relative_rect.w, self.style.stack.padding))
         self.menu_cont.set_size(
             (self.relative_rect.w-self.style.stack.padding*2, 1))
+        
+    def _build_options(self):
         self.menu_cont.destroy_children()
+        self.menu_cont._done = False
         for i, opt in enumerate(self.options):
             Button(opt, pygame.Rect(0, 0, 0, self.settings.option_height),
                    self.element_id +
                    f"_option_{i}", common.style_id_or_copy(
                 self.menu_cont, self.settings.option_style_id),
                 False, self.menu_cont, self.manager).status.add_listener("on_click", self._on_option_click).element.add_element_type("dropmenu_option").set_attr("builtin", True)
+        self.menu_cont._done = True
         self.menu_cont._refresh_stack()
 
     def on_logic(self):
@@ -160,8 +168,10 @@ class SelectionList(VStack):
                  style_id: str = "",
                  parent: Element | None = None,
                  manager: Manager | None = None,
-                 settings: settings_.SelectionListSettings = settings_.SelectionListDefaultSettings,
+                 settings: settings_.SelectionListSettings|None = None
                  ):
+        if settings is None:
+            settings = settings_.SelectionListSettings()
         super().__init__(relative_rect, element_id, style_id, parent, manager)
         self.settings: settings_.SelectionListSettings = settings
         self.set_options(options)
@@ -201,7 +211,7 @@ class SelectionList(VStack):
         """Set the options and rebuild the element"""
         self.options: list[str] = list(options)
         self.option_buttons: list[Button] = []
-        self.build()
+        self._build_options()
         return self
 
     def _on_option_select(self, btn: Button):
@@ -216,10 +226,9 @@ class SelectionList(VStack):
         self.status.invoke_callback("on_option_deselect", btn.text.text)
         events._post_selectionlist_event("deselect", self, btn.text.text)
 
-    def build(self):
-        if not self.manager._running:
-            return
+    def _build_options(self):
         self.destroy_children()
+        self._done = False
         for i, option in enumerate(self.options):
             btn = Button(option, pygame.Rect(0, 0, 0, self.settings.option_height),
                          self.element_id +
@@ -229,3 +238,5 @@ class SelectionList(VStack):
                 status.add_multi_listeners(
                     on_select=self._on_option_select, on_deselect=self._on_option_deselect).element.set_attr("builtin", True)
             self.option_buttons.append(btn)
+        self._done = True
+        self._refresh_stack()

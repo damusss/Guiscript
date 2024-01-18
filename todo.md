@@ -1,10 +1,11 @@
 THINGS
 
-- guide
+- style caching
+- resizing with a lot of elements lag
 
 ELEMENTS
 
-- file dialog
+...
 
 DONE THINGS
 
@@ -45,6 +46,7 @@ DONE THINGS
 - rich text
 - sounds
 - bugfix
+- guide
 
 DONE ELEMENTS
 
@@ -73,3 +75,4 @@ DONE ELEMENTS
 - textbox
 - box
 - row/column
+- filedialog

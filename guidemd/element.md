@@ -107,7 +107,8 @@ You can also animate
 - render offset
 
 To do that check the numerous `animate_*` methods that will create property animations objects and update them<br>
-If the method name ends in 'to' it means the increase amount will be calcluated based on the final amount and the starting amount
+If the method name ends in 'to' it means the increase amount will be calcluated based on the final amount and the starting amount<br>
+You can also remove animations and access the current playing animations
 
 ## Ignore Flags, Offsets & More
 
@@ -132,6 +133,9 @@ You can use the appropriate methods to set, check and remove anchors. When an an
 
 ## Resizers
 With the appropriate methods small resizer elements on the specified element positions will be created and when they are pressed the element will resize. Useful for things like windows or textboxes. To allow a change in cursor the custom attr `resizer_name` is set
+
+## Tooltips
+Either automatically make a tooltip with a title and description or set your own element as one with the `set_[custom_]tooltip` method that will automatically show when hovering the element for long enough
 
 ## Subclassing
 When subclassing, remember to call the appropriate parent class's `__init__` method. Avoid using the 'private' attributes unless it's absolutely necessary. Methods like `init`, `on_logic`, `on_render`, `on_destroy`, `on_event`, `_refresh_stack` (implemented by stacks), `size_changed`, `style_changed`, `position_changed`, `build` have a default empty implementation and are supposed to be overridden whenever you need.

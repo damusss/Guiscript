@@ -21,8 +21,10 @@ class ProgressBar(Element):
                  style_id: str = "",
                  parent: Element | None = None,
                  manager: Manager | None = None,
-                 settings: settings_.ProgressBarSettings = settings_.ProgressBarDefaultSettings,
+                 settings: settings_.ProgressBarSettings|None = None,
                  ):
+        if settings is None:
+            settings = settings_.ProgressBarSettings()
         super().__init__(relative_rect, element_id, style_id,
                          ("element", "progressbar"), parent, manager)
         self.deactivate()
@@ -84,8 +86,10 @@ class Slider(Element):
                  style_id: str = "",
                  parent: Element | None = None,
                  manager: Manager | None = None,
-                 settings: settings_.SliderSettings = settings_.SliderDefaultSettings,
+                 settings: settings_.SliderSettings|None = None,
                  ):
+        if settings is None:
+            settings = settings_.SliderSettings()
         super().__init__(relative_rect, element_id, style_id,
                          ("element", "slider"), parent, manager)
         self.settings: settings_.SliderSettings = settings
@@ -127,6 +131,10 @@ class Slider(Element):
     def get_percent(self) -> float:
         """Return the current value in the range 0-100"""
         return self.get_value()*100
+    
+    def get_range(self, max_: float, min_: float = 0):
+        """Return the current value in a custom range min-max"""
+        return min_ + (self.get_value()*max_)
 
     def set_value(self, value: float) -> typing.Self:
         """Set the value. Must be between 0-1"""
@@ -142,6 +150,7 @@ class Slider(Element):
             self.handle.set_relative_pos(
                 (self.bar.relative_rect.centerx-self.settings.handle_size//2, pos))
         self.buffers.update("value", value)
+        self._prev_value = value
         return self
 
     def set_percent(self, value_percent: float) -> typing.Self:
@@ -162,6 +171,7 @@ class Slider(Element):
                 events._post_slider_event(prev, val, self)
                 self.status.invoke_callback("on_move")
                 self.buffers.update("value", val)
+            self._prev_value = prev
         elif self.settings.axis == "vertical" and UIState.mouse_rel[1] != 0:
             prev = self.get_value()
             self.handle.set_relative_pos((self.handle.relative_rect.x,
@@ -173,11 +183,12 @@ class Slider(Element):
                 events._post_slider_event(prev, val, self)
                 self.status.invoke_callback("on_move")
                 self.buffers.update("value", val)
+            self._prev_value = prev
 
     def build(self):
         if not self.manager._running:
             return
-        cur_value = self.get_value()
+        cur_value = self._prev_value
         self.handle.set_size(
             (self.settings.handle_size, self.settings.handle_size))
         if self.settings.axis == "horizontal":
@@ -263,8 +274,10 @@ class Slideshow(Element):
                  style_id: str = "",
                  parent: Element | None = None,
                  manager: Manager | None = None,
-                 settings: settings_.SlideshowSettings = settings_.SlideshowDefaultSettings
+                 settings: settings_.SlideshowSettings|None = None
                  ):
+        if settings is None:
+            settings = settings_.SlideshowSettings()
         super().__init__(relative_rect, element_id, style_id,
                          ("element", "image", "slideshow"), parent, manager)
         self.settings: settings_.SlideshowSettings = settings

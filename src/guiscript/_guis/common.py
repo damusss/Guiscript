@@ -316,6 +316,15 @@ def ease_out_circ(t: float) -> float:
     return math.sqrt(abs(1 - (t - 1) * (t - 1)))
 
 
+def hex_to_rgba(hex: str, a: bool = True) -> tuple[int]:
+    hex = hex.replace("#", "").strip()
+    return tuple(int(hex[i:i+2], 16) for i in (0, 2, 4)) if not a else tuple(int(hex[i:i+2], 16) for i in (0, 2, 4, 6))
+    
+    
+def rgba_to_hex(r,g,b,a) -> str:
+    return '#{:02x}{:02x}{:02x}'.format(r, g, b) if a is None else '#{:02x}{:02x}{:02x}{:02x}'.format(r, g, b, a)
+
+
 ANIMATION_FUNCTIONS = {
     'linear': linear,
     'ease_in': ease_in,
@@ -522,7 +531,68 @@ modal_container:: {
     image.image 'builtin.1x1';
 }
 
+soundplayer:: {
+    stack.scroll_x false;
+    stack.scroll_y false;
+}
+
 / INNER ELEMENTS
+colorpicker_preview_image:: {
+    stack.fill_x true;
+    stack.fill_y true;
+}
+
+colorpicker_row:: {
+    stack.fill_x true;
+}
+
+colorpicker_slider:: {
+    stack.fill_x true;
+}
+
+colorpicker_hex_entry:: {
+    stack.fill_x true;
+}
+
+colorpicker_preview:: {
+    image.image 'builtin.1x1';
+    bg.enabled false;
+    outline.enabled false;
+    image.fill true;
+}
+
+filedialog_button:: {
+    stack.fill_y true;
+}
+
+filedialog_back_button, filedialog_home_button:: {
+    text.font_name googleicons;
+    text.font_size 22;
+}
+
+filedialog_path_entry:: {
+    stack.fill_y true;
+    stack.fill_x true;
+}
+
+filedialog_selectionlist:: {
+    stack.fill_y true;
+    stack.fill_x true;
+}
+
+filedialog_row:: {
+    stack.fill_x true;
+}
+
+filedialog_bottom_row:: {
+    stack.anchor right;
+}
+
+filedialog_content:: {
+    stack.scroll_x false;
+    stack.scroll_y false;
+}
+
 entry_text:: {
     text.do_wrap false;
     text.grow_x true;
@@ -548,11 +618,16 @@ slideshow_arrow:: {
     outline.enabled false;
 }
 
-soundplayer_button,videoplayer_button:: {
+soundplayer_button, videoplayer_button:: {
     text.font_name googleicons;
     text.font_size 22;
     bg.enabled false;
     outline.enabled false;
+}
+
+videoplayer_control_stack:: {
+    stack.scroll_x false;
+    stack.scroll_y false;
 }
 
 dropmenu_arrow::{
@@ -619,6 +694,11 @@ window_collapse_button:: {
     text.color (180, 180, 180);
 }
 
+.fildialog_selectionlist_option:: {
+    text.align left;
+    text.font_align left;
+}
+
 .active_cont:hover {
     bg.color (32, 32, 32);
 }
@@ -645,13 +725,12 @@ window_collapse_button:: {
     image.enabled false;
     icon.enabled false;
     shape.enabled false;
-    stack.padding false;
+    stack.padding 0;
     stack.floating_scrollbars true;
 }
 
 .icons_font:: {
     text.font_name googleicons;
-    text.font_size 30;
 }
 
 .no_scroll:: {

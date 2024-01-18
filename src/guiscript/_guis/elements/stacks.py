@@ -1,5 +1,6 @@
 import pygame
 import typing
+import inspect
 
 from .element import Element
 from ..manager import Manager
@@ -67,6 +68,15 @@ class UIStack(Element):
         self.vscrollbar._refresh(self.total_y-self.content_y)
         self.hscrollbar._refresh(self.total_x-self.content_x)
         return self
+    
+    def __enter__(self, *args):
+        self._done = False
+        return super().__enter__(*args)
+    
+    def __exit__(self, *args):
+        self._done = True
+        self._refresh_stack()
+        return super().__exit__(*args)
 
 
 class VStack(UIStack):
@@ -86,6 +96,7 @@ class VStack(UIStack):
     def _refresh_stack(self):
         if not self.manager._running or not self._done:
             return
+
         style = self.style
         total_x = 0
         total_y = style.stack.padding
@@ -162,7 +173,7 @@ class VStack(UIStack):
         current_y = 0
         if total_y < (self.relative_rect.h-scroll_y):
             if style.stack.shrink_y:
-                self.set_size((self.relative_rect.w, total_y))
+                self.set_size((self.relative_rect.w, total_y), True, refresh_stack=False)
             else:
                 match style.stack.anchor:
                     case "center":
@@ -171,7 +182,7 @@ class VStack(UIStack):
                     case "bottom" | "right":
                         current_y = (self.relative_rect.h-scroll_y)-total_y
         elif total_y > self.relative_rect.h and style.stack.grow_y:
-            self.set_size((self.relative_rect.w, total_y))
+            self.set_size((self.relative_rect.w, total_y), True, refresh_stack=False)
         current_y += style.stack.padding
 
         i_o = 0

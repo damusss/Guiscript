@@ -31,7 +31,7 @@ def help_element_types() -> typing.LiteralString:
         Slideshow.left_arrow: (*Button, slideshow_arrow, slideshow_left_arrow)
         Slideshow.right_arrow: (*Button, slideshow_arrow, slideshow_right_arrow)
         
-    SoundPlayer: (*HStack, player, soundplayer)
+    SoundPlayer(HStack): (*HStack, player, soundplayer)
         SoundPlayer.track_slider: (*Slider, soundplayer_slider, soundplayer_track_slider)
         SoundPlayer.volume_slider: (*Slider, soundplayer_slider, soundplayer_volume_slider)
         SoundPlayer.play_button: (*Button, soundplayer_button, soundplayer_play_button)
@@ -51,24 +51,55 @@ def help_element_types() -> typing.LiteralString:
         DropMenu.menu_cont: (*VStack, dropmenu_menu)
             DropMenu.menu_cont.*: (*Button, dropmenu_option)
             
-    SelectionList: (*VStack, menu, selectionlist)
+    SelectionList(VStack): (*VStack, menu, selectionlist)
         SelectionList.*: (*Button, selectionlist_option)
     
-    Entry: (*HStack, entry)
+    Entry(VStack): (*VStack, entry)
         Entry.text_element: (*Text, entry_text)
         
-    Textbox: (*HStack, textbox)
+    Textbox(VStack): (*VStack, textbox)
         Textbox.text_element: (*Text, entry_text)
         
     Window: (element, window)
         Window.title_bar: (*HStack, window_title_bar)
             Window.title: (*Button, window_title)
-            ?Window.close_btn: (*Button, window_close_button)
-            ?Window.collapse_btn: (*Button, window_collapse_button)
+            ?Window.close_button: (*Button, window_close_button)
+            ?Window.collapse_button: (*Button, window_collapse_button)
         Window.content: (*VStack, window_content)
         
-    ModalContainer: (*VStack, modal_container)
+    FileDialog(Window): (*Window, filedialog)
+        FileDialog.top_row_cont: (*HStack, filedialog_row, filedialog_top_row)
+            FileDialog.home_button: (*Button, filedialog_button, filedialog_home_button)
+            FileDialog.back_button: (*Button, filedialog_button, filedialog_back_button)
+            FileDialog.path_entry: (*Entry, filedialog_path_entry)
+        FileDialog.selectionlist: (*SelectionList, filedialog_selectionlist)
+        FileDialog.bottom_row_cont: (*HStack, filedialog_row, filedialog_bottom_row)
+            FileDialog.enter_button: (*Button, filedialog_button, filedialog_enter_button)
+            FileDialog.cancel_button: (*Button, filedialog_button, filedialog_cancel_button)
+            FileDialog.ok_button: (*Button, filedialog_button, filedialog_ok_button)
+        
+    ModalContainer(VStack): (*VStack, modal_container)
         ModalContainer.modal_element: any
+        
+    ColorPicker(VStack): (*VStack, colorpicker)
+        ?ColorPicker.preview_image: (*Image, colorpicker_preview, colorpicker_preview_image)
+        ColorPicker.row_r: (*HStack, colorpicker_row, colorpicker_row_r)
+            ColorPicker.slider_r: (*Slider, colorpicker_slider, colorpicker_slider_r)
+            ColorPicker.entry_r: (*Entry, colorpicker_entry, colorpicker_entry_r)
+            ColorPicker.preview_r: (*Image, colorpicker_preview, colorpicker_preview_r)
+        ColorPicker.row_g: (*HStack, colorpicker_row, colorpicker_row_g)
+            ColorPicker.slider_g: (*Slider, colorpicker_slider, colorpicker_slider_g)
+            ColorPicker.entry_g: (*Entry, colorpicker_entry, colorpicker_entry_g)
+            ColorPicker.preview_g: (*Image, colorpicker_preview, colorpicker_preview_g)
+        ColorPicker.row_b: (*HStack, colorpicker_row, colorpicker_row_b)
+            ColorPicker.slider_b: (*Slider, colorpicker_slider, colorpicker_slider_b)
+            ColorPicker.entry_b: (*Entry, colorpicker_entry, colorpicker_entry_b)
+            ColorPicker.preview_b: (*Image, colorpicker_preview, colorpicker_preview_b)
+        ?ColorPicker.row_a: (*HStack, colorpicker_row, colorpicker_row_a)
+            ?ColorPicker.slider_a: (*Slider, colorpicker_slider, colorpicker_slider_a)
+            ?ColorPicker.entry_a: (*Entry, colorpicker_entry, colorpicker_entry_a)
+            ?ColorPicker.preview_a: (*Image, colorpicker_preview, colorpicker_preview_a)
+        ?ColorPicker.hex_entry: (*Entry, colorpicker_entry, colorpicker_hex_entry)
         
     row -> (*HStack, row)
     column -> (*VStack, column)
@@ -345,6 +376,24 @@ def help_events() -> typing.LiteralString:
         extra properties:
             window: Window
             collapsed: bool
+            
+    FileDialog(Window)
+        FILEDIALOG_CLOSE
+        FILEDIALOG_HOME
+        FILEDIALOG_BACK
+        FILEDIALOG_ENTER
+        FILEDIALOG_CANCEL
+        FILEDIALOG_OK
+        extra properties:
+            filedialog: FileDialog
+            path: pathlib.Path
+            selected: list[pathlib.Path]
+            
+    ColorPicker:
+        COLORPICKER_CHANGE
+        extra properties:
+            colorpicker: ColorPicker
+            color: Color
         
     """
 
@@ -414,6 +463,20 @@ def help_callbacks() -> typing.LiteralString:
     Window:
         on_close
         on_collapse
+        
+    FileDialog(Window):
+        on_back
+        on_home
+        on_enter
+        on_cancel
+        on_ok
+        extra args:
+            selected: list[pathlib.Path]
+            
+    ColorPicker:
+        on_change
+        extra args:
+            color: Color
     """
 
 
@@ -424,6 +487,7 @@ def help_buffers() -> typing.LiteralString:
     Slider: value (sync with Slider.get_value())
     Entry: text (sync with Entry.get_text())
     Textbox: text (sync with Textbox.get_text())
+    ColorPicker: color (sync with ColorPicker.color)
     """
 
 
