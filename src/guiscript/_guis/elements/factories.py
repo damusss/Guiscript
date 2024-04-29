@@ -90,6 +90,7 @@ class Slider(Element):
                  ):
         if settings is None:
             settings = settings_.SliderSettings()
+        self._prev_value = settings.start_value
         super().__init__(relative_rect, element_id, style_id,
                          ("element", "slider"), parent, manager)
         self.settings: settings_.SliderSettings = settings
@@ -134,7 +135,12 @@ class Slider(Element):
     
     def get_range(self, max_: float, min_: float = 0):
         """Return the current value in a custom range min-max"""
-        return min_ + (self.get_value()*max_)
+        return min_ + (self.get_value()*(max_-min_))
+    
+    def set_from_range(self, value: float, max_: float, min_: float = 0) -> typing.Self:
+        """Set the value from a custom range min-max"""
+        self.set_value((value-min_)/(max_-min_))
+        return self
 
     def set_value(self, value: float) -> typing.Self:
         """Set the value. Must be between 0-1"""

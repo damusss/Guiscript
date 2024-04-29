@@ -644,6 +644,7 @@ dropmenu_option, selectionlist_option:: {
 
 dropmenu_menu:: {
     stack.grow_y true;
+    stack.shrink_y true;
     stack.padding 2;
     stack.spacing 2;
 }
@@ -773,5 +774,9 @@ window_collapse_button:: {
     stack.shrink_x true;
     stack.grow_y true;
     stack.shrink_y true;
+}
+
+.dark_bg::{
+    bg.color $DARK_COLOR;
 }
 """

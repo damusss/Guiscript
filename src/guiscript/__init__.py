@@ -33,7 +33,9 @@ from ._guis.enums import (
     AnimEaseFunc,
     StyleAnimPropertyType,
     Resizer,
-    Anchor
+    Anchor,
+    DockAnchor,
+    DockConn
 )
 
 from ._guis.elements.factories import (

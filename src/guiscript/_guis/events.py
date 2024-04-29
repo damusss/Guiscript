@@ -64,6 +64,7 @@ FILEDIALOG_CLOSE = pygame.event.custom_type()
 FILEDIALOG_HOME = pygame.event.custom_type()
 
 COLORPICKER_CHANGE = pygame.event.custom_type()
+MODAL_HIDE = pygame.event.custom_type()
 
 
 def _post_base_event(type_: int, element: "Element"):
@@ -214,5 +215,15 @@ def _post_colorpicker_event(element: "Element"):
             "element": element,
             "colorpicker": element,
             "color": element.color,
+        }
+    ))
+    
+def _post_modal_event(element: "Element"):
+    pygame.event.post(pygame.Event(
+        MODAL_HIDE,
+        {
+            "id": element.element_id,
+            "element": element,
+            "modal": element,
         }
     ))

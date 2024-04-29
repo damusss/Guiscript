@@ -360,6 +360,11 @@ class Element:
             self.add_element_type(et)
         return self
     
+    def add_style_id(self, style_id: str) -> typing.Self:
+        """Add the specified style prefixing it with ';' if necessary"""
+        self.set_style_id(f"{self.style_id};{style_id}" if self.style_id else style_id)
+        return self
+    
     def anchors_padding(self, padding: float, *skip_anchors: str) -> typing.Self:
         """Automatically set the offset of some anchors with the provided padding, inverting it for right and bottom. The specified anchors will be skipped"""
         for na, ad in self._anchors.items():
@@ -429,19 +434,19 @@ class Element:
                 ch.set_parent(self)
         return self
     
-    def set_anchors(self, *target_selfanchor_targetanchor_offset: tuple[typing.Union[typing.Literal["parent"], None, "Element"], enums.Anchor, enums.Anchor, float]) -> typing.Self:
+    def set_anchors(self, *target_selfanchor_targetanchor_offset_ignorestack: tuple[typing.Union[typing.Literal["parent"], None, "Element"], enums.Anchor, enums.Anchor, float]) -> typing.Self:
         """Sets multiple anchors. This element's set_anchor function will be called for each of the provided tuples which items should correspond to the arguments"""
-        for tuple_data in target_selfanchor_targetanchor_offset:
+        for tuple_data in target_selfanchor_targetanchor_offset_ignorestack:
             self.set_anchor(*tuple_data)
         return self
     
-    def set_anchor(self, target: typing.Union[typing.Literal["parent"], None, "Element"], self_anchor: enums.Anchor = "none", target_anchor: enums.Anchor = "none", offset: float = 0) -> typing.Self:
+    def set_anchor(self, target: typing.Union[typing.Literal["parent"], None, "Element"], self_anchor: enums.Anchor = "none", target_anchor: enums.Anchor = "none", offset: float = 0, ignore_stack: bool = True) -> typing.Self:
         """
         Sets an anchor of the element. The side/position 'self_anchor' of this element will follow the side/position of 'target_anchor' of target. 
         If both are set to left, the left of this element will follow the left of the target. 
         NOTE: centerx and centery are not compatible with left, right and top, bottom respectively
         """
-        self.set_ignore(stack=True)
+        if ignore_stack: self.set_ignore(stack=True)
         if self_anchor not in ["left", "right", "top", "bottom", "centerx", "centery"] or target_anchor not in ["left", "right", "top", "bottom", "centerx", "centery"]:
             raise UIError(
                 f"Invalid anchor. Valid anchors are left, right, top, bottom, centerx, centery")

@@ -260,6 +260,7 @@ def help_style_script() -> typing.LiteralString:
         fill, fill_x, fill_y: shortcuts for space filling elements as they are used a lot
         inactive: default dark bg color
         resize, resize_x, resize_y: apply both grow and shrink stack properties for the specified axis
+        dark_bg
     
     Have fun styling your elements!
     """

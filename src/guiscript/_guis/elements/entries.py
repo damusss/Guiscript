@@ -425,6 +425,13 @@ class Textbox(VStack):
         """Manually delete the currently selected text"""
         self._remove_selection()
         return
+    
+    #def move_cursor(self, places: int) -> typing.Self:
+    #    return self.set_cursor_index(self._cursor_index+places)
+    
+    def delete_at_cursor(self, forward: bool = False) -> typing.Self:
+        self._on_delete() if forward else self._on_backspace()
+        return self
 
 class Entry(VStack):
     """An element where you can input text on a single line"""

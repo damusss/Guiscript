@@ -94,7 +94,7 @@ def bind_one_selected_only(selectable_elements: list[Element], can_deselect: boo
             el.status.add_listener("on_select", _on_select)
             
 
-def static_dock(root: Element, ids_elements: list[tuple[int, Element]], ids_root_anchors: list[tuple[int, enums.DockAnchor]], ids_connection_ids: list[tuple[int, enums.DockConn, int]]):
+def static_dock(root: Element, ids_elements: list[tuple[int, Element]], ids_root_anchors: list[tuple[int, enums.DockAnchor]], ids_connection_ids: list[tuple[int, enums.DockConn, int]], ignore_stack: bool = True):
     """
     Automatically sets up anchors for static docking.\n
     root is the background panel element of the docking\n
@@ -115,17 +115,17 @@ def static_dock(root: Element, ids_elements: list[tuple[int, Element]], ids_root
             raise UIError(f"Docking failed. Element with id '{id_}' was not registered in the elements '{ids_elements}'")
         element = id_els[id_]
         if an in ["left", "right"]:
-            element.set_anchor(root, an, an)
+            element.set_anchor(root, an, an, ignore_stack=ignore_stack)
         elif an in ["top", "bottom"]:
-            element.set_anchor(root, an, an)
+            element.set_anchor(root, an, an, ignore_stack=ignore_stack)
         elif an.startswith("top"):
-            element.set_anchors((root, "top", "top"), (root, an.replace("top", ""), an.replace("top", "")))
+            element.set_anchors((root, "top", "top", 0, ignore_stack), (root, an.replace("top", ""), an.replace("top", ""), 0, ignore_stack))
         elif an.startswith("bottom"):
-            element.set_anchors((root, "bottom", "bottom"), (root, an.replace("bottom", ""), an.replace("bottom", "")))
+            element.set_anchors((root, "bottom", "bottom", 0, ignore_stack), (root, an.replace("bottom", ""), an.replace("bottom", ""), 0, ignore_stack))
         elif an.startswith("left"):
-            element.set_anchors((root, "left", "left"), (root, an.replace("left", ""), an.replace("left", "")))
+            element.set_anchors((root, "left", "left", 0, ignore_stack), (root, an.replace("left", ""), an.replace("left", ""), 0, ignore_stack))
         elif an.startswith("right"):
-            element.set_anchors((root, "right", "right"), (root, an.replace("right", ""), an.replace("right", "")))
+            element.set_anchors((root, "right", "right", 0, ignore_stack), (root, an.replace("right", ""), an.replace("right", ""), 0, ignore_stack))
         else:
             common.warn(f"Skipping invalid dock anchor '{an}'")
     for id1, conn, id2 in ids_connection_ids:
@@ -136,19 +136,19 @@ def static_dock(root: Element, ids_elements: list[tuple[int, Element]], ids_root
         e1 = id_els[id1]
         e2 = id_els[id2]
         if conn == "<x>":
-            e1.set_anchor(e2, "right", "left")
-            e2.set_anchor(e1, "left", "right")
+            e1.set_anchor(e2, "right", "left", ignore_stack=ignore_stack)
+            e2.set_anchor(e1, "left", "right", ignore_stack=ignore_stack)
         elif conn == "<y>":
-            e1.set_anchor(e2, "bottom", "top")
-            e2.set_anchor(e1, "top", "bottom")
+            e1.set_anchor(e2, "bottom", "top", ignore_stack=ignore_stack)
+            e2.set_anchor(e1, "top", "bottom", ignore_stack=ignore_stack)
         elif conn == "x>":
-            e1.set_anchor(e2, "right", "left")
+            e1.set_anchor(e2, "right", "left", ignore_stack=ignore_stack)
         elif conn == "<x":
-            e2.set_anchor(e1, "left", "right")
+            e2.set_anchor(e1, "left", "right", ignore_stack=ignore_stack)
         elif conn == "y>":
-            e1.set_anchor(e2, "bottom", "top")
+            e1.set_anchor(e2, "bottom", "top", ignore_stack=ignore_stack)
         elif conn == "<y":
-            e2.set_anchor(e1, "top","bottom")
+            e2.set_anchor(e1, "top","bottom", ignore_stack=ignore_stack)
         else:
             common.warn(f"Skipping invalid dock connection '{conn}'")
 

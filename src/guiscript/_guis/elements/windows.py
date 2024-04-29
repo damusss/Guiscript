@@ -28,8 +28,9 @@ class Modal(VStack):
                  ):
         if settings is None:
             settings = settings_.ModalSettings()
-        super().__init__(pygame.Rect(), element_id, style_id, None, manager)
-        self.set_size(self.manager.root.relative_rect.size).add_element_type("modal_container").hide()
+        super().__init__(pygame.Rect(0,0,0,0), element_id, style_id, None, manager)
+        self.set_parent(self.manager.root).set_size(self.manager.root.relative_rect.size).add_element_type("modal_container").hide()
+        self.status.register_callback("on_hide")
         if settings.hide_when_clicking_sourroundings:
             self.activate()
         self.settings: settings_.ModalSettings = settings
@@ -44,6 +45,8 @@ class Modal(VStack):
         if event.type == pygame.VIDEORESIZE:
             self.set_size((event.w, event.h))
         elif self.settings.hide_when_clicking_sourroundings and event.type == events.CLICK and event.element is self:
+            self.status.invoke_callback("on_hide")
+            events._post_modal_event(self)
             self.hide()
 
 class _WinStackHolder:

@@ -82,7 +82,7 @@ class UIStatus:
             except TypeError as e:
                 if "takes 0 positional arguments but 1 was given" in str(e) or "takes 1 positional argument but 2 were given" in str(e):
                     callback(*args)
-                    return self
+                    continue
                 raise e
         return self
 
