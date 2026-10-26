@@ -1,4 +1,9 @@
-# Guiscript WIP
+![Archived](https://shields.io)
+
+> [!WARNING]
+> Guiscript is an old project that has been abandoned and superseded and won't receive any updates.
+
+# Guiscript (Abandoned)
 
 User friendly, script based UI library for pygame graphical user interfaces.<br>
 The scripting is similar to CSS, the syntax is simple and the UI can be used for both applications and games.<br>
@@ -10,18 +15,12 @@ The elements structure is easy to follow thanks to the use of context managers.<
 Customization is easily accessible thanks to the styling, style priority and inheritance system.
 
 # Installation
-# NOT OUT YET
-The library can be installed from PyPI or downloaded manually from github
-```
-pip/pip3 install guiscript
-```
+
+The library was not published to PyPI and must be downloaded manually from GitHub.
+
 It's recommended to shorten the name on import to code faster
 ```py
 import guiscript as guis
 ```
 
 # [Usage Guide](guidemd/guide.md)
-
-# Links
-### [PyPI Project](https://pypi.org/project/guiscript/)
-### [Github Repository](https://github.com/Damus666/Guiscript)
