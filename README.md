@@ -1,4 +1,4 @@
-![Archived](https://shields.io)
+![Archived](https://img.shields.io/badge/Status-Archived/Abandoned-red)
 
 > [!WARNING]
 > Guiscript is an old project that has been abandoned and superseded and won't receive any updates.
